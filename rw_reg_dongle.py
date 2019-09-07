@@ -212,7 +212,7 @@ def displayReg(reg,option=None):
     if option=='hexbin': return hex(address).rstrip('L')+' '+reg.permission+'\t'+tabPad(reg.name,7)+'{0:#010x}'.format(final_int)+' = '+'{0:032b}'.format(final_int)
     else: return hex(address).rstrip('L')+' '+reg.permission+'\t'+tabPad(reg.name,7)+'{0:#010x}'.format(final_int)
 
-def writeReg(reg, value):
+def writeReg(reg, value, readback=0):
     try: address = reg.real_address
     except:
         print 'Reg',reg,'not a Node'
@@ -220,23 +220,27 @@ def writeReg(reg, value):
     if 'w' not in reg.permission:
         return 'No write permission!'
 
-    # Apply Mask if applicable
-    if reg.mask is not None:
-        shift_amount=0
-        for bit in reversed('{0:b}'.format(reg.mask)):
-            if bit=='0': shift_amount+=1
-            else: break
-        shifted_value = value << shift_amount
-        if 'r' not in reg.permission: final_value = shifted_value
-        else:
-            initial_value = mpeek(address)
-            try: initial_value = parseInt(initial_value)
-            except: return 'Error reading initial value: '+str(initial_value)
-            final_value = (shifted_value & reg.mask) | (initial_value & ~reg.mask)
-    else: final_value = value
+    if (readback):
+        if (value!=readReg(reg)):
+            print "Failed to read back register %s" % reg.name
+    else:
+        # Apply Mask if applicable
+        if reg.mask is not None:
+            shift_amount=0
+            for bit in reversed('{0:b}'.format(reg.mask)):
+                if bit=='0': shift_amount+=1
+                else: break
+            shifted_value = value << shift_amount
+            if 'r' not in reg.permission: final_value = shifted_value
+            else:
+                initial_value = mpeek(address)
+                try: initial_value = parseInt(initial_value)
+                except: return 'Error reading initial value: '+str(initial_value)
+                final_value = (shifted_value & reg.mask) | (initial_value & ~reg.mask)
+        else: final_value = value
 
-    # mpoke
-    mpoke (address, final_value)
+        # mpoke
+        mpoke (address, final_value)
 
 def isValid(address):
     #try: subprocess.check_output('mpeek '+str(address), stderr=subprocess.STDOUT , shell=True)

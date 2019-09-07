@@ -213,7 +213,7 @@
 
                 <!-- [0x02d] CLKGLFConfig0 -->
                 <node id="CLKGLOCKFILTERENABLE" address="0x25" permission="rw"
-                    description="Enables the lock filter on the instant lock signal; only in TX mode  disable, 1 enable]; default: 1"
+                    description="Enables the lock filter on the instant lock signal; only in TX mode  disable, 1 enable; default: 1"
                     mask="0x80" />
 
                 <node id="CLKGCAPBANKSELECT_8" address="0x25" permission="rw"
@@ -265,7 +265,6 @@
                 <node id="EPRXUNLOCKTHRESHOLD" address="0x2b" permission="rw"
                     description=" 7:4 -  Sets the unlock threshold value of the instant lock low pass filter for ePortRx DLL's (default: 5)"
                     mask="0xf0" />
-
 
                 <node id="PSDLLCONFIRMCOUNT" address="0x2b" permission="rw"
                     description="Number of clock cycles (in the 40 MHz clock domain) to confirm locked state. 2d0=1, 2d1=4, 2d2=16, 2d3=31"
@@ -1240,7 +1239,7 @@
 
                 <!-- [0x115] EOMConfigL -->
                 <node id="EOMPHASESEL" address="0x1" permission="rw"
-                    description="Selects the sampling phase from the phase interpolation block; steps [0:1/(fvco*64):63/(fvco*64)] s -->"
+                    description="Selects the sampling phase from the phase interpolation block; steps [0:1/(fvco*64):63/(fvco*64)]"
                     mask="0x1f" />
 
                 <!-- [0x116] EOMvofSel -->
@@ -1251,7 +1250,294 @@
 
 
             <!-- https://lpgbt.web.cern.ch/lpgbt/manual/registermap.html#process-monitor -->
+
             <!-- https://lpgbt.web.cern.ch/lpgbt/manual/registermap.html#testing -->
+
+            <!-- 15.2.7. Testing -->
+            <!-- Uplink data path test patterns. -->
+
+            <node id="TESTING" address="0x118-0x0f0" permission="rw">
+
+                <!-- [0x118] ULDataSource0 -->
+                <node id="ULECDATASOURCE" address="0x0" permission="rw"
+                    description="    7:5 -  Data source for uplink EC channel"
+                    mask="0xe0" />
+
+
+                <!-- ULGECDataSource[2:0]	Name	Description -->
+                <!-- 3'd0	EPORTRX_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 3'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 3'd2	BIN_CNTR_UP	Binary counter counting up -->
+                <!-- 3'd3	BIN_CNTR_DOWN	Binary counter counting down -->
+                <!-- 3'd4	CONST_PATTERN	Constant pattern (DPDataPattern[1:0]) -->
+                <!-- 3'd5	CONST_PATTERN_INV	Constant pattern inverted (~DPDataPattern[1:0]) -->
+                <!-- 3'd6	DLDATA_LOOPBACK	Loop back, downlink frame data -->
+                <!-- 3'd7	Reserved	Reserved -->
+                <node id="ULSERTESTPATTERN" address="0x0" permission="rw"
+                    description="    3:0 -  Controls the serializer data source."
+                    mask="0xf" />
+
+
+                <!-- ULSerTestPattern[3:0]	Name	Description -->
+                <!-- 4'd0	DATA	Normal mode of operation -->
+                <!-- 4'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 4'd2	PRBS15	PRBS15 test pattern -->
+                <!-- 4'd3	PRBS23	PRBS23 test pattern -->
+                <!-- 4'd4	PRBS31	PRBS31 test pattern -->
+                <!-- 4'd5	CLK5G12	5.12 GHz clock pattern (in 5Gbps mode it will produce only 2.56 GHz) -->
+                <!-- 4'd6	CLK2G56	2.56 GHz clock pattern -->
+                <!-- 4'd7	CLK1G28	1.28 GHz clock pattern -->
+                <!-- 4'd8	CLK40M	40 MHz clock pattern -->
+                <!-- 4'd9	DLFRAME_10G24	Loopback, downlink frame repeated 4 times -->
+                <!-- 4'd10	DLFRAME_5G12	Loopback, downlink frame repeated 2 times, each bit repeated 2 times -->
+                <!-- 4'd11	DLFRAME_2G56	Loopback, downlink frame repeated 1 times, each bit repeated 4 times -->
+                <!-- 4'd12	CONST PATTERN	8 x DPDataPattern[31:0] -->
+                <!-- 4'd13 -->
+                <!-- Reserved -->
+                <!-- 4'd14 -->
+                <!-- Reserved -->
+                <!-- 4'd15 -->
+                <!-- Reserved -->
+
+
+
+                <!-- [0x119] ULDataSource1 -->
+                <!-- Uplink data path test patterns. -->
+
+                <node id="LDDATASOURCE" address="0x1" permission="rw"
+                    description="    7:6 -  Data source for the line driver."
+                    mask="0xc0" />
+
+
+                <!-- LDDataSource[1:0]	Description -->
+                <!-- 2'd0	Data from serializer (normal mode of operation) -->
+                <!-- 2'd1	Equalizer output data loopback -->
+                <!-- 2'd2	Data resampled by CDR loopback -->
+                <!-- 2'd3	reserved -->
+
+                <node id="ULG1DATASOURCE" address="0x1" permission="rw"
+                    description="    5:3 -  Data source for uplink data group 1"
+                    mask="0x18" />
+
+
+                <!-- ULG1DataSource[2:0]	Name	Description -->
+                <!-- 3'd0	EPORTRX_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 3'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 3'd2	BIN_CNTR_UP	Binary counter counting up -->
+                <!-- 3'd3	BIN_CNTR_DOWN	Binary counter counting down -->
+                <!-- 3'd4	CONST_PATTERN	Constant pattern (DPDataPattern[31:0]) -->
+                <!-- 3'd5	CONST_PATTERN_INV	Constant pattern inverted (~DPDataPattern[31:0]) -->
+                <!-- 3'd6	DLDATA_LOOPBACK	Loop back, downlink frame data -->
+                <!-- 3'd7	Reserved	Reserved -->
+                <node id="ULG0DATASOURCE" address="0x1" permission="rw"
+                    description="    2:0 -  Data source for uplink data group 0"
+                    mask="0x7" />
+
+
+                <!-- ULG0DataSource[2:0]	Name	Description -->
+                <!-- 3'd0	EPORTRX_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 3'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 3'd2	BIN_CNTR_UP	Binary counter counting up -->
+                <!-- 3'd3	BIN_CNTR_DOWN	Binary counter counting down -->
+                <!-- 3'd4	CONST_PATTERN	Constant pattern (DPDataPattern[31:0]) -->
+                <!-- 3'd5	CONST_PATTERN_INV	Constant pattern inverted (~DPDataPattern[31:0]) -->
+                <!-- 3'd6	DLDATA_LOOPBACK	Loop back, downlink frame data -->
+                <!-- 3'd7	Reserved	Reserved -->
+
+
+
+                <!-- [0x11a] ULDataSource2 -->
+                <!-- Uplink data path test patterns. -->
+
+                <node id="ULG3DATASOURCE" address="0x2" permission="rw"
+                    description="    5:3 -  Data source for uplink data group 3"
+                    mask="0x18" />
+
+
+                <!-- ULG3DataSource[2:0]	Name	Description -->
+                <!-- 3'd0	EPORTRX_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 3'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 3'd2	BIN_CNTR_UP	Binary counter counting up -->
+                <!-- 3'd3	BIN_CNTR_DOWN	Binary counter counting down -->
+                <!-- 3'd4	CONST_PATTERN	Constant pattern (DPDataPattern[31:0]) -->
+                <!-- 3'd5	CONST_PATTERN_INV	Constant pattern inverted (~DPDataPattern[31:0]) -->
+                <!-- 3'd6	DLDATA_LOOPBACK	Loop back, downlink frame data -->
+                <!-- 3'd7	Reserved	Reserved -->
+                <node id="ULG2DATASOURCE" address="0x2" permission="rw"
+                    description="    2:0 -  Data source for uplink data group 2"
+                    mask="0x7" />
+
+
+                <!-- ULG2DataSource[2:0]	Name	Description -->
+                <!-- 3'd0	EPORTRX_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 3'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 3'd2	BIN_CNTR_UP	Binary counter counting up -->
+                <!-- 3'd3	BIN_CNTR_DOWN	Binary counter counting down -->
+                <!-- 3'd4	CONST_PATTERN	Constant pattern (DPDataPattern[31:0]) -->
+                <!-- 3'd5	CONST_PATTERN_INV	Constant pattern inverted (~DPDataPattern[31:0]) -->
+                <!-- 3'd6	DLDATA_LOOPBACK	Loop back, downlink frame data -->
+                <!-- 3'd7	Reserved	Reserved -->
+                <!-- [0x11b] ULDataSource3 -->
+                <!-- Uplink data path test patterns. -->
+
+                <node id="ULG5DATASOURCE" address="0x3" permission="rw"
+                    description="    5:3 -  Data source for uplink data group 5"
+                    mask="0x18" />
+
+
+                <!-- ULG5DataSource[2:0]	Name	Description -->
+                <!-- 3'd0	EPORTRX_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 3'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 3'd2	BIN_CNTR_UP	Binary counter counting up -->
+                <!-- 3'd3	BIN_CNTR_DOWN	Binary counter counting down -->
+                <!-- 3'd4	CONST_PATTERN	Constant pattern (DPDataPattern[31:0]) -->
+                <!-- 3'd5	CONST_PATTERN_INV	Constant pattern inverted (~DPDataPattern[31:0]) -->
+                <!-- 3'd6	DLDATA_LOOPBACK	Loop back, downlink frame data -->
+                <!-- 3'd7	Reserved	Reserved -->
+                <node id="ULG4DATASOURCE" address="0x3" permission="rw"
+                    description="    2:0 -  Data source for uplink data group 4"
+                    mask="0x7" />
+
+
+                <!-- ULG4DataSource[2:0]	Name	Description -->
+                <!-- 3'd0	EPORTRX_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 3'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 3'd2	BIN_CNTR_UP	Binary counter counting up -->
+                <!-- 3'd3	BIN_CNTR_DOWN	Binary counter counting down -->
+                <!-- 3'd4	CONST_PATTERN	Constant pattern (DPDataPattern[31:0]) -->
+                <!-- 3'd5	CONST_PATTERN_INV	Constant pattern inverted (~DPDataPattern[31:0]) -->
+                <!-- 3'd6	DLDATA_LOOPBACK	Loop back, downlink frame data -->
+                <!-- 3'd7	Reserved	Reserved -->
+
+                <!-- [0x11c] ULDataSource4 -->
+                <!-- Uplink data path test patterns. -->
+
+                <node id="DLECDATASOURCE" address="0x4" permission="rw"
+                    description="    7:6 - "
+                    mask="0xc0" />
+
+
+                <node id="ULICDATASOURCE" address="0x4" permission="rw"
+                    description="    5:3 - "
+                    mask="0x18" />
+
+
+                <node id="ULG6DATASOURCE" address="0x4" permission="rw"
+                    description="    2:0 -  Data source for uplink data group 6"
+                    mask="0x7" />
+
+
+                <!-- ULG6DataSource[2:0]	Name	Description -->
+                <!-- 3'd0	EPORTRX_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 3'd1	PRBS7	PRBS7 test pattern -->
+                <!-- 3'd2	BIN_CNTR_UP	Binary counter counting up -->
+                <!-- 3'd3	BIN_CNTR_DOWN	Binary counter counting down -->
+                <!-- 3'd4	CONST_PATTERN	Constant pattern (DPDataPattern[31:0]) -->
+                <!-- 3'd5	CONST_PATTERN_INV	Constant pattern inverted (~DPDataPattern[31:0]) -->
+                <!-- 3'd6	DLDATA_LOOPBACK	Loop back, downlink frame data -->
+                <!-- 3'd7	Reserved	Reserved -->
+
+                <!-- [0x11d] ULDataSource5 -->
+                <node id="DLG3DATASOURCE" address="0x5" permission="rw"
+                    description="    7:6 -  Controls the ePortTx group 3 data source"
+                    mask="0xc" />
+
+
+                <!-- DLG3DataSource[1:0]	Name	Description -->
+                <!-- 2'd0	LINK_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 2'd1	PRBS7	PRBS7 patter on each channel -->
+                <!-- 2'd2	BIN_CNTR_UP	Binary counter counting up on each channel -->
+                <!-- 2'd3	CONST_PATTERN	Constant pattern -->
+                <node id="DLG2DATASOURCE" address="0x5" permission="rw"
+                    description="    5:4 -  Controls the ePortTx group 2 data source"
+                    mask="0x30" />
+
+
+                <!-- DLG2DataSource[1:0]	Name	Description -->
+                <!-- 2'd0	LINK_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 2'd1	PRBS7	PRBS7 patter on each channel -->
+                <!-- 2'd2	BIN_CNTR_UP	Binary counter counting up on each channel -->
+                <!-- 2'd3	CONST_PATTERN	Constant pattern -->
+                <node id="DLG1DATASOURCE" address="0x5" permission="rw"
+                    description="    3:2 -  Controls the ePortTx group 1 data source"
+                    mask="0x0c" />
+
+
+                <!-- DLG1DataSource[1:0]	Name	Description -->
+                <!-- 2'd0	LINK_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 2'd1	PRBS7	PRBS7 patter on each channel -->
+                <!-- 2'd2	BIN_CNTR_UP	Binary counter counting up on each channel -->
+                <!-- 2'd3	CONST_PATTERN	Constant pattern -->
+                <node id="DLG0DATASOURCE" address="0x5" permission="rw"
+                    description="    1:0 -  Controls the ePortTx group 0 data source"
+                    mask="0x3" />
+
+
+                <!-- DLG0DataSource[1:0]	Name	Description -->
+                <!-- 2'd0	LINK_DATA	Normal mode of operation, data from ePortRx -->
+                <!-- 2'd1	PRBS7	PRBS7 patter on each channel -->
+                <!-- 2'd2	BIN_CNTR_UP	Binary counter counting up on each channel -->
+                <!-- 2'd3	CONST_PATTERN	Constant pattern -->
+            </node>
+
+
+            <node id="BERT" address="0x126-0x0f0">
+
+                <!-- [0x126] BERTSource -->
+                <!-- Data source for the built-in BER checker. -->
+
+                <node id="COARSEBERTSOURCE" address="0x0" permission="rw"
+                    description="Please refer to Section 14.2 for more details."
+                    mask="0xf0" />
+
+                <node id="BERTSOURCE" address="0x0" permission="rw"
+                    description="Please refer to Section 14.2 for more details."
+                    mask="0x0f" />
+
+                <!-- [0x127] BERTConfig -->
+                <!-- Configuration for the Bit Error Rate Test. -->
+
+                <node id="BERTMEASTIME" address="0x1" permission="rw"
+                    description="    7:4 -  Test time. For more details please refer to Table 14.5"
+                    mask="0xf" />
+
+                <node id="SKIPDISABLE" address="0x1" permission="rw"
+                    description="1 -- Disable the skip cycle signal originating from the frame aligner. It is used when testing raw PRBS sequences on the downlink."
+                    mask="0x2" />
+
+                <node id="BERTSTART" address="0x1" permission="rw"
+                    description="0 -- Asserting this bit start the BERT measurement."
+                    mask="0x1" />
+
+                <!-- [0x128] BERTDataPattern3 -->
+                <!-- Fixed data pattern used by the BERT checker. -->
+
+                <node id="BERTDATAPATTERN" address="0x2" permission="rw"
+                    description="    7:0 -  Bits 31:24 of the fixed pattern for BERT."
+                    mask="0xff" />
+
+                <!-- [0x129] BERTDataPattern2 -->
+                <!-- Fixed data pattern used by the BERT checker. -->
+
+                <node id="BERTDATAPATTERN" address="0x2" permission="rw"
+                    description="    7:0 -  Bits 23:16 of the fixed pattern for BERT."
+                    mask="0xff" />
+
+                <!-- [0x12a] BERTDataPattern1 -->
+                <!-- Fixed data pattern used by the BERT checker. -->
+
+                <node id="BERTDATAPATTERN" address="0x2" permission="rw"
+                    description="    7:0 -  Bits 15:8 of the fixed pattern for BERT."
+                    mask="0xff" />
+
+                <!-- [0x12b] BERTDataPattern0 -->
+                <!-- Fixed data pattern used by the BERT checker. -->
+
+                <node id="BERTDATAPATTERN" address="0x2" permission="rw"
+                    description="    7:0 -  Bits 7:0 of the fixed pattern for BERT."
+                    mask="0xff" />
+
+            </node>
 
             <!-- 15.2.8. Reset Manager -->
             <!-- https://lpgbt.web.cern.ch/lpgbt/manual/registermap.html#reset-manager -->
@@ -1432,6 +1718,7 @@
 
                 <node id="PUSMBROWNOUTACTION" address="0x1" permission="rw"
                     description="This flag is set if the brownout action has be executed since the last chip reset."
+
                     mask="0x3" />
 
                 <node id="PUSMPLLWATCHDOGACTION" address="0x1" permission="rw"
@@ -1692,12 +1979,12 @@
 
 
                 <!-- [0x1bb] EOMCouterValueH -->
-                <node id="EOMCOUNTERVALUE" address="0x1" permission="r"
+                <node id="EOMCOUNTERVALUEH" address="0x1" permission="r"
                     description="MSB word of EOM ripple counter (bigger the value, more the eye is open in this (x,y) position)"
                     mask="0xff" />
 
                 <!-- [0x1bc] EOMCouterValueL -->
-                <node id="EOMCOUNTERVALUE" address="0x2" permission="r"
+                <node id="EOMCOUNTERVALUEL" address="0x2" permission="r"
                     description="LSB word of EOM ripple counter (bigger the value, more the eye is open in this (x,y) position)"
                     mask="0xff" />
 
@@ -1710,8 +1997,62 @@
                 <node id="EOMCOUNTER40ML" address="0x4" permission="r"
                     description="LSB word of EOM gating counter (toggles at 40 MHz); used to estimate number of data transitions"
                     mask="0xff" />
-            </node> <!-- /ro -->
+            </node>
 
+            <node id="BERT" address="0x1bf-0x140">
+
+                <!-- 15.3.11. BERT Tester -->
+                <!-- [0x1bf] BERTStatus -->
+                <!-- Status register of BERT checker. -->
+
+                <node id="BERTPRBSERRORFLAG" address="0x0" permission="rw"
+                    description="2 -- This flag is set when data input was always zero during the test."
+                    mask="0x4" />
+
+                <node id="BERTBUSY" address="0x0" permission="rw"
+                    description="1 -- Measurement is ongoing when this bit is asserted."
+                    mask="0x2" />
+
+                <node id="BERTDONE" address="0x0" permission="rw"
+                    description="0 -- Measurement is down when this bit is asserted."
+                    mask="0x1" />
+
+                <!-- [0x1c0] BERTResult4 -->
+                <!-- BERT result. -->
+
+                <node id="BERTERRORCOUNT4" address="0x1" permission="rw"
+                    description="    7:0 -  Bits 39:32 of BERT result."
+                    mask="0xff" />
+
+                <!-- [0x1c1] BERTResult3 -->
+                <!-- BERT result. -->
+
+                <node id="BERTERRORCOUNT3" address="0x2" permission="rw"
+                    description="    7:0 -  Bits 31:24 of BERT result."
+                    mask="0xff" />
+
+                <!-- [0x1c2] BERTResult2 -->
+                <!-- BERT result. -->
+
+                <node id="BERTERRORCOUNT2" address="0x3" permission="rw"
+                    description="    7:0 -  Bits 23:16 of BERT result."
+                    mask="0xff" />
+
+                <!-- [0x1c3] BERTResult1 -->
+                <!-- BERT result. -->
+
+                <node id="BERTERRORCOUNT1" address="0x4" permission="rw"
+                    description="    7:0 -  Bits 15:8 of BERT result."
+                    mask="0xff" />
+
+                <!-- [0x1c4] BERTResult0 -->
+                <!-- BERT result. -->
+
+                <node id="BERTERRORCOUNT0" address="0x5" permission="rw"
+                    description="    7:0 -  Bits 7:0 of BERT result."
+                    mask="0xff" />
+
+            </node> <!-- /ro -->
 
         </node> <!-- /ro -->
 
