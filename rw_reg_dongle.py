@@ -16,6 +16,7 @@ class Node:
     real_address = 0x0
     permission = ''
     mask = 0x0
+    lsb_pos = 0x0
     isModule = False
     parent = None
     level = 0
@@ -35,6 +36,7 @@ class Node:
         print 'Address:','{0:#010x}'.format(self.address)
         print 'Permission:',self.permission
         print 'Mask:',self.mask
+        print 'LSB:',self.lsb_pos
         print 'Module:',self.isModule
         print 'Parent:',self.parent.name
 
@@ -46,11 +48,12 @@ def main():
     random_node.output()
     i=0
     for node in nodes:
+        print i
         if (i>0):
             node.output()
         i=i+1
 
-    print (gbt.gbtx_read_register(320))
+    #print (gbt.gbtx_read_register(320))
     #print str(random_node.__class__.__name__)
     #print 'Node:',random_node.name
     #print 'Parent:',random_node.parent.name
@@ -95,6 +98,7 @@ def makeTree(node,baseName,baseAddress,nodes,parentNode,vars,isGenerated,num_of_
     newNode.real_address = address
     newNode.permission = node.get('permission')
     newNode.mask = parseInt(node.get('mask'))
+    newNode.lsb_pos = mask_to_lsb(newNode.mask)
     newNode.isModule = node.get('fw_is_module') is not None and node.get('fw_is_module') == 'true'
     if node.get('mode') is not None:
         newNode.mode = node.get('mode')
@@ -115,10 +119,16 @@ def getAllChildren(node,kids=[]):
             getAllChildren(child,kids)
 
 def getNode(nodeName):
-    thisnode = next((node for node in nodes if node.name == nodeName),None)
+    thisnode = next(
+        (node for node in nodes if node.name == nodeName),None
+    )
+
     if (thisnode == None):
         print nodeName
     return thisnode
+
+def getNodebyID(number):
+    return nodes[number]
 
 def getNodeFromAddress(nodeAddress):
     return next((node for node in nodes if node.real_address == nodeAddress),None)
@@ -150,48 +160,29 @@ def readRawAddress(raw_address):
         return 'Error reading address. (rw_reg)'
 
 def mpeek(address):
-    #try:
-    #    output = subprocess.check_output('mpeek '+str(address), stderr=subprocess.STDOUT , shell=True)
-    #    value = ''.join(s for s in output if s.isalnum())
-    #except subprocess.CalledProcessError as e: value = parseError(int(str(e)[-1:]))
-    #gbt.gbtx_address=0x70
     return gbt.gbtx_read_register(address)
-    #print "reading register 320"
-    #print (gbt.gbtx_read_register(320))
-    #print
-    #return 1
 
 def mpoke(address,value):
-    #return 1
-    #print "poking register 320"
-    #print (gbt.gbtx_read_register(320))
-    #gbt.gbtx_address=0x70
-    #print gbt.gbtx_read_register(320)
     gbt.gbtx_write_register(address,value)
-    #try: output = subprocess.check_output('mpoke '+str(address)+' '+str(value), stderr=subprocess.STDOUT , shell=True)
-    #except subprocess.CalledProcessError as e: return parseError(int(str(e)[-1:]))
-    #return 'Done.'
 
 def readRegStr(reg):
     return '{0:#010x}'.format(readReg(reg))
 
 def readReg(reg):
+
     address = reg.real_address
+
     if 'r' not in reg.permission:
         return 'No read permission!'
+
     # read
     value = mpeek (address)
+
     # Apply Mask
-    if reg.mask is not None:
-        shift_amount=0
-        for bit in reversed('{0:b}'.format(reg.mask)):
-            if bit=='0': shift_amount+=1
-            else: break
-        final_value = (parseInt(str(reg.mask))&parseInt(value)) >> shift_amount
-    else: final_value = value
-    final_int =  parseInt(str(final_value))
-    return final_int
-    #return '{0:#010x}'.format(final_int)
+    if (reg.mask != 0):
+        value = (reg.mask & value) >> reg.lsb_pos
+
+    return value
 
 def displayReg(reg,option=None):
     address = reg.real_address
@@ -222,25 +213,18 @@ def writeReg(reg, value, readback=0):
 
     if (readback):
         if (value!=readReg(reg)):
-            print "Failed to read back register %s" % reg.name
+            print "Failed to read back register %s. Expect=0x%x Read=0x%x" % (reg.name, value, redReg(reg))
     else:
         # Apply Mask if applicable
-        if reg.mask is not None:
-            shift_amount=0
-            for bit in reversed('{0:b}'.format(reg.mask)):
-                if bit=='0': shift_amount+=1
-                else: break
-            shifted_value = value << shift_amount
-            if 'r' not in reg.permission: final_value = shifted_value
-            else:
-                initial_value = mpeek(address)
-                try: initial_value = parseInt(initial_value)
-                except: return 'Error reading initial value: '+str(initial_value)
-                final_value = (shifted_value & reg.mask) | (initial_value & ~reg.mask)
-        else: final_value = value
+        if (reg.mask != 0):
+            value = value << reg.lsb_pos
+            value = value & reg.mask
+
+            if 'r' in reg.permission:
+                value = (value) | (mpeek(address) & ~reg.mask)
 
         # mpoke
-        mpoke (address, final_value)
+        mpoke (address, value)
 
 def isValid(address):
     #try: subprocess.check_output('mpeek '+str(address), stderr=subprocess.STDOUT , shell=True)
@@ -294,6 +278,21 @@ def substituteVars(string, vars):
 
 def tabPad(s,maxlen):
     return s+"\t"*((8*maxlen-len(s)-1)/8+1)
+
+
+def mask_to_lsb(mask):
+    if mask is None:
+        return 0
+    if (mask&0x1):
+        return 0
+    else:
+        idx=1
+        while (True):
+            mask=mask>>1
+            if (mask&0x1):
+                return idx
+            idx = idx+1
+
 
 if __name__ == '__main__':
     main()

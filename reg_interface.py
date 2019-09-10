@@ -20,8 +20,10 @@ class Prompt(Cmd):
             address = reg.real_address
             if 'r' in str(reg.permission):
                 print displayReg(reg)
-            elif reg.isModule: print 'This is a module!'
-            else: print hex(address),'\t',reg.name,'\t','No read permission!'
+            elif reg.isModule:
+                print 'This is a module!'
+            else:
+                print hex(address),'\t',reg.name,'\t','No read permission!'
         else:
             print args,'not found!'
 
@@ -33,17 +35,21 @@ class Prompt(Cmd):
     def do_write(self, args):
         """Writes register. USAGE: write <register name> <register value>"""
         arglist = args.split()
-        if len(arglist)==2:
+        if len(arglist)!=2:
+            print "Incorrect number of arguments!"
+        else:
             reg = getNode(arglist[0])
             if reg is not None:
                 try: value = parseInt(arglist[1])
                 except:
                     print 'Write Value must be a number!'
                     return
-                if 'w' in str(reg.permission): print writeReg(reg,value)
-                else: print 'No write permission!'
-            else: print arglist[0],'not found!'
-        else: print "Incorrect number of arguments!"
+                if 'w' in str(reg.permission):
+                    print writeReg(reg,value)
+                else:
+                    print 'No write permission!'
+            else:
+                print arglist[0],'not found!'
 
     def complete_write(self, text, line, begidx, endidx):
         return completeReg(text)
@@ -63,7 +69,6 @@ class Prompt(Cmd):
 
     def complete_readGroup(self, text, line, begidx, endidx):
         return completeReg(text)
-
 
     def do_readFW(self, args):
         """Quick read of all FW-related registers"""
@@ -86,7 +91,8 @@ class Prompt(Cmd):
     def do_readAll(self, args):
         """Read all registers with read-permission"""
         for reg in getNodesContaining(''):
-            if 'r' in str(reg.permission): print displayReg(reg)
+            if 'r' in (reg.permission):
+                print displayReg(reg)
 
     def do_exit(self, args):
         """Exit program"""
@@ -102,8 +108,10 @@ class Prompt(Cmd):
             address = reg.real_address
             if 'r' in str(reg.permission):
                 print hex(address),'{0:#010x}'.format(reg.mask),reg.permission,'\t',reg.name,'\t',readRegStr(reg)
-            elif reg.isModule: print 'This is a module!'
-            else: print hex(address),'\t',reg.name,'\t','No read permission!'
+            elif reg.isModule:
+                print 'This is a module!'
+            else:
+                print hex(address),'\t',reg.name,'\t','No read permission!'
         else:
             print args,'not found!'
 

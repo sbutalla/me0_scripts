@@ -121,7 +121,7 @@ class USB_dongle():
                 self.device = hid.device()
                 self.device.open(IDENT_VENDOR_NUM, IDENT_PRODUCT_NUM)
                 #self.device.set_nonblocking(1)
-                break;
+                break
         if not found:
             raise IOError("No interface attached to USB")
         else:
@@ -154,7 +154,7 @@ class USB_dongle():
         header=[ID,START_BYTE,cmd,num_send,num_recv]
         buf=header+payload # merge header and payload
 
-        for i in range(132-len(buf)): # report needs to be 132 bytes - so we fill with 0x00
+        for _ in range(132-len(buf)): # report needs to be 132 bytes - so we fill with 0x00
             buf.append(0x00)
 
         # transmit data to USB

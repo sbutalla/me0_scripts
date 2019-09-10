@@ -4,6 +4,7 @@ from rw_reg import *
 from time import *
 import array
 import struct
+import sys
 
 DEBUG=False
 

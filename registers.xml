@@ -1490,7 +1490,7 @@
                     description="Please refer to Section 14.2 for more details."
                     mask="0xf0" />
 
-                <node id="BERTSOURCE" address="0x0" permission="rw"
+                <node id="FINEBERTSOURCE" address="0x0" permission="rw"
                     description="Please refer to Section 14.2 for more details."
                     mask="0x0f" />
 

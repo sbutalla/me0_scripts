@@ -35,15 +35,20 @@ def main():
     eomstatereg = getNode("LPGBT.RO.EOM.EOMSMSTATE")
 
     cntvalmax = 0
+    cntvalmin = 2**20
 
+    ymin=1
+    ymax=31
+    xmin=0
+    xmax=64
 
-    for y_axis  in range (0,32):
+    for y_axis  in range (ymin,ymax):
 
         # update yaxis
 
         writeReg(getNode("LPGBT.RW.EOM.EOMVOFSEL"), y_axis)
 
-        for x_axis in range (0,64):
+        for x_axis in range (xmin,xmax):
 
             if (x_axis >= 32):
                 x_axis_wr = 63-(x_axis-32)
@@ -54,7 +59,7 @@ def main():
             writeReg(eomphaseselreg, x_axis_wr)
 
             # wait few miliseconds
-            sleep(0.005)
+            sleep(0.002)
 
             # start measurement
             writeReg(eomstartreg, 0x1)
@@ -68,12 +73,13 @@ def main():
             countervalue = (readReg(datavalregh)) << 8 |readReg(datavalregl)
             if (countervalue > cntvalmax):
                 cntvalmax = countervalue
+            if (countervalue < cntvalmin):
+                cntvalmin = countervalue
 
             #print num_clocks_read
             #print num_clocks
 
             eyeimage[x_axis][y_axis] = countervalue
-            #print countervalue
             #print (4149 - countervalue)
 
             # deassert eomstart bit
@@ -82,7 +88,8 @@ def main():
             #line = line + ("%x" % (eyeimage[x][y]/260))
             #print ("%x" % (eyeimage[x_axis][y_axis]/260))
 
-            sys.stdout.write("%x" % (10000 - eyeimage[x_axis][y_axis]/650))
+            #print countervalue/1000
+            sys.stdout.write("%x" % (eyeimage[x_axis][y_axis]/1000))
             sys.stdout.flush()
 
         sys.stdout.write("\n")
@@ -91,21 +98,21 @@ def main():
         #print "%f percent done" % percent_done
 
     print "Counter value max=%d" % cntvalmax
-    f = open ("eye.dat", "w+")
+    f = open ("eye_data.py", "w+")
     f.write ("eye_data=[\n")
-    for y  in range (0,32):
+    for y  in range (ymin,ymax):
         f.write ("    [")
-        for x in range (0,64):
+        for x in range (xmin,xmax):
 
-            # normalize for plotting 
-            f.write(100 - 100*eyeimage[x][y]/cntvalmax)
-            if (x<63):
+            # normalize for plotting
+            f.write("%d" % (100*(cntvalmax - eyeimage[x][y])/(cntvalmax-cntvalmin)))
+            if (x<(xmax-1)):
                 f.write(",")
-            else: 
+            else:
                 f.write("]")
-        if (y<31): 
+        if (y<(ymax-1)):
             f.write(",\n")
-        else: 
+        else:
             f.write("]\n")
 
 if __name__ == '__main__':

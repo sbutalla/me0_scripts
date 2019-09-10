@@ -4,6 +4,8 @@ def configLPGBT():
 
     parseXML()
 
+    mpeek (0x1ca)
+
     response1 = mpeek(0x141)
     print 'Reading register 0x141 : 0x%.2x'%(response1)
 
@@ -34,7 +36,6 @@ def configLPGBT():
     # datapath configuration
     mpoke(0x132,0x10) # enabled fec counter for the downlink
     #mpoke(0x132,0x10 | 0x2) # enabled fec counter for the downlink
-    print mpeek(0x132)
 
     #$# Uplink:  ePort Inputs DLL"s
     #$mpoke(0x034,0xa1)
@@ -83,7 +84,7 @@ def configLPGBT():
 
     #writeReg(getNode("LPGBT.RWF.CHIPCONFIG.CHIPADDRESSBAR"), 0x7)
     # pattern
-    constPatternSerializer(0xaaaaaaaa)
+    #constPatternSerializer(0xaaaaaaaa)
 
     #writeReg(getNode("LPGBT.RW.TESTING.LDDATASOURCE"), 0x1)
 

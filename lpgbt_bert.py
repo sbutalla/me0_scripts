@@ -1,4 +1,4 @@
-from rw_reg_dongle import *
+from rw_reg_dongle import mpeek,mpoke,writeReg,readReg,getNode,parseXML
 from time import sleep
 
 def main():
@@ -11,23 +11,19 @@ def main():
         print "Error: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xa5)
         return
 
-    writeReg(getNode("LPGBT.RW.BERT.SKIPDISABLE"),1)
-
     # // select the data source for the measurement
-    #writeReg(getNode("LPGBT.RW.BERT.COARSEBERTSOURCE"),0xe)
-    #writeReg(getNode("LPGBT.RW.BERT.BERTSOURCE"),2)
-    mpoke(0x126, 0xc3)
+    writeReg(getNode("LPGBT.RW.BERT.COARSEBERTSOURCE"),14) # bert source to DLFRAME 
+    writeReg(getNode("LPGBT.RW.BERT.FINEBERTSOURCE"),2) # prbs 7 
 
-    # set the measurement time to 2**31 clock cycles (2.1G * 25 ns = 53.6s)
     writeReg(getNode("LPGBT.RW.BERT.BERTMEASTIME"),15)
+
+    writeReg(getNode("LPGBT.RW.BERT.SKIPDISABLE"),1)
 
     # Downlink frame contains 64 bits (2.56 Gbps)
     bits_per_clock_cycle = 64
 
     bits_checked = 2**31 * bits_per_clock_cycle
 
-
-    #
     # writeReg(getNode("LPGBT.RWF.CALIBRATION.CLKGDISABLEFRAMEALIGNERLOCKCONTROL") ,1)
     # writeReg(getNode("LPGBT.RWF.CALIBRATION.CLKGLOCKFILTERENABLE"), 0x0) # quickstart recommends 0
     # writeReg(getNode("LPGBT.RWF.CALIBRATION.CLKGWAITCDRTIME"), 0xa)
@@ -68,5 +64,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
