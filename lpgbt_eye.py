@@ -38,7 +38,7 @@ def main():
     cntvalmin = 2**20
 
     ymin=1
-    ymax=31
+    ymax=30
     xmin=0
     xmax=64
 
