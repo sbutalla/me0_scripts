@@ -1,5 +1,5 @@
 import sys
-from time import sleep
+from time import sleep,time
 
 import platform
 hostname = platform.uname()[1]
@@ -12,6 +12,8 @@ readback = 0
 master = 0
 spicy = 0
 reset_before_config=0
+
+FUSE_TIMEOUT_MS = 5
 
 def main(do_readback=0):
 
@@ -133,6 +135,8 @@ def fuse_from_file (filename):
    config = config.split('\n')
    data = 0x0
 
+   write_fuse_magic(1)
+
    print "Fusing from file \"%s\"" % filename
    en="No"
    while (en!="yes"):
@@ -153,6 +157,8 @@ def fuse_from_file (filename):
 
       if (reg_addr%4==3):
          write_blow_and_check_fuse (reg_addr & 0xfffc, data, True)
+
+   write_fuse_magic(0)
 
 def set_uplink_group_data_source(type, pattern=0x55555555):
 
@@ -376,7 +382,7 @@ def configure_ec_channel():
 
     # enable EC output
     writeReg(getNode("LPGBT.RWF.EPORTTX.EPTXECENABLE"), 0x1, readback)
-%
+
     # enable EC input
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECENABLE"), 0x1, readback)
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECTERM"),   0x1, readback)
@@ -672,9 +678,8 @@ def blow_fuse():
     mpoke(0x109, 0xC0)
     #gbt.gbtx_enable_efusepower()
 
-    # https://www.analog.com/media/en/technical-documentation/data-sheets/1761sff.pdf
-    sleep (0.5) # some time for the ldo to turn on.. how long???
-                # better to use a gpio or something fast...
+    # https://pdf1.alldatasheet.com/datasheet-pdf/view/931712/TI1/LP2985A.html
+    sleep (0.01) # datasheet says the startup time is around 10ms with 150mA load (we have almost no load when using PIZZA)
 
     # write fuseblow on
     # [0x109] FUSEControl
@@ -685,8 +690,15 @@ def blow_fuse():
 
     #wait for fuseblowdone
     done = 0;
+    t0 = time()
     while (done!=0):
         done = (0x1 & ((mpeek(0x1a1)) >> 1))
+        if int(round((time() - t0) * 1000)) > FUSE_TIMEOUT_MS:
+            gbt.gbtx_disable_efusepower()
+            mpoke(0x109, 0xC0) # wr
+            print "ERROR: Fusing operation took longer than %dms and was terminated due to a timeout" % FUSE_TIMEOUT_MS:
+            sys.exit()
+
     err = (0x1 & ((mpeek(0x1a1)) >> 3))
     print "\tFuse blown, err=%d" % err
 
