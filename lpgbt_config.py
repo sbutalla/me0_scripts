@@ -14,6 +14,7 @@ spicy = 0
 reset_before_config=0
 
 FUSE_TIMEOUT_MS = 5
+TOTAL_EFUSE_ON_TIME_MS = 0
 
 def main(do_readback=0):
 
@@ -663,6 +664,8 @@ def write_fuse_block_data(adr, data, fullblock=False):
 
 
 def blow_fuse():
+    global TOTAL_EFUSE_ON_TIME_MS
+
     adr = 0;
 
     adr |= mpeek (0x10e) << 8
@@ -677,6 +680,7 @@ def blow_fuse():
 
     mpoke(0x109, 0xC0)
     #gbt.gbtx_enable_efusepower()
+    t0_efusepower = time()
 
     # https://pdf1.alldatasheet.com/datasheet-pdf/view/931712/TI1/LP2985A.html
     sleep (0.01) # datasheet says the startup time is around 10ms with 150mA load (we have almost no load when using PIZZA)
@@ -696,13 +700,17 @@ def blow_fuse():
         if int(round((time() - t0) * 1000)) > FUSE_TIMEOUT_MS:
             gbt.gbtx_disable_efusepower()
             mpoke(0x109, 0xC0) # wr
+            TOTAL_EFUSE_ON_TIME_MS += int(round((time() - t0_efusepower) * 1000))
             print "ERROR: Fusing operation took longer than %dms and was terminated due to a timeout" % FUSE_TIMEOUT_MS
+            print "Total efuse power on time: %dms" % TOTAL_EFUSE_ON_TIME_MS
             sys.exit()
 
     err = (0x1 & ((mpeek(0x1a1)) >> 3))
     print "\tFuse blown, err=%d" % err
 
     gbt.gbtx_disable_efusepower()
+    TOTAL_EFUSE_ON_TIME_MS += int(round((time() - t0_efusepower) * 1000))
+    print "Total efuse power on time: %dms" % TOTAL_EFUSE_ON_TIME_MS
 
     # write fuseblow on
     # [0x109] FUSEControl
@@ -710,7 +718,6 @@ def blow_fuse():
     # Bit 1 - FuseRead - Execute fuse readout sequence.
     # Bit 0 - FuseBlow - Execute fuse blowing sequence.
     mpoke(0x109, 0xC0) # wr
-
 
 # sets fuse value, blows the fuse, and checks the result
 # it can operate on a sub-address (one byte out of 4 in the fuse block)
