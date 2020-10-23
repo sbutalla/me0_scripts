@@ -46,6 +46,12 @@ class GBTx():
         #print payload
         self.my_interface.i2c_write(self.gbtx_address,payload)
 
+    def gbtx_enable_efusepower(self):
+        self.my_interface.setvfuseldo(1)
+
+    def gbtx_disable_efusepower(self):
+        self.my_interface.setvfuseldo(0)
+
     def gbtx_read_register(self,register):
         """read a value from a register - return register byte value"""
         reg_add_l=register&0xFF
