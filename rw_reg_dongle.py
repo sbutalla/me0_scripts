@@ -7,7 +7,10 @@ ADDRESS_TABLE_TOP = './registers.xml'
 nodes = []
 
 gbt = gbt_vldb.GBTx()
+
 TOP_NODE_NAME = "LPGBT"
+
+rw_config = (0x13C+1)*[0] # init with # of registers in lpgbt rwf + rw block
 
 class Node:
     name = ''
@@ -163,6 +166,7 @@ def mpeek(address):
     return gbt.gbtx_read_register(address)
 
 def mpoke(address,value):
+    rw_config[address] |= value
     gbt.gbtx_write_register(address,value)
 
 def readRegStr(reg):
@@ -203,17 +207,30 @@ def displayReg(reg,option=None):
     if option=='hexbin': return hex(address).rstrip('L')+' '+reg.permission+'\t'+tabPad(reg.name,7)+'{0:#010x}'.format(final_int)+' = '+'{0:032b}'.format(final_int)
     else: return hex(address).rstrip('L')+' '+reg.permission+'\t'+tabPad(reg.name,7)+'{0:#010x}'.format(final_int)
 
+def write_config_file(name):
+    f = open(name, 'w+')
+
+    for i in range(len(rw_config)):
+        f.write("%02X\n" % rw_config[i])
+
+def writeAndCheckAddr(addr, value):
+    mpoke(addr, value);
+    return mpeek(addr)==value
+
 def writeReg(reg, value, readback=0):
+
     try: address = reg.real_address
     except:
         print 'Reg',reg,'not a Node'
-        return
+        return 0
     if 'w' not in reg.permission:
-        return 'No write permission!'
+        print 'No write permission!'
+        return 0
 
     if (readback):
         if (value!=readReg(reg)):
             print "Failed to read back register %s. Expect=0x%x Read=0x%x" % (reg.name, value, redReg(reg))
+            return 0
     else:
         # Apply Mask if applicable
         if (reg.mask != 0):
@@ -222,9 +239,10 @@ def writeReg(reg, value, readback=0):
 
             if 'r' in reg.permission:
                 value = (value) | (mpeek(address) & ~reg.mask)
-
         # mpoke
         mpoke (address, value)
+
+        return 1
 
 def isValid(address):
     #try: subprocess.check_output('mpeek '+str(address), stderr=subprocess.STDOUT , shell=True)
