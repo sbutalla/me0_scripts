@@ -88,28 +88,27 @@ def main():
 
     if (readReg(getNode("LPGBT.RO.PUSM.PUSMPLLTIMEOUTACTION"))):
         print "PLL timeout:"
-        print "\tPLL timeout action has neen executed since the last chip reset."
+        print "\tPLL timeout action has been executed since the last chip reset."
 
     if (readReg(getNode("LPGBT.RO.PUSM.PUSMDLLTIMEOUTACTION"))):
         print "DLL timeout:"
-        print "\tDLL timeout action has neen executed since the last chip reset."
+        print "\tDLL timeout action has been executed since the last chip reset."
 
     if (readReg(getNode("LPGBT.RO.PUSM.PUSMCHANNELSTIMEOUTACTION"))):
         print "Channels timeout:"
-        print "\tWait for channels locked timeout action has neen executed since the last chip reset."
+        print "\tWait for channels locked timeout action has been executed since the last chip reset."
 
     if (readReg(getNode("LPGBT.RO.PUSM.PUSMBROWNOUTACTION"))):
         print "Brownout:"
-        print "\tThe brownout action has neen executed since the last chip reset."
+        print "\tThe brownout action has been executed since the last chip reset."
 
     if (readReg(getNode("LPGBT.RO.PUSM.PUSMPLLWATCHDOGACTION"))):
         print "PLL Watchdog:"
-        print "\tPLL watchdog action has neen executed since the last chip reset."
+        print "\tPLL watchdog action has been executed since the last chip reset."
 
     if (readReg(getNode("LPGBT.RO.PUSM.PUSMDLLWATCHDOGACTION"))):
         print "DLL Watchdog:"
-        print "\tDLL watchdog action has neen executed since the last chip reset."
-
+        print "\tDLL watchdog action has been executed since the last chip reset."
 
     print "Frame Aligner State:"
     print "\t" + str(readReg(getNode("LPGBT.RO.PUSM.FASTATE")))
