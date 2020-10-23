@@ -1,4 +1,5 @@
 from rw_reg_dongle import *
+from time import sleep
 
 def main():
 
@@ -171,11 +172,87 @@ def main():
     print "VCO Cap Select:"
     print "\t%d" % (readReg(getNode("LPGBT.RO.CLKG.CLKG_VCOCAPSELECTH")) << 1 |readReg(getNode("LPGBT.RO.CLKG.CLKG_VCOCAPSELECTH")))
 
-   #print ("Configuring adc...")
-   #writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1)
-   #writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x15)
-   #writeReg(getNode("LPGBT.RW.ADC.CONVERT"), 0x1)
-   #writeReg(getNode("LPGBT.RW.ADC.GAINSELECT"), 0x1)
+    #print ("Configuring adc...")
+    #writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1)
+    #writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x15)
+    #writeReg(getNode("LPGBT.RW.ADC.CONVERT"), 0x1)
+    #writeReg(getNode("LPGBT.RW.ADC.GAINSELECT"), 0x1)
+
+    init_adc()
+    print "ADC Readings:"
+    for i in range(16):
+        name = ""
+        if (i==0 ):  name="N/A";
+        if (i==1 ):  name="ASENSE_2";
+        if (i==2 ):  name="ASENSE_1";
+        if (i==3 ):  name="ASENSE_3";
+        if (i==4 ):  name="ASENSE_0";
+        if (i==5 ):  name="1V2_DIV2";
+        if (i==6 ):  name="2V5_DIV3";
+        if (i==7 ):  name="N/A";
+        if (i==8 ):  name="EOM DAC (internal signal)";
+        if (i==9 ):  name="VDDIO * 0.42 (internal signal)";
+        if (i==10):  name="VDDTX * 0.42 (internal signal)";
+        if (i==11):  name="VDDRX * 0.42 (internal signal)";
+        if (i==12):  name="VDD * 0.42 (internal signal)";
+        if (i==13):  name="VDDA * 0.42 (internal signal)";
+        if (i==14):  name="Temperature sensor (internal signal)";
+        if (i==15):  name="VREF/2 (internal signal)";
+
+        read = read_adc(i)
+        print "\tch %X: 0x%03X = %f (%s)" % (i, read, read/1024., name)
+
+def init_adc():
+    mpoke (0x113, 0x04) # adc enable
+    mpoke (0x112, 0x1f) # enable dividers + temp sensor
+    mpoke (0x01c, 0x80) # vref enable
+    sleep (0.01)
+
+def powerdown_adc():
+
+    mpoke (0x113, 0x00) # adc disable
+    mpoke (0x01c, 0x1c) # vref disable
+    mpoke (0x112,0x0) # disable dividers + temp sensor
+
+def read_adc(channel):
+
+    # ADCInPSelect[3:0]	|  Input
+    # ------------------|----------------------------------------
+    # 4'd0	        |  ADC0 (external pin)
+    # 4'd1	        |  ADC1 (external pin)
+    # 4'd2	        |  ADC2 (external pin)
+    # 4'd3	        |  ADC3 (external pin)
+    # 4'd4	        |  ADC4 (external pin)
+    # 4'd5	        |  ADC5 (external pin)
+    # 4'd6	        |  ADC6 (external pin)
+    # 4'd7	        |  ADC7 (external pin)
+    # 4'd8	        |  EOM DAC (internal signal)
+    # 4'd9	        |  VDDIO * 0.42 (internal signal)
+    # 4'd10	        |  VDDTX * 0.42 (internal signal)
+    # 4'd11	        |  VDDRX * 0.42 (internal signal)
+    # 4'd12	        |  VDD * 0.42 (internal signal)
+    # 4'd13	        |  VDDA * 0.42 (internal signal)
+    # 4'd14	        |  Temperature sensor (internal signal)
+    # 4'd15	        |  VREF/2 (internal signal)
+
+    # "LPGBT.RW.ADC.ADCINPSELECT"
+    # "LPGBT.RW.ADC.ADCINNSELECT"
+    mpoke (0x111, channel<<4 | 0xf)
+
+    # "LPGBT.RW.ADC.ADCGAINSELECT"
+    # "LPGBT.RW.ADC.ADCCONVERT"
+    mpoke (0x113, 0x84)
+
+    done = 0
+    while (done==0):
+        done = 0x1 & (mpeek(0x1b8) >> 6) # "LPGBT.RO.ADC.ADCDONE"
+
+    val  = mpeek(0x1b9)               # LPGBT.RO.ADC.ADCVALUEL
+    val |= (0x3 & mpeek (0x1b8)) << 8 # LPGBT.RO.ADC.ADCVALUEL
+
+    mpoke (0x113, 0x04)
+
+    return val
 
 if __name__ == '__main__':
     main()
