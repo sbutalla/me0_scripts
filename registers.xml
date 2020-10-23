@@ -47,7 +47,19 @@
             <!-- this node is partial!! -->
             <!-- https://lpgbt.web.cern.ch/lpgbt/manual/registermap.html#calibration-data -->
             <node id="CALIBRATION" address="0x8" description="Calibration Data">
-                <!-- left out many tbd calibration registers-->
+
+                <!-- TODO left out many tbd calibration registers-->
+
+                <!-- [0x01c] VREFCNTR -->
+                <!-- Voltage reference control. -->
+
+                <node id="VREFENABLE" address="0x01c-0x8" permission="rw"
+                    description="Enable internal voltage reference."
+                    mask="0x80" />
+
+                <node id="VREFTUNE" address="0x01c-0x8" permission="rw"
+                    description="Tuning world for internal voltage reference."
+                    mask="0x1f" />
 
                 <!--[0x01f] EPRXLOCKFILTER-->
                 <node id="EPRXLOCKTHRESHOLD" address="0x17" permission="rw"
@@ -659,7 +671,7 @@
                     mask="0xc0" />
                 <node id="EPTX2DATARATE" address="0x0" permission="rw"
                     description="Data rate for ePortTx group 2. 0=disabled, 1=80Mbps, 2=160Mbps, 3=320Mbps"
-                    mask="0x3" />
+                    mask="0x30" />
                 <node id="EPTX1DATARATE" address="0x0" permission="rw"
                     description="Data rate for ePortTx group 1. 0=disabled, 1=80Mbps, 2=160Mbps, 3=320Mbps"
                     mask="0x0c" />
@@ -2414,6 +2426,31 @@
                     description="Bits 7:0 of the FEC correction counter."
                     mask="0xff" />
 
+            </node>
+
+            <!--15.3.9. ADC-->
+
+            <node id="ADC" address="0x1b8-0x140">
+
+                <!--[0x1b8] ADCStatusH-->
+                <!--ADC status register-->
+                <node id="ADCBUSY" address="0x0" permission="r"
+                    description="ADC core is performing conversion."
+                    mask="0x80" />
+
+                <node id="ADCDONE" address="0x0" permission="r"
+                    description="ADC conversion is done. Result of conversion can be accessed in ADCValue"
+                    mask="0x40" />
+
+                <node id="ADCVALUEH" address="0x0" permission="r"
+                    description="Result of the last conversion bits [9:8]."
+                    mask="0x3" />
+
+                <!--[0x1b9] ADCStatusL-->
+                <!--ADC status register-->
+                <node id="ADCVALUEL" address="0x1" permission="r"
+                    description="Result of the last conversion bits [7:0]."
+                    mask="0xff" />
             </node>
 
             <!-- 15.3.10. Eye Opening Monitor -->
