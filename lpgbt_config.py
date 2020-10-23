@@ -1,5 +1,6 @@
 import sys
 from time import sleep,time
+import cProfile
 
 import platform
 hostname = platform.uname()[1]
@@ -10,10 +11,11 @@ else:
 
 readback = 0
 master = 0
+minimal = 0
 spicy = 0
 reset_before_config=0
 
-FUSE_TIMEOUT_MS = 5
+FUSE_TIMEOUT_MS = 1000
 TOTAL_EFUSE_ON_TIME_MS = 0
 
 def main(do_readback=0):
@@ -40,9 +42,18 @@ def main(do_readback=0):
     elif (sys.argv[1]=="master"):
         print "Configuring LPGBT as master"
         master=1
+        minimal=0
+    elif (sys.argv[1]=="master_minimal"):
+        print "Configuring minimally LPGBT as master"
+        master=1
+        minimal=1
     elif (sys.argv[1]=="slave"):
         print "Configuring LPGBT as slave"
         master=0
+    elif (sys.argv[1]=="slave_minimal"):
+        print "Configuring minimally LPGBT as slave"
+        master=0
+        minimal=1
     elif (sys.argv[1]=="fuseid"):
         fuse_chip_id()
         sys.exit()
@@ -51,6 +62,9 @@ def main(do_readback=0):
         sys.exit()
     elif len(sys.argv)==3 and (sys.argv[1]=="config_from_file"):
         config_from_file (sys.argv[2])
+        sys.exit()
+    elif (sys.argv[1]=="fuse_minimal_config"):
+        fuse_minimal_config()
         sys.exit()
     else:
         print "instructions to come..."
@@ -65,7 +79,7 @@ def main(do_readback=0):
     if (reset_before_config):
         reset_lpgbt()
 
-    configure_lpgbt(readback)
+    configure_lpgbt(readback, minimal)
 
     if (len(sys.argv)==3):
         if (sys.argv[2]=="spicy"):
@@ -73,37 +87,41 @@ def main(do_readback=0):
         if (sys.argv[2]=="classic"):
             invert_the_extra_spicy(0)
 
-def configure_lpgbt(readback):
+def configure_lpgbt(readback, minimal=False):
     configure_base()
 
-    # eportrx dll configuration
-    configure_eport_dlls()
+    if not minimal:
+        # eportrx dll configuration
+        configure_eport_dlls()
 
-    # eportrx channel configuration
-    configure_eprx()
+        # eportrx channel configuration
+        configure_eprx()
 
     # configure downlink
     if (master):
         configure_downlink()
 
-    # configure eport tx
-    if (master):
-        configure_eptx()
+    if not minimal:
+        # configure eport tx
+        if (master):
+            configure_eptx()
 
-    # configure phase shifter on master lpgbt
-    if (master):
-        configure_phase_shifter()
+        # configure phase shifter on master lpgbt
+        if (master):
+            configure_phase_shifter()
 
-    # configure ec channels
-    configure_ec_channel()
+        # configure ec channels
+        configure_ec_channel()
 
     # invert relevant hsio and eptx
     invert_hsio()
-    invert_eptx()
-    #invert_eprx()
 
-    # configure reset + led outputs
-    configure_gpio()
+    if not minimal:
+        invert_eptx()
+        #invert_eprx()
+
+        # configure reset + led outputs
+        configure_gpio()
 
     mpoke (0x0ed, 0x03)
     mpoke (0x0ee, 0x30)
@@ -156,7 +174,7 @@ def fuse_from_file (filename):
       value = int(config[reg_addr],16)
       data  |= value << (8*reg_addr%4)
 
-      if (reg_addr%4==3):
+      if (reg_addr%4==3) and data != 0:
          write_blow_and_check_fuse (reg_addr & 0xfffc, data, True)
 
    write_fuse_magic(0)
@@ -683,7 +701,7 @@ def blow_fuse():
     t0_efusepower = time()
 
     # https://pdf1.alldatasheet.com/datasheet-pdf/view/931712/TI1/LP2985A.html
-    sleep (0.01) # datasheet says the startup time is around 10ms with 150mA load (we have almost no load when using PIZZA)
+    #sleep (0.01) # datasheet says the startup time is around 10ms with 150mA load (we have almost no load when using PIZZA)
 
     # write fuseblow on
     # [0x109] FUSEControl
@@ -695,7 +713,7 @@ def blow_fuse():
     #wait for fuseblowdone
     done = 0;
     t0 = time()
-    while (done!=0):
+    while (done==0):
         done = (0x1 & ((mpeek(0x1a1)) >> 1))
         if int(round((time() - t0) * 1000)) > FUSE_TIMEOUT_MS:
             gbt.gbtx_disable_efusepower()
@@ -705,12 +723,13 @@ def blow_fuse():
             print "Total efuse power on time: %dms" % TOTAL_EFUSE_ON_TIME_MS
             sys.exit()
 
-    err = (0x1 & ((mpeek(0x1a1)) >> 3))
-    print "\tFuse blown, err=%d" % err
 
     gbt.gbtx_disable_efusepower()
     TOTAL_EFUSE_ON_TIME_MS += int(round((time() - t0_efusepower) * 1000))
     print "Total efuse power on time: %dms" % TOTAL_EFUSE_ON_TIME_MS
+
+    err = (0x1 & ((mpeek(0x1a1)) >> 3))
+    print "\tFuse blown, err=%d" % err
 
     # write fuseblow on
     # [0x109] FUSEControl
@@ -831,6 +850,7 @@ if __name__ == '__main__':
    print "Writing register configuration..."
    print "=================================="
 
+   #cProfile.run('main(0)')
    main(0)
 
    print "=================================="
