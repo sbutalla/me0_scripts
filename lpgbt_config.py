@@ -696,7 +696,7 @@ def blow_fuse():
         if int(round((time() - t0) * 1000)) > FUSE_TIMEOUT_MS:
             gbt.gbtx_disable_efusepower()
             mpoke(0x109, 0xC0) # wr
-            print "ERROR: Fusing operation took longer than %dms and was terminated due to a timeout" % FUSE_TIMEOUT_MS:
+            print "ERROR: Fusing operation took longer than %dms and was terminated due to a timeout" % FUSE_TIMEOUT_MS
             sys.exit()
 
     err = (0x1 & ((mpeek(0x1a1)) >> 3))
