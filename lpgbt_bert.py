@@ -1,4 +1,4 @@
-from rw_reg_dongle import mpeek,mpoke,writeReg,readReg,getNode,parseXML
+from rw_reg_dongle import *
 from time import sleep
 
 def main():
