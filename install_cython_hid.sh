@@ -1,1 +1,1 @@
-python -m pip install hidapi
+python -m pip install --user hidapi
