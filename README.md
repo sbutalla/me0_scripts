@@ -1,3 +1,7 @@
+## General
+
+Script for configuring LpGBTs on ME0 Optohybrid using either RPi+Cheesecake (preferred option) or USB dongle
+
 ## Installation
 
 The scripts depend on the cython-hidapi library (https://github.com/trezor/cython-hidapi)
