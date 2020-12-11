@@ -8,7 +8,7 @@ import smbus
 import time
 
 
-class rpi_chc:
+class lpgbt_rpi_chc:
     """Raspberry CHeeseCake interface for I2C"""
 
     def __init__(self):
@@ -20,8 +20,9 @@ class rpi_chc:
         # Set up the I2C bus
         device_bus = 1  # for SDA1 and SCL1
         self.bus = smbus.SMBus(device_bus)
+        self.gbtx_address = 0x70
 
-    def close(self):
+    def terminate(self):
         """Setting GPIO17 to Low to deselect both channels for I2C switch, and cleans up rpi"""
         # Set GPIO 17 to High
         reset_channel = 17
@@ -31,6 +32,12 @@ class rpi_chc:
         # Cleanup
         self.bus.close()
         GPIO.cleanup()
+
+    def initialize(self, boss):
+        """Takes all steps to initialize I2C with either boss or sub LpGBT"""
+        lpgbt_rpi_chc.config_select(boss)
+        lpgbt_rpi_chc.en_i2c_switch()
+        lpgbt_rpi_chc.i2c_cha_sel(boss)
 
     def en_i2c_switch(self):
         """Setting GPIO17 to High to disable Reset for I2C switch"""
@@ -46,7 +53,7 @@ class rpi_chc:
             config_channel = 13
         elif not boss:
             config_channel = 26
-        if config_channel ==0:
+        if config_channel == 0:
             print("Config Select channel missing")
             i2c_selected = 0
         else:
@@ -68,24 +75,34 @@ class rpi_chc:
             self.bus.write_byte(i2c_switch_addr, 0x02)
             print("Sub selected")
 
-#    def get_i2c_address(self, address):
-#       """Given an address, returns address suitable for i2c between RPi and LpGBT"""
-#         reg_addr = int(address, 16)
-#         reg_addr_low = reg_addr & 0x00ff
-#         reg_addr_high = (reg_addr >> 8) & 0x00ff 
-#        return reg_addr, reg_addr_low, reg_addr_high
+    def i2c_device_scan(self):
+        """Scans all possible I2C addresses for connected devices"""
+        for device in range(128):
 
-    def i2c_write(self, device_addr, reg_addr_low, reg_addr_high, value):
+            try:
+                self.bus.read_byte(device)
+                print(hex(device))
+            except:  # exception if read_byte fails
+                pass
+
+    #    def get_i2c_address(self, address):
+    #       """Given an address, returns address suitable for i2c between RPi and LpGBT"""
+    #         reg_addr = int(address, 16)
+    #         reg_addr_low = reg_addr & 0x00ff
+    #         reg_addr_high = (reg_addr >> 8) & 0x00ff
+    #        return reg_addr, reg_addr_low, reg_addr_high
+
+    def lpgbt_write_register(self, device_add, register, value):
         """Write to the LpGBT register given an address and value using I2C"""
-        self.bus.write_i2c_block_data(device_addr, reg_addr_low, [reg_addr_high, value])
+        reg_add_l = register & 0xFF
+        reg_add_h = (register >> 8) & 0xFF
+        self.bus.write_i2c_block_data(device_add, reg_add_l, [reg_add_h, value])
 
-    def i2c_read(self, device_addr, reg_addr_low, reg_addr_high):
+    def lpgbt_read_register(self, device_add, register):
         """Read the LpGBT register given address"""
-        self.bus.write_i2c_block_data(device_addr, reg_addr_low, [reg_addr_high])
+        reg_add_l = register & 0xFF
+        reg_add_h = (register >> 8) & 0xFF
+        self.bus.write_i2c_block_data(device_add, reg_add_l, [reg_add_h])
 
-        data = self.bus.read_byte(device_addr)
+        data = self.bus.read_byte(device_add)
         return data
-
-
-
-
