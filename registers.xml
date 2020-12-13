@@ -56,277 +56,242 @@
                 <node id="EPRXRELOCKTHRESHOLD" address="0x17" permission="rw"
                     description="Sets the relock threshold value of the instant lock low pass filter for ePortRx DLL's (default: 5)"
                     mask="0x0f" />
+            </node> <!--CALIBRATION-->
+
+            <!--Clock Generator-->
+            <node id="CLOCKGENERATOR" address="0x20" description="Clock Generator Settings">
 
                 <!--[0x020] CLKGConfig0 -->
-                <node id="CLKGBIASGENCONFIG" address="0x18" permission="rw"
-                    description="Bias DAC for the charge pumps [0 : 8 : 120] uA; default: 8"
-                    mask="0x0f" />
-                <node id="CLKGCALIBRATIONENDOFCOUNT" address="0x18" permission="rw"
+                <node id="CLKGCALIBRATIONENDOFCOUNT" address="0x00" permission="rw"
                     description="Selects the VCO calibration race goal in number of clock cycles between refClk (refClkCounter) and vco_40MHz (vcoClkCounter) (2^(CLKGCalibrationEndOfCount[3:0]+1)); default: 12"
                     mask="0xf0" />
+                <node id="CLKGBIASGENCONFIG" address="0x00" permission="rw"
+                    description="Bias DAC for the charge pumps [0 : 8 : 120] uA; default: 8"
+                    mask="0x0f" />
 
                 <!--[0x021] CLKGConfig1 -->
-                <node id="CLKGVCODAC" address="0x19" permission="rw"
-                    description="Current DAC for the VCO [0: 0.470 : 7.1] mA; default: 8"
-                    mask="0x0f" />
-                <node id="CLKGVCORAILMODE" address="0x19" permission="rw"
-                    description="VCO rail mode; [0: voltage mode, fixed to VDDRX; 1: current mode, value selectable using CLKGVcoDAC (default)]"
-                    mask="0x10" />
-                <node id="CLKGCDRRES" address="0x19" permission="rw"
-                    description="CDR's filter resistance; default: 1 when in RX/TRX mode, 0 when in TX mode"
-                    mask="0x20" />
-                <node id="CLKGDISABLEFRAMEALIGNERLOCKCONTROL" address="0x19" permission="rw"
-                    description="Disables the use of the frame aligner's lock status; default: 0"
-                    mask="0x40" />
-                <node id="CDRCONTROLOVERRIDEENABLE" address="0x19" permission="rw"
+                <node id="CDRCONTROLOVERRIDEENABLE" address="0x01" permission="rw"
                     description="Enables the control override of the state machine; default: 0"
                     mask="0x80" />
+                <node id="CLKGDISABLEFRAMEALIGNERLOCKCONTROL" address="0x01" permission="rw"
+                    description="Disables the use of the frame aligner's lock status; default: 0"
+                    mask="0x40" />
+                <node id="CLKGCDRRES" address="0x01" permission="rw"
+                    description="CDR's filter resistance; default: 1 when in RX/TRX mode, 0 when in TX mode"
+                    mask="0x20" />
+                <node id="CLKGVCORAILMODE" address="0x01" permission="rw"
+                    description="VCO rail mode; [0: voltage mode, fixed to VDDRX; 1: current mode, value selectable using CLKGVcoDAC (default)]"
+                    mask="0x10" />
+                <node id="CLKGVCODAC" address="0x01" permission="rw"
+                    description="Current DAC for the VCO [0: 0.470 : 7.1] mA; default: 8"
+                    mask="0x0f" />
 
                 <!-- [0x022] CLKGPllRes -->
-                <node id="CLKGPLLRESWHENLOCKED" address="0x1a" permission="rw"
+                <node id="CLKGPLLRESWHENLOCKED" address="0x02" permission="rw"
                     description="PLL's filter resistance when PLL is locked [R = 1/2 * 79.8k / CONFIG] Ohm; default: 4; set to 0 if RX or TRX mode"
                     mask="0xf0" />
-
-                <node id="CLKGPLLRES" address="0x1a" permission="rw"
+                <node id="CLKGPLLRES" address="0x02" permission="rw"
                     description="PLL's filter resistance when PLL is locking [R = 1/2 * 79.8k / CONFIG] Ohm; default: 4; set to 0 if RX or TRX mode"
                     mask="0x0f" />
 
                 <!-- [0x023] CLKGPLLIntCur -->
-                <node id="CLKGPLLINTCURWHENLOCKED" address="0x1b" permission="rw"
+                <node id="CLKGPLLINTCURWHENLOCKED" address="0x03" permission="rw"
                     description="PLL's integral current path when in locked state [0 : 1.1 : 8] uA; default: 5"
                     mask="0xf0" />
-
-                <node id="CLKGPLLINTCUR" address="0x1b" permission="rw"
+                <node id="CLKGPLLINTCUR" address="0x03" permission="rw"
                     description="PLL's integral current path when in locking state [0 : 1.1 : 8] uA; default: 5"
                     mask="0x0f" />
 
                 <!-- [0x024] CLKGPLLPropCur -->
-                <node id="CLKGPLLPROPCURWHENLOCKED" address="0x1c" permission="rw"
+                <node id="CLKGPLLPROPCURWHENLOCKED" address="0x04" permission="rw"
                     description="PLL's proportional current path when in locked state [0 : 5.46 : 82] uA; default: 5"
                     mask="0xf0" />
-
-                <node id="CLKGPLLPROPCUR" address="0x1c" permission="rw"
+                <node id="CLKGPLLPROPCUR" address="0x04" permission="rw"
                     description="PLL's proportional current path when in locking state [0 : 5.46 : 82] uA; default: 5"
                     mask="0x0f" />
 
                 <!-- [0x025] CLKGCDRPropCur -->
-                <node id="CLKGCDRPROPCURWHENLOCKED" address="0x1d" permission="rw"
+                <node id="CLKGCDRPROPCURWHENLOCKED" address="0x05" permission="rw"
                     description="CDR's Alexander phase detector proportional current path when in locked state [0 : 5.46 : 82] uA; default: 5"
                     mask="0xf0" />
-
-                <node id="CLKGCDRPROPCUR" address="0x1d" permission="rw"
+                <node id="CLKGCDRPROPCUR" address="0x05" permission="rw"
                     description="CDR's Alexander phase detector proportional current path when in locking state [0 : 5.46 : 82] uA; default: 5"
                     mask="0x0f" />
 
                 <!-- [0x026] CLKGCDRIntCur -->
-                <node id="CLKGCDRINTCURWHENLOCKED" address="0x1e" permission="rw"
+                <node id="CLKGCDRINTCURWHENLOCKED" address="0x06" permission="rw"
                     description="CDR's Alexander phase detector integral current path when in locked state [0 : 5.46 : 82] uA; default: 5"
                     mask="0xf0" />
-
-                <node id="CLKGCDRINTCUR" address="0x1e" permission="rw"
+                <node id="CLKGCDRINTCUR" address="0x06" permission="rw"
                     description="CDR's Alexander phase detector integral integral current path when in locking state [0 : 5.46 : 82] uA; default: 5"
                     mask="0x0f" />
 
                 <!-- [0x027] CLKGCDRFFPropCur -->
-                <node id="CLKGCDRFEEDFORWARDPROPCURWHENLOCKED" address="0x1f" permission="rw"
+                <node id="CLKGCDRFEEDFORWARDPROPCURWHENLOCKED" address="0x07" permission="rw"
                     description="CDR's proportional feed forward current path when in locked state [0 : 5.46 : 82] uA; default: 5"
                     mask="0xf0" />
-
-                <node id="CLKGCDRFEEDFORWARDPROPCUR" address="0x1f" permission="rw"
+                <node id="CLKGCDRFEEDFORWARDPROPCUR" address="0x07" permission="rw"
                     description="CDR's proportional feed forward current path when in locking state [0 : 5.46 : 82] uA; default: 5"
                     mask="0x0f" />
 
                 <!-- [0x028] CLKGFLLIntCur -->
-                <node id="CLKGFLLINTCURWHENLOCKED" address="0x20" permission="rw"
+                <node id="CLKGFLLINTCURWHENLOCKED" address="0x08" permission="rw"
                     description="CDR's frequency detector charge pump when in locked state [0 : 5.46 : 82] uA; default: 0"
                     mask="0xf0" />
-
-                <node id="CLKGFLLINTCUR" address="0x20" permission="rw"
+                <node id="CLKGFLLINTCUR" address="0x08" permission="rw"
                     description="CDR's frequency detector charge pump when in locking state [0 : 5.46 : 82] uA; default: 5"
                     mask="0x0f" />
 
                 <!-- [0x029] CLKGFFCAP -->
-                <node id="CDRCOCONNECTCDR" address="0x21" permission="rw"
+                <node id="CDRCOCONNECTCDR" address="0x09" permission="rw"
                     description="Enables the connectCDR switch [0 - disable, 1 - enable] (only when CDRControlOverrideEnable is 1)"
                     mask="0x80" />
-
-                <node id="CLKGCAPBANKOVERRIDEENABLE" address="0x21" permission="rw"
+                <node id="CLKGCAPBANKOVERRIDEENABLE" address="0x09" permission="rw"
                     description="Enables the override of the capacitor search during VCO calibration  disable, 1 - enable]; default: 0"
                     mask="0x40" />
-
-                <node id="CLKGFEEDFORWARDCAPWHENLOCKED" address="0x21" permission="rw"
+                <node id="CLKGFEEDFORWARDCAPWHENLOCKED" address="0x09" permission="rw"
                     description="CDR's feed forward filter's capacitance when in locked state [0: 44 : 308] fF; default: 3"
                     mask="0x38" />
-
-                <node id="CLKGFEEDFORWARDCAP" address="0x21" permission="rw"
+                <node id="CLKGFEEDFORWARDCAP" address="0x09" permission="rw"
                     description="CDR's feed forward filter's capacitance when in locking state [0: 44 : 308] fF; default: 3"
                     mask="0x07" />
 
                 <!-- [0x02a] CLKGCntOverride -->
-                <node id="CLKGCOOVERRIDEVC" address="0x22" permission="rw"
+                <node id="CLKGCOOVERRIDEVC" address="0x0A" permission="rw"
                     description="Forces the VCO's control voltage to be in mid range  disable, 1 - enable] (only when CDRControlOverrideEnable is 1)"
                     mask="0x80" />
-
-                <node id="CDRCOREFCLKSEL" address="0x22" permission="rw"
+                <node id="CDRCOREFCLKSEL" address="0x0A" permission="rw"
                     description="Forces the reference clock selection for the VCO calibration  data/4, 1 - external refClk] (only when CDRControlOverrideEnable is 1)"
                     mask="0x40" />
-
-                <node id="CDRCOENABLEPLL" address="0x22" permission="rw"
+                <node id="CDRCOENABLEPLL" address="0x0A" permission="rw"
                     description="Enables the enablePLL switch [0 - disable, 1 - enable] (only when CDRControlOverrideEnable is 1)"
                     mask="0x20" />
-
-                <node id="CDRCOENABLEFD" address="0x22" permission="rw"
+                <node id="CDRCOENABLEFD" address="0x0A" permission="rw"
                     description="Enables the frequency detector [0 - disable, 1 - enable] (only when CDRControlOverrideEnable is 1)"
                     mask="0x10" />
-
-                <node id="CDRCOENABLECDR" address="0x22" permission="rw"
+                <node id="CDRCOENABLECDR" address="0x0A" permission="rw"
                     description="Enables  the enableCDR switch [0 - disable, 1 - enable] (only when CDRControlOverrideEnable is 1)"
                     mask="0x8" />
-
-                <node id="CDRCODISDATACOUNTERREF" address="0x22" permission="rw"
+                <node id="CDRCODISDATACOUNTERREF" address="0x0A" permission="rw"
                     description="Enables  the data/4 ripple counter [0 - disable, 0 - enable] (only when CDRControlOverrideEnable is 1)"
                     mask="0x4" />
-
-                <node id="CDRCODISDESVBIASGEN" address="0x22" permission="rw"
+                <node id="CDRCODISDESVBIASGEN" address="0x0A" permission="rw"
                     description="Enables the vbias for the CDR [0 - disable, 0 - enable] (only when CDRControlOverrideEnable is 1)"
                     mask="0x2" />
-
-                <node id="CDRCOCONNECTPLL" address="0x22" permission="rw"
+                <node id="CDRCOCONNECTPLL" address="0x0A" permission="rw"
                     description="Enables the connectPLL switch [0 - disable, 1 - enable] (only when CDRControlOverrideEnable is 1)"
                     mask="0x1" />
 
                 <!-- [0x02b] CLKGOverrideCapBank -->
-                <node id="CLKGCAPBANKSELECT_7TO0" address="0x23" permission="rw"
+                <node id="CLKGCAPBANKSELECT_7TO0" address="0x0B" permission="rw"
                     description="Selects the capacitor bank value for the VCO [check attached table] (only when CLKGCapBankOverrideEnable is 1); default: n/a"
                     mask="0xff" />
 
                 <!-- [0x02c] CLKGWaitTime -->
-                <node id="CLKGWAITCDRTIME" address="0x24" permission="rw"
+                <node id="CLKGWAITCDRTIME" address="0x0C" permission="rw"
                     description="ljCDR state machine waiting for lock, RX/TRX mode, (16'h0001 shl waitCDRTime); (only when CLKGDisableFrameAlignerLockControl == 1); default: 8"
                     mask="0xf0" />
-
-                <node id="CLKGWAITPLLTIME" address="0x24" permission="rw"
+                <node id="CLKGWAITPLLTIME" address="0x0C" permission="rw"
                     description="ljCDR state machine waiting for lock, TX mode, (16'h0001 shl waitPLLTime); (only when lfEnable == 0); default: 8"
                     mask="0x0f" />
 
                 <!-- [0x02d] CLKGLFConfig0 -->
-                <node id="CLKGLOCKFILTERENABLE" address="0x25" permission="rw"
+                <node id="CLKGLOCKFILTERENABLE" address="0x0D" permission="rw"
                     description="Enables the lock filter on the instant lock signal; only in TX mode  disable, 1 enable; default: 1"
                     mask="0x80" />
-
-                <node id="CLKGCAPBANKSELECT_8" address="0x25" permission="rw"
+                <node id="CLKGCAPBANKSELECT_8" address="0x0D" permission="rw"
                     description="Selects the capacitor bank value for the VCO [check attached table] (only when CLKGCapBankOverrideEnable is 1); default: n/a"
                     mask="0x10" />
-
-                <node id="CLKGLOCKFILTERLOCKTHRCOUNTER" address="0x25" permission="rw"
+                <node id="CLKGLOCKFILTERLOCKTHRCOUNTER" address="0x0D" permission="rw"
                     description="Sets the lock threshold value of the instant lock low pass filter (16'h0001 shl lfLockThrCounter); only in TX mode; default: after SEU"
                     mask="0x0f" />
 
                 <!-- [0x02e] CLKGLFConfig1 -->
-                <node id="CLKGLOCKFILTERRELOCKTHRCOUNTER" address="0x26" permission="rw"
+                <node id="CLKGLOCKFILTERRELOCKTHRCOUNTER" address="0x0E" permission="rw"
                     description="Sets the relock threshold value of the instant lock low pass filter (16'h0001 shl lfReLockThrCounter); only in TX mode; default: after SEU"
                     mask="0xf0" />
-
-                <node id="CLKGLOCKFILTERUNLOCKTHRCOUNTER" address="0x26" permission="rw"
+                <node id="CLKGLOCKFILTERUNLOCKTHRCOUNTER" address="0x0E" permission="rw"
                     description="Sets the unlock threshold value of the instant lock low pass filter (16'h0001 shl lfUnLockThrCounter); only in TX mode; default: after SEU"
                     mask="0x0f" />
 
                 <!-- [0x02f] FAMaxHeaderFoundCount¶ -->
                 <!-- Frame aligner configuration register. -->
-
-                <node id="FAMAXHEADERFOUNDCOUNT" address="0x27" permission="rw"
+                <node id="FAMAXHEADERFOUNDCOUNT" address="0x0F" permission="rw"
                     description="The number of consecutive valid frame headers that have to be detected before frame lock is assumed."
                     mask="0xff" />
 
                 <!-- [0x030] FAMaxHeaderFoundCountAfterNF -->
                 <!-- Frame aligner configuration register. -->
-
-                <node id="FAMAXHEADERFOUNDCOUNTAFTERNF" address="0x28" permission="rw"
+                <node id="FAMAXHEADERFOUNDCOUNTAFTERNF" address="0x10" permission="rw"
                     description="The number of consecutive detected valid headers to be found to clear the invalid frame count. The reset can happen only if the number of detected invalid headers does not exceed the FAMaxHeaderNotFoundCount[7:0]."
                     mask="0xff" />
 
                 <!-- [0x031] FAMaxHeaderNotFoundCount -->
                 <!-- Frame aligner configuration register. -->
-
-                <node id="FAMAXHEADERNOTFOUNDCOUNT" address="0x29" permission="rw"
+                <node id="FAMAXHEADERNOTFOUNDCOUNT" address="0x11" permission="rw"
                     description="The maximum number of invalid headers (consecutive or not) that can be received before the frame is considered misaligned."
                     mask="0xff" />
 
                 <!-- [0x032] FAFAMaxSkipCycleCountAfterNF -->
                 <!-- Frame aligner configuration register. -->
-
-                <node id="FAMAXSKIPCYCLECOUNTAFTERNF" address="0x2a" permission="rw"
+                <node id="FAMAXSKIPCYCLECOUNTAFTERNF" address="0x12" permission="rw"
                     description=""
                     mask="0xff" />
 
                 <!-- [0x033] PSDllConfig -->
-                <node id="EPRXUNLOCKTHRESHOLD" address="0x2b" permission="rw"
+                <node id="EPRXUNLOCKTHRESHOLD" address="0x13" permission="rw"
                     description=" 7:4 -  Sets the unlock threshold value of the instant lock low pass filter for ePortRx DLL's (default: 5)"
                     mask="0xf0" />
-
-                <node id="PSDLLCONFIRMCOUNT" address="0x2b" permission="rw"
+                <node id="PSDLLCONFIRMCOUNT" address="0x13" permission="rw"
                     description="Number of clock cycles (in the 40 MHz clock domain) to confirm locked state. 2d0=1, 2d1=4, 2d2=16, 2d3=31"
                     mask="0x0c" />
-
-                <node id="PSDLLCURRENTSEL" address="0x2b" permission="rw"
+                <node id="PSDLLCURRENTSEL" address="0x13" permission="rw"
                     description="Current for the DLL charge pump. 2d0=1 uA, 2d1=2 uA, 2d2=4 uA, 2d3=8 uA"
                     mask="0x03" />
 
                 <!-- [0x034] EPRXDllConfig -->
                 <!-- DLL configuration register -->
 
-                <node id="EPRXDLLCURRENT" address="0x2c" permission="rw"
+                <node id="EPRXDLLCURRENT" address="0x14" permission="rw"
                     description="Current for the DLL charge pump. 2d0=1 uA, 2d1=2 uA, 2d2=4 uA, 2d3=8 uA"
                     mask="0xc0" />
-
-                <node id="EPRXDLLCONFIRMCOUNT" address="0x2c" permission="rw"
+                <node id="EPRXDLLCONFIRMCOUNT" address="0x14" permission="rw"
                     description="Number of clock cycles (in the 40 MHz clock domain) to confirm locked state. 2d0=1, 2d1=4, 2d2=16, 2d3=31"
                     mask="0x30" />
-
-                <node id="EPRXDLLFSMCLKALWAYSON" address="0x2c" permission="rw"
+                <node id="EPRXDLLFSMCLKALWAYSON" address="0x14" permission="rw"
                     description="Force clock of ePortRx DLL state machine to be always enabled (disables clock gating)."
                     mask="0x8" />
-
-                <node id="EPRXDLLCOARSELOCKDETECTION" address="0x2c" permission="rw"
+                <node id="EPRXDLLCOARSELOCKDETECTION" address="0x14" permission="rw"
                     description="Use coarse detector for the DLL lock condition."
                     mask="0x4" />
-
-                <node id="EPRXENABLEREINIT" address="0x2c" permission="rw"
+                <node id="EPRXENABLEREINIT" address="0x14" permission="rw"
                     description="Allow re-initialization in ePortRxGroup when the tuning is out of range."
                     mask="0x2" />
-
-                <node id="EPRXDATAGATINGENABLE" address="0x2c" permission="rw"
+                <node id="EPRXDATAGATINGENABLE" address="0x14" permission="rw"
                     description="Enable data gating."
                     mask="0x1" />
 
-
                 <!-- [0x035] FORCEEnable -->
                 <!-- Enables user to enable specific sub-circuits regardless of the operation mode -->
-
-                <node id="FORCETXENABLE" address="0x2d" permission="rw"
+                <node id="FORCETXENABLE" address="0x15" permission="rw"
                     description="Enable the TX logic regardless of the operation mode"
                     mask="0x80" />
-
-                <node id="FORCERXENABLE" address="0x2d" permission="rw"
+                <node id="FORCERXENABLE" address="0x15" permission="rw"
                     description="Enable the RX logic regardless of the operation mode"
                     mask="0x40" />
-
-                <node id="LDFORCEENABLE" address="0x2d" permission="rw"
+                <node id="LDFORCEENABLE" address="0x15" permission="rw"
                     description="Enables the Line Driver, regardless of the operation mode, when one of the loop-backs is selected."
                     mask="0x20" />
-
-                <node id="TESTCLKFORCEENABLE" address="0x2d" permission="rw"
+                <node id="TESTCLKFORCEENABLE" address="0x15" permission="rw"
                     description="Enable the test clock input pad regardless of the operation mode."
                     mask="0x10" />
-
-                <node id="I2CMCLKALWAYSENABLE" address="0x2d" permission="rw"
+                <node id="I2CMCLKALWAYSENABLE" address="0x15" permission="rw"
                     description="I2C masters clock always enable (disable clock gating)."
                     mask="0x08" />
-
-                <node id="PSFSMCLKALWAYSON" address="0x2d" permission="rw"
+                <node id="PSFSMCLKALWAYSON" address="0x15" permission="rw"
                     description="Forces an initialization state machine clock to be always active (disables clock gating)"
                     mask="0x04" />
-            </node> <!--CALIBRATION-->
+            </node> <!--Clock Generator-->
 
             <!-- CHIP Config -->
             <!-- https://lpgbt.web.cern.ch/lpgbt/manual/registermap.html#chip-config -->
@@ -335,11 +300,9 @@
                 <node id="HIGHSPEEDDATAOUTINVERT" address="0x0" permission="rw"
                     description="Inverts high speed data output lines (equivalent to swapping HSOUTP and HSOUTN on the PCB)"
                     mask="0x80" />
-
                 <node id="HIGHSPEEDDATAININVERT" address="0x0" permission="rw"
                     description="Inverts high speed data input lines (equivalent to swapping HSINP and HSINN on the PCB)"
                     mask="0x40" />
-
                 <node id="CHIPADDRESSBAR" address="0x0" permission="rw"
                     description="Sets most significant bits of the chip address (see Section 3.3)."
                     mask="0x7" />
@@ -348,18 +311,15 @@
             <node id="EQUALIZER" address="0x37" description="LpGBT Equalizer">
                 <!-- [0x037] EQConfig -->
                 <!-- Main equalizer configuration register -->
-
                 <node id="EQATTENUATION" address="0x0" permission="rw"
                     description="4:3 -  Attenuation of the equalizer. Gain [V/V] 2d0 = 1/3, 2d1 = 2/3, 2d2 = 2/3, 2d3 = 1/1"
                     mask="0x18" />
-
                 <node id="EQCAP" address="0x0" permission="rw"
                     description="1:0 -  Capacitance select for the equalizer. Capacitance [fF]: 2d0 = 0, 2d1 = 70, 2d2 = 70, 2d3 = 140"
                     mask="0x3" />
 
                 <!-- [0x038] EQRes -->
                 <!-- Resistance configuration for the equalizer -->
-
                 <node id="EQRES3" address="0x1" permission="rw"
                     description="Resistance to be used in the fourth stage of the data input equalizer. Resistance [kOhm]: 2d0=0, 2d1=3.0, 2d2=4.9, 2d3=7.1"
                     mask="0xc0" />
@@ -383,7 +343,6 @@
                 <node id="LDEMPHASISENABLE" address="0x0" permission="rw"
                     description="Enable pre-emphasis in the line driver. The amplitude of the pre-emphasis is controlled by LDEmphasisAmp[6:0] and the duration by LDEmphasisShort."
                     mask="0x80" />
-
                 <node id="LDMODULATIONCURRENT" address="0x0" permission="rw"
                     description="Sets high-speed line driver modulation current: Im = 137 uA * LDModulationCurrent[6:0]"
                     mask="0x7f" />
@@ -394,7 +353,6 @@
                 <node id="LDEMPHASISSHORT" address="0x1" permission="rw"
                     description="Sets the duration of the pre-emphasis pulse. Please not that pre-emphasis has to be enabled (LDEmphasisEnable) for this field to have any impact."
                     mask="0x8" />
-
                 <node id="LDEMPHASISAMP" address="0x1" permission="rw"
                     description="Sets high-speed line driver pre-emphasis current: Ipre = 137 uA * LDEmphasisAmp[6:0]. Please note that pre-emphasis has to be enabled (LDEmphasisEnable) for these registers bits to be active."
                     mask="0x7f" />
@@ -405,15 +363,12 @@
                 <node id="TESTCLKSETCM" address="0x2" permission="rw"
                     description="Enable common mode generation for TSTCLKN/P input pads."
                     mask="0x10" />
-
                 <node id="REFCLKFORCEENABLE" address="0x2" permission="rw"
                     description="Enable the reference clock pad regardless of the operation mode."
                     mask="0x4" />
-
                 <node id="REFCLKACBIAS" address="0x2" permission="rw"
                     description="Enables the common mode generation for the REFCLK."
                     mask="0x2" />
-
                 <node id="REFCLKTERM" address="0x2" permission="rw"
                     description="Enables the 100 Ohm termination for the REFCLK input."
                     mask="0x1" />
@@ -436,19 +391,15 @@
 
                 <!-- [0x03e] PGConfig -->
                 <!-- Power Good configuration. -->
-
                 <node id="PGENABLE" address="0x0" permission="rw"
                     description="7 -- Enable Power Good feature. For more details see Power-up state machine."
                     mask="0x80" />
-
-                <node id="PGDELAY" address="0x0" permission="rw"
+                <node id="PGLEVEL" address="0x0" permission="rw"
                     description="PGLevel Enable Power Good feature. For more details see Power-up state machine. Voltage level [V]: 0=0.70, 1=0.75, 2=0.80, 3=0.85, 4=0.90, 5=0.95, 6=1.00, 7=1.05"
                     mask="0x70" />
-
                 <node id="PGDELAY" address="0x0" permission="rw"
                     description="PGDelay Wait time. Wait time: 0 =disabled, 1 =1 us, 2 =5 us, 3 =10 us, 4 =50 us, 5 =100 us, 6 =500 us, 7 =1 ms, 8 =5 ms, 9 =10 ms, 10=20 ms, 11=50 ms, 12=100 ms, 13=200 ms, 14=500 ms, 15=1 s"
                     mask="0x0f" />
-
             </node>
 
             <!-- Masters  -->
@@ -659,7 +610,7 @@
                     mask="0xc0" />
                 <node id="EPTX2DATARATE" address="0x0" permission="rw"
                     description="Data rate for ePortTx group 2. 0=disabled, 1=80Mbps, 2=160Mbps, 3=320Mbps"
-                    mask="0x3" />
+                    mask="0x30" />
                 <node id="EPTX1DATARATE" address="0x0" permission="rw"
                     description="Data rate for ePortTx group 1. 0=disabled, 1=80Mbps, 2=160Mbps, 3=320Mbps"
                     mask="0x0c" />
@@ -2101,7 +2052,7 @@
             </node>
 
 
-            <node id="POWERUP" address="0x3F" description="">
+            <node id="POWERUP" address="0x12F" description="">
                 <!-- https://lpgbt.web.cern.ch/lpgbt/manual/registermap.html#power-up -->
 
                 <!-- [0x12f] POWERUP3 -->
@@ -2116,8 +2067,39 @@
                 <node id="PUSMFORCEMAGIC" address="0x1" permission="rw"
                     description="PUSMForceMagic Has to be set to 0xA3 (magic number) in order to enable PUSMForceState feature."
                     mask="0xff" />
-
             </node>
+
+            <node id="DEBUG" address="0x131" description="">
+
+                <!-- [0x132] DATAPATH -->
+                <node id="DLDPBYPASDEINTERLEVEAR" address="0x1" permission="rw"
+                    description="Bypass de-interleaver in the downlink data path"
+                    mask="0x80" />
+                <node id="DLDPBYPASFECDECODER" address="0x1" permission="rw"
+                    description="Bypass FEC decoder in the downlink data path"
+                    mask="0x40" />
+                <node id="DLDPBYPASSDESCRAMBLER" address="0x1" permission="rw"
+                    description="Bypass de-scrambler in the downlink data path"
+                    mask="0x20" />
+                <node id="DLDPFECERRCNTENA" address="0x1" permission="rw"
+                    description="Unused"
+                    mask="0x10" />
+                <node id="ULDPBYPASSINTERLEAVER" address="0x1" permission="rw"
+                    description=" Bypass interleaver in the uplink data path"
+                    mask="0x04" />
+                <node id="ULDPBYPASSSCRAMBLER" address="0x1" permission="rw"
+                    description="Bypass scrambler in the uplink data path"
+                    mask="0x02" />
+                <node id="ULDPBYPASSFECCODER" address="0x1" permission="rw"
+                    description="Bypass FEC coder in the uplink data path"
+                    mask="0x01" />
+
+                <!-- [0x133] TO0SEL -->
+                <node id="TO0SELECT" address="0x2" permission="rw"
+                    description="Selects a signal to be outputted on TSTOUT0 according to TOnSelect"
+                    mask="0xFF" />
+            </node>
+
         </node> <!-- /rw -->
 
         <node id="RO" address="0x140" description="Read Only" fw_is_module="false">

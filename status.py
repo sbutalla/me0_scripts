@@ -1,15 +1,22 @@
-from rw_reg_dongle import *
+from rw_reg_dongle_chc import *
+from time import sleep
+import sys
+import argparse
 
-def main():
+def main(system, boss):
 
+    print ("Parsing xml file...")
     parseXML()
-    print "Parsing complete..."
+    print ("Parsing complete...")
 
-    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
-    if (romreg != 0xa5):
-        print "Error: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xa5)
-        return
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(system, boss)
+    print ("Initialization Done")
 
+    # readback rom register to make sure communication is OK
+    check_rom_readback()
+
+    # Checking Status of Registers
 
     print "CHIP ID:"
     print "\t0x%08x" % (readReg(getNode("LPGBT.RWF.CHIPID.CHIPID0")) << 24 | \
@@ -178,7 +185,56 @@ def main():
    #writeReg(getNode("LPGBT.RW.ADC.CONVERT"), 0x1)
    #writeReg(getNode("LPGBT.RW.ADC.GAINSELECT"), 0x1)
 
+    # Termination
+    if system=="chc":
+        chc_terminate()
+
+def check_rom_readback():
+    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
+    if (romreg != 0xA5):
+        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
+        rw_terminate()
+    else:
+        print ("Successfully read from ROM. I2C communication OK")
+
+
 if __name__ == '__main__':
-    main()
+
+    # Parsing arguments
+    parser = argparse.ArgumentParser(description='Checking Status of LpGBT Configuration for ME0 Optohybrid')
+    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle")
+    parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+
+    if args.system == "chc":
+        print ("Using Rpi CHeeseCake for checking configuration")
+    elif args.system == "backend":
+        #print ("Using Backend for checking configuration")
+        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        sys.exit()
+    elif args.system == "dongle":
+        #print ("Using USB Dongle for checking configuration")
+        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        sys.exit()
+    else:
+        print ("Only valid options: chc, backend, dongle")
+        sys.exit()
+
+    boss = None
+    if args.lpgbt is None:
+        print ("Please select boss or sub")
+        sys.exit()
+    elif (args.lpgbt=="boss"):
+        print ("Checking Status of boss LPGBT")
+        boss=1
+    elif (args.lpgbt=="sub"):
+        print ("Configuring Status of sub LPGBT")
+        boss=0
+    else:
+        print ("Please select boss or sub")
+        sys.exit()
+    if boss is None:
+        sys.exit()
+
+    main(args.system, boss)
 
 

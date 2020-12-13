@@ -1,14 +1,18 @@
 import xml.etree.ElementTree as xml
 import sys, os, subprocess
 import gbt_vldb
-import gbt_chc
+import lpgbt_rpi_chc
 
 DEBUG = True
 ADDRESS_TABLE_TOP = './registers.xml'
 nodes = []
+system = ""
+reg_list_dryrun = {}
+for i in range(317):
+    reg_list_dryrun[i] = 0x00
 
 gbt_dongle = gbt_vldb.GBTx()
-gbt_rpi_chc = gbt_chc.LPGBT()
+gbt_rpi_chc = lpgbt_rpi_chc.lpgbt_rpi_chc()
 TOP_NODE_NAME = "LPGBT"
 
 class Node:
@@ -42,7 +46,6 @@ class Node:
         print ('Module:',self.isModule)
         print ('Parent:',self.parent.name)
 
-
 def main():
     parseXML()
     print ('Example:')
@@ -64,7 +67,6 @@ def main():
     #print len(kids), kids.name
 
 # Functions related to parsing registers.xml
-
 def parseXML(filename = None, num_of_oh = None):
     if filename == None:
         filename = ADDRESS_TABLE_TOP
@@ -73,7 +75,6 @@ def parseXML(filename = None, num_of_oh = None):
     root = tree.getroot()[0]
     vars = {}
     makeTree(root,'',0x0,nodes,None,vars,False,num_of_oh)
-
 
 def makeTree(node,baseName,baseAddress,nodes,parentNode,vars,isGenerated,num_of_oh=None):
     if (isGenerated == None or isGenerated == False) and node.get('generate') is not None and node.get('generate') == 'true':
@@ -114,7 +115,6 @@ def makeTree(node,baseName,baseAddress,nodes,parentNode,vars,isGenerated,num_of_
     for child in node:
         makeTree(child,name,address,nodes,newNode,vars,False,num_of_oh)
 
-
 def getAllChildren(node,kids=[]):
     if node.children==[]:
         kids.append(node)
@@ -123,30 +123,24 @@ def getAllChildren(node,kids=[]):
         for child in node.children:
             getAllChildren(child,kids)
 
-
 def getNode(nodeName):
     thisnode = next(
         (node for node in nodes if node.name == nodeName),None
     )
-
     if (thisnode == None):
         print (nodeName)
     return thisnode
 
-
 def getNodebyID(number):
     return nodes[number]
 
-
 def getNodeFromAddress(nodeAddress):
     return next((node for node in nodes if node.real_address == nodeAddress),None)
-
 
 def getNodesContaining(nodeString):
     nodelist = [node for node in nodes if nodeString in node.name]
     if len(nodelist): return nodelist
     else: return None
-
 
 def getRegsContaining(nodeString):
     nodelist = [node for node in nodes if nodeString in node.name and node.permission is not None and 'r' in node.permission]
@@ -154,50 +148,78 @@ def getRegsContaining(nodeString):
     else: return None
 
 # Functions regarding reading/writing registers
-
-def chc_initialize(boss):
-    return gbt_rpi_chc.initialize(boss)
-
+def rw_initialize(system_val, boss):
+    initialize_success = 1
+    system = system_val
+    if system=="chc":
+        initialize_success *= gbt_rpi_chc.config_select(boss)
+        if initialize_success:
+            initialize_success *= gbt_rpi_chc.en_i2c_switch()
+        if initialize_success:
+            initialize_success *= gbt_rpi_chc.i2c_channel_sel(boss)
+        if not initialize_success:
+            print ("ERROR: Problem in initialization")
+            rw_terminate()
 
 def chc_terminate():
-    gbt_rpi_chc.terminate()
+    terminate_success = gbt_rpi_chc.terminate()
+    if not terminate_success:
+        print("ERROR: Problem in RPi_CHC termination")
+        sys.exit()
 
+def rw_terminate():
+    if system=="chc":
+        chc_terminate()
+    sys.exit()
 
-def readAddress(address, system):
+def readAddress(address):
     try:
-        output = subprocess.check_output('mpeek ('+str(address), + ',' + system ')' + stderr=subprocess.STDOUT , shell=True)
+        output = subprocess.check_output("mpeek (" + str(address) + ")" + stderr==subprocess.STDOUT , shell=True)
         value = ''.join(s for s in output if s.isalnum())
     except subprocess.CalledProcessError as e: value = parseError(int(str(e)[-1:]))
     return '{0:#010x}'.format(parseInt(str(value)))
 
-
-def readRawAddress(raw_address, system):
+def readRawAddress(raw_address):
     try:
         address = (parseInt(raw_address) << 2)+0x64000000
-        return readAddress(address, system)
+        return readAddress(address)
     except:
         return 'Error reading address. (rw_reg)'
 
-
-def mpeek(address, system):
+def mpeek(address):
     if system=="chc":
-        return gbt_rpi_chc.lpgbt_read_register(address)
-    else:
+        success, data = gbt_rpi_chc.lpgbt_read_register(address)
+        if success:
+            return data
+        else:
+            print("ERROR: Problem in reading register: " + str(hex(address)))
+            rw_terminate()
+    elif system=="dongle":
         return gbt_dongle.gbtx_read_register(address)
-
-
-def mpoke(address,value, system):
-    if system=="chc":
-        return gbt_rpi_chc.lpgbt_write_register(address, value)
+    elif system=="dryrun":
+        return reg_list_dryrun[address]
     else:
-        return gbt_dongle.gbtx_write_register(address,value)
+        print("ERROR: Incorrect system")
+        rw_terminate()
 
+def mpoke(address, value):
+    if system=="chc":
+        success = gbt_rpi_chc.lpgbt_write_register(address, value)
+        if not success:
+            print("ERROR: Problem in writing register: " + str(hex(address)))
+            rw_terminate()
+    elif system=="dongle":
+        gbt_dongle.gbtx_write_register(address,value)
+    elif system=="dryrun":
+        reg_list_dryrun[address] = value
+    else:
+        print("ERROR: Incorrect system")
+        rw_terminate()
 
-def readRegStr(reg, system):
-    return '{0:#010x}'.format(readReg(reg, system))
+def readRegStr(reg):
+    return '{0:#010x}'.format(readReg(reg))
 
-
-def readReg(reg, system):
+def readReg(reg):
     try:
         address = reg.real_address
     except:
@@ -207,7 +229,7 @@ def readReg(reg, system):
         return 'No read permission!'
 
     # read
-    value = mpeek(address, system)
+    value = mpeek(address)
 
     # Apply Mask
     if (reg.mask != 0):
@@ -215,13 +237,12 @@ def readReg(reg, system):
 
     return value
 
-
-def displayReg(reg, system, option=None):
+def displayReg(reg, option=None):
     address = reg.real_address
     if 'r' not in reg.permission:
         return 'No read permission!'
     # mpeek
-    value = mpeek(address, system)
+    value = mpeek(address)
     # Apply Mask
     if reg.mask is not None:
         shift_amount=0
@@ -235,7 +256,7 @@ def displayReg(reg, system, option=None):
     if option=='hexbin': return hex(address).rstrip('L')+' '+reg.permission+'\t'+tabPad(reg.name,7)+'{0:#010x}'.format(final_int)+' = '+'{0:032b}'.format(final_int)
     else: return hex(address).rstrip('L')+' '+reg.permission+'\t'+tabPad(reg.name,7)+'{0:#010x}'.format(final_int)
 
-def writeReg(reg, value, readback, system):
+def writeReg(reg, value, readback):
     try:
         address = reg.real_address
     except:
@@ -245,26 +266,22 @@ def writeReg(reg, value, readback, system):
         return 'No write permission!'
 
     if (readback):
-        if (value!=readReg(reg, system)):
-            print ("Failed to read back register %s. Expect=0x%x Read=0x%x" % (reg.name, value, redReg(reg)))
+        if (value!=readReg(reg)):
+            print ("ERROR: Failed to read back register %s. Expect=0x%x Read=0x%x" % (reg.name, value, readReg(reg)))
     else:
         # Apply Mask if applicable
         if (reg.mask != 0):
             value = value << reg.lsb_pos
             value = value & reg.mask
-
             if 'r' in reg.permission:
                 value = (value) | (mpeek(address) & ~reg.mask)
-
         # mpoke
-        mpoke(address, value, system)
-
+        mpoke(address, value)
 
 def isValid(address):
     #try: subprocess.check_output('mpeek '+str(address), stderr=subprocess.STDOUT , shell=True)
     #except subprocess.CalledProcessError as e: return False
     return True
-
 
 def completeReg(string):
     possibleNodes = []
@@ -281,7 +298,6 @@ def completeReg(string):
             completions.append(n.name)
     return completions
 
-
 def parseError(e):
     if e==1:
         return "Failed to parse address"
@@ -289,7 +305,6 @@ def parseError(e):
         return "Bus error"
     else:
         return "Unknown error: "+str(e)
-
 
 def parseInt(s):
     if s is None:
@@ -302,7 +317,6 @@ def parseInt(s):
     else:
         return int(string)
 
-
 def substituteVars(string, vars):
     if string is None:
         return string
@@ -311,10 +325,8 @@ def substituteVars(string, vars):
         ret = ret.replace('${' + varKey + '}', str(vars[varKey]))
     return ret
 
-
 def tabPad(s,maxlen):
     return s+"\t"*((8*maxlen-len(s)-1)/8+1)
-
 
 def mask_to_lsb(mask):
     if mask is None:
@@ -329,6 +341,56 @@ def mask_to_lsb(mask):
                 return idx
             idx = idx+1
 
+def lpgbt_write_config_file(config_file = 'config.txt'):
+    f = open(config_file,"w+")
+    for i in range (317):
+        val =  mpeek(i)
+        wrtie_string = str(hex(i)) + "  "
+        write_string += str(hex(val)) + "\n"
+        f.write(write_string)
+
+def lpgbt_dump_config(config_file = 'Loopback_test.txt'):
+        #dump configuration to lpGBT - accepts .txt of .xml input
+        # Read configuration file
+        if(config_file[-4:] == '.xml'):
+            tree = ET.parse(config_file)
+            root = tree.getroot()
+            reg_config = []
+            for i in range(0,366):
+                reg_config.append([0,0]) # Value / Mask
+
+            for child in root:
+                name_signal = child.attrib['name']
+                triplicated = child.attrib['triplicated']
+                reg_value   = int(child[0].text)
+                if(triplicated in ['true', 'True', 'TRUE']) : n=3
+                else                                        : n=1
+                for i in range(1,n+1):
+                    #print(name_signal)
+                    #print(triplicated)
+                    #print(reg_value)
+                    reg_addr = int(child[i].attrib['startAddress'])
+                    startbit = int(child[i].attrib['startBitIndex'])
+                    endbit   = int(child[i].attrib['lastBitIndex'])
+                    mask     = 2**(startbit+1) - 2**(endbit)
+                    reg_config[reg_addr][0] = reg_config[reg_addr][0] | (reg_value << startbit)
+                    reg_config[reg_addr][1] = reg_config[reg_addr][1] | mask
+
+            for reg_addr in range(0,len(reg_config)):
+                value = reg_config[reg_addr][0]
+                mask  = reg_config[reg_addr][1]
+                if(mask != 0):
+                    value = mpeek(reg_addr)
+                    value = (value & (~mask)) | value
+                    mpoke(reg_addr, value)
+        else:
+            input_file = open(config_file, 'r')
+            for line in input_file.readlines():
+                reg_addr = int(line.split()[0],16)
+                value = int(line.split()[1],16)
+                mpoke(reg_addr, value)
+            input_file.close()
+        print('lpGBT Configuration Done')
 
 if __name__ == '__main__':
     main()
