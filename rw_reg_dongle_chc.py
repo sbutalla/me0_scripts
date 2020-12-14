@@ -8,10 +8,10 @@ ADDRESS_TABLE_TOP = './registers.xml'
 nodes = []
 system = ""
 reg_list_dryrun = {}
-for i in range(317):
+for i in range(462):
     reg_list_dryrun[i] = 0x00
 
-gbt_dongle = gbt_vldb.GBTx()
+#gbt_dongle = gbt_vldb.GBTx()
 gbt_rpi_chc = lpgbt_rpi_chc.lpgbt_rpi_chc()
 TOP_NODE_NAME = "LPGBT"
 
@@ -150,6 +150,7 @@ def getRegsContaining(nodeString):
 # Functions regarding reading/writing registers
 def rw_initialize(system_val, boss):
     initialize_success = 1
+    global system
     system = system_val
     if system=="chc":
         initialize_success *= gbt_rpi_chc.config_select(boss)
@@ -194,8 +195,8 @@ def mpeek(address):
         else:
             print("ERROR: Problem in reading register: " + str(hex(address)))
             rw_terminate()
-    elif system=="dongle":
-        return gbt_dongle.gbtx_read_register(address)
+    #elif system=="dongle":
+    #    return gbt_dongle.gbtx_read_register(address)
     elif system=="dryrun":
         return reg_list_dryrun[address]
     else:
@@ -208,8 +209,8 @@ def mpoke(address, value):
         if not success:
             print("ERROR: Problem in writing register: " + str(hex(address)))
             rw_terminate()
-    elif system=="dongle":
-        gbt_dongle.gbtx_write_register(address,value)
+    #elif system=="dongle":
+    #    gbt_dongle.gbtx_write_register(address,value)
     elif system=="dryrun":
         reg_list_dryrun[address] = value
     else:
@@ -345,8 +346,7 @@ def lpgbt_write_config_file(config_file = 'config.txt'):
     f = open(config_file,"w+")
     for i in range (317):
         val =  mpeek(i)
-        wrtie_string = str(hex(i)) + "  "
-        write_string += str(hex(val)) + "\n"
+        write_string = "0x%03X  0x%02X\n" % (i, val)
         f.write(write_string)
 
 def lpgbt_dump_config(config_file = 'Loopback_test.txt'):

@@ -2052,7 +2052,7 @@
             </node>
 
 
-            <node id="POWERUP" address="0x12F" description="">
+            <node id="POWERUP" address="0x12F-0x0f0" description="">
                 <!-- https://lpgbt.web.cern.ch/lpgbt/manual/registermap.html#power-up -->
 
                 <!-- [0x12f] POWERUP3 -->
@@ -2069,7 +2069,7 @@
                     mask="0xff" />
             </node>
 
-            <node id="DEBUG" address="0x131" description="">
+            <node id="DEBUG" address="0x131-0x0f0" description="">
 
                 <!-- [0x132] DATAPATH -->
                 <node id="DLDPBYPASDEINTERLEVEAR" address="0x1" permission="rw"

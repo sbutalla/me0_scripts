@@ -13,7 +13,8 @@ def main(system, boss, input_config_file, cernconfig, configure_elinks, force_pu
     print ("Initialization Done")
 
     # readback rom register to make sure communication is OK
-    check_rom_readback()
+    if system!="dryrun":
+        check_rom_readback()
 
     # optionally reset LPGBT
     if (reset_before_config):
@@ -73,9 +74,9 @@ def main(system, boss, input_config_file, cernconfig, configure_elinks, force_pu
     # Writing lpGBT configuration to text file
     if not readback:
         if boss:
-            lpgbt_write_config_file("config_master.txt")
+            lpgbt_write_config_file("config_boss.txt")
         else:
-            lpgbt_write_config_file("config_slave.txt")
+            lpgbt_write_config_file("config_sub.txt")
 
     # Termination
     if system=="chc":
@@ -412,6 +413,9 @@ def configure_ec_channel(boss, readback):
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECTERM"),   0x1, readback)
 
     if (boss):
+        # EC channel driver configuration
+        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTXECDRIVESTRENGTH"), 0x3, readback)
+
         # turn on 80 Mbps EC clock
         writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28INVERT"), 0x1, readback)
         writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28FREQ"), 0x2, readback)
@@ -482,14 +486,14 @@ def configure_downlink(readback):
     # downlink
 
     #[0x02f] FAMaxHeaderFoundCount
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.FAMAXHEADERFOUNDCOUNT"), 0x0, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNT"), 0xA, readback)
     #[0x030] FAMaxHeaderFoundCountAfterNF
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.FAMAXHEADERFOUNDCOUNTAFTERNF"), 0xA, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNTAFTERNF"), 0xA, readback)
     ##[0x031] FAMaxHeaderNotFoundCount
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.FAMAXHEADERNOTFOUNDCOUNT"), 0xA, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERNOTFOUNDCOUNT"), 0xA, readback)
     ##[0x032] FAFAMaxSkipCycleCountAfterNF
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.FAMAXSKIPCYCLECOUNTAFTERNF"), 0xA, readback)
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.EPRXUNLOCKTHRESHOLD"), 0x5, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXSKIPCYCLECOUNTAFTERNF"), 0xA, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.EPRXUNLOCKTHRESHOLD"), 0x5, readback)
 
 
 def configure_eprx(readback):
@@ -593,7 +597,7 @@ def configure_eport_dlls(readback):
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.EPRXDATAGATINGENABLE"), 0x1, readback)
 
 
-def configure_phase_shifter(boss, readback):
+def configure_phase_shifter(readback):
     # turn on phase shifter clock
     writeReg(getNode("LPGBT.RWF.PHASE_SHIFTER.PS1DELAY_8"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.PHASE_SHIFTER.PS1DELAY_7TO0"), 0x0, readback)
@@ -624,11 +628,11 @@ if __name__ == '__main__':
         print ("Using Rpi CHeeseCake for configuration")
     elif args.system == "backend":
         #print ("Using Backend for configuration")
-        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
         sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for configuration")
-        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually configuring lpGBT")
@@ -652,8 +656,8 @@ if __name__ == '__main__':
     if boss is None:
         sys.exit()
 
-    if input_config_file is not None:
-        print ("Configruing lpGBT from file: " + input_config_file)
+    if args.input_config_file is not None:
+        print ("Configruing lpGBT from file: " + args.input_config_file)
 
     cernconfig = 1
     if args.config=="cern":
@@ -688,7 +692,7 @@ if __name__ == '__main__':
 
     # Configuring LPGBT
     readback = 0
-    main(args.system, boss, input_config_file, cernconfig, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
+    main(args.system, boss, args.input_config_file, cernconfig, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
 
     print ("==================================")
     print ("Checking register configuration...")
@@ -697,5 +701,5 @@ if __name__ == '__main__':
     # Checking LPGBT configuration
     readback = 1
     if (input_config_file is None):
-        main(args.system, boss, input_config_file, cernconfig, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
+        main(args.system, boss, args.input_config_file, cernconfig, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
 
