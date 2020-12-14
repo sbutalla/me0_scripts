@@ -700,6 +700,6 @@ if __name__ == '__main__':
 
     # Checking LPGBT configuration
     readback = 1
-    if (input_config_file is None):
+    if (args.input_config_file is None):
         main(args.system, boss, args.input_config_file, cernconfig, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
 
