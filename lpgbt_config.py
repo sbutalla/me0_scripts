@@ -584,15 +584,6 @@ if __name__ == '__main__':
     if args.input_config_file is not None:
         print ("Configruing lpGBT from file: " + args.input_config_file)
 
-    cernconfig = 1
-    if args.config=="cern":
-        cernconfig = 1
-    elif args.config=="basic":
-        cernconfig = 0
-    else:
-        print ("Config option can only be cern or basic")
-        sys.exit()
-
     if args.configure_elinks not in [0,1]:
         print ("Only 0 or 1 allowed for configure_elinks")
         sys.exit()
