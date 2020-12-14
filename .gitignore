@@ -1,3 +1,4 @@
+*.txt
 *.pyc
 archive/*
 .DS_Store
