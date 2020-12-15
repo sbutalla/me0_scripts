@@ -3,7 +3,7 @@ from time import sleep
 import sys
 import argparse
 
-def main(system, boss, input_config_file, cernconfig, configure_elinks, force_pusm_ready, reset_before_config, watchdog_disable, loopback, override_lockcontrol, override_cdr,  readback=0):
+def main(system, boss, input_config_file, configure_elinks, force_pusm_ready, reset_before_config, watchdog_disable, loopback, override_lockcontrol, override_cdr,  readback=0):
     print ("Parsing xml file...")
     parseXML()
     print ("Parsing complete...")
@@ -23,12 +23,8 @@ def main(system, boss, input_config_file, cernconfig, configure_elinks, force_pu
     if input_config_file is not None:
         lpgbt_dump_config(input_config_file)
     else:
-        if cernconfig:
-            # cern configuration
-            configLPGBT(readback)
-        else:
-            # basic configuration
-            configure_base(boss, readback, override_lockcontrol)
+        # configure clocks, chip config, line driver
+        configLPGBT(readback, override_lockcontrol)
 
         # eportrx dll configuration
         configure_eport_dlls(readback)
@@ -82,48 +78,79 @@ def main(system, boss, input_config_file, cernconfig, configure_elinks, force_pu
     if system=="chc":
         chc_terminate()
 
-def configLPGBT(readback):
+def configLPGBT(readback, override_lockcontrol):
     print ("Configuring Clock Generator, Line Drivers, Chip Config, Power Good for CERN configuration...")
 
     # Configure ClockGen Block:
+    # [0x01f] EPRXLOCKFILTER
     writeReg(getNode("LPGBT.RWF.CALIBRATION.EPRXLOCKTHRESHOLD"), 0x5, readback)
     writeReg(getNode("LPGBT.RWF.CALIBRATION.EPRXRELOCKTHRESHOLD"), 0x5, readback)
 
+    # [0x020] CLKGConfig0
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCALIBRATIONENDOFCOUNT"), 0xC, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGBIASGENCONFIG"), 0x8, readback)
 
+    # [0x021] CLKGConfig1
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCONTROLOVERRIDEENABLE"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
+    #if (boss):
+    #    if (override_lockcontrol):
+    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x1, readback)
+    #    else:
+    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
+    #else:
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES"), 0x1, readback)
+    # default: 1 when in RX/TRX mode, 0 when in TX mode
+    #if (boss):
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x1, readback)
+    #else:
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCORAILMODE"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCODAC"), 0x4, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCODAC"), 0x4, readback) # or 0x8?
 
+    # [0x022] CLKGPllRes
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x4, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x4, readback)
+    # default: 4; set to 0 if RX or TRX mode
+    #if (boss):
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x0, readback)
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x0, readback)
+    #else:
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x4, readback)
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x4, readback)
 
+    #[0x023] CLKGPLLIntCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLINTCURWHENLOCKED"), 0x5, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLINTCUR"), 0x5, readback)
 
+    #[0x024] CLKGPLLPropCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLPROPCURWHENLOCKED"), 0x5, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLPROPCUR"), 0x5, readback)
 
+    #[0x025] CLKGCDRPropCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRPROPCURWHENLOCKED"), 0x5, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRPROPCUR"), 0x5, readback)
 
+    #[0x026] CLKGCDRIntCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRINTCURWHENLOCKED"), 0x5, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRINTCUR"), 0x5, readback)
 
+    #[0x027] CLKGCDRFFPropCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRFEEDFORWARDPROPCURWHENLOCKED"), 0x5, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRFEEDFORWARDPROPCUR"), 0x5, readback)
 
+    #[0x028] CLKGFLLIntCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFLLINTCURWHENLOCKED"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFLLINTCUR"), 0xF, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFLLINTCUR"), 0xF, readback) # or 0x5 from register map?
 
+    #[0x029] CLKGFFCAP
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOCONNECTCDR"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCAPBANKOVERRIDEENABLE"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAPWHENLOCKED"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAP"), 0x0, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAPWHENLOCKED"), 0x0, readback) # or 0x3 from register map?
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAP"), 0x0, readback) # or 0x3 from register map?
 
+    #[0x02a] CLKGCntOverride
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCOOVERRIDEVC"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOREFCLKSEL"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOENABLEPLL"), 0x0, readback)
@@ -133,15 +160,33 @@ def configLPGBT(readback):
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCODISDESVBIASGEN"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOCONNECTPLL"), 0x0, readback)
 
+    #[0x02b] CLKGOverrideCapBank
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCAPBANKSELECT_7TO0"), 0x00, readback)
 
+    #[0x02c] CLKGWaitTime
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0x8, readback)
+    #if (boss):
+    #    if (override_lockcontrol):
+    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0xA, readback)
+    #    else:
+    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0x8, readback)
+    #else:
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0x8,
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITPLLTIME"), 0x8, readback)
 
+    #[0x02d] CLKGLFCONFIG0
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x1, readback)
+    #if (boss):
+    #    if (override_lockcontrol):
+    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x0, readback)
+    #    else:
+    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x1, readback)
+    #else:
+    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCAPBANKSELECT_8"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERLOCKTHRCOUNTER"), 0x9, readback)
 
+    #[0x02e] CLKGLFConfig1
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERRELOCKTHRCOUNTER"), 0x9, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERUNLOCKTHRCOUNTER"), 0x9, readback)
 
@@ -169,144 +214,25 @@ def configLPGBT(readback):
     # Select test pattern for eTx group 3: (initial value from Ted : 0x40 (PRBS), 0xc0 = constant, 0x80 = binary)
     #mpoke(0x11d,0x40)
 
-    writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAININVERT"), 0x1, readback)
-    writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAOUTINVERT"), 0x0, readback)
-
+    # [0x02f] FAMaxHeaderFoundCount
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNT"), 0xA, readback)
+    # [0x030] FAMaxHeaderFoundCountAfterNF
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNTAFTERNF"), 0xA, readback)
+    # [0x031] FAMaxHeaderNotFoundCount
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERNOTFOUNDCOUNT"), 0xA, readback)
+    # [0x032] FAFAMaxSkipCycleCountAfterNF
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXSKIPCYCLECOUNTAFTERNF"), 0xA, readback)
 
+    #[0x033] PSDllConfig
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.EPRXUNLOCKTHRESHOLD"), 0x5, readback)
 
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQATTENUATION"), 0x3, readback)
     #writeReg(getNode("LPGBT.RW.BERT.SKIPDISABLE"),1, readback)
     #writeReg(getNode("LPGBT.RW.RESET.RSTFRAMEALIGNER"), 1, readback)
 
-
-def configure_base(boss, readback, override_lockcontrol):
-    print ("Configuring Clock Generator, Line Drivers, Chip Config, Power Good for Basic Configuration...")
-
-    # Enable PowerGood @ 1.0 V, Delay 100 ms:
-    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGENABLE"), 0x1, readback)
-    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGLEVEL"), 0x5, readback)
-    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGDELAY"), 0xC, readback)
-
-    # Select TO0 internal signal:
-    writeReg(getNode("LPGBT.RW.DEBUG.TO0SELECT"), 0x02, readback) #40 mhz clock
-
-    # Datapath configuration
-    writeReg(getNode("LPGBT.RW.DEBUG.DLDPBYPASDEINTERLEVEAR"), 0x0, readback)
-    writeReg(getNode("LPGBT.RW.DEBUG.DLDPBYPASFECDECODER"), 0x0, readback)
-    writeReg(getNode("LPGBT.RW.DEBUG.DLDPBYPASSDESCRAMBLER"), 0x0, readback)
-    writeReg(getNode("LPGBT.RW.DEBUG.DLDPFECERRCNTENA"), 0x1, readback)
-    writeReg(getNode("LPGBT.RW.DEBUG.ULDPBYPASSINTERLEAVER"), 0x0, readback)
-    writeReg(getNode("LPGBT.RW.DEBUG.ULDPBYPASSSCRAMBLER"), 0x0, readback)
-    writeReg(getNode("LPGBT.RW.DEBUG.ULDPBYPASSFECCODER"), 0x0, readback)
-
-    # [0x01f] EPRXLOCKFILTER
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.EPRXLOCKTHRESHOLD"), 0x5, readback)
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.EPRXRELOCKTHRESHOLD"), 0x5, readback)
-
-    # [0x020] CLKGConfig0
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCALIBRATIONENDOFCOUNT"), 0xC, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGBIASGENCONFIG"), 0x8, readback)
-
-    # [0x021] CLKGConfig1
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCONTROLOVERRIDEENABLE") ,0x0, readback)
-
-    # default: 1 when in RX/TRX mode, 0 when in TX mode
-    if (boss):
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x1, readback)
-    else:
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x0, readback)
-
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCODAC") ,0x8, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCORAILMODE") ,0x0, readback) #0 = voltage mode, 1 = current mode
-    # quick start suggests voltage mode but manual suggests current mode as default
-
-    # [0x022] CLKGPllRes
-    # default: 4; set to 0 if RX or TRX mode
-    if (boss):
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x0, readback)
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x0, readback)
-    else:
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x4, readback)
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x4, readback)
-
-    #[0x023] CLKGPLLIntCur
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLINTCURWHENLOCKED"), 0x5, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLINTCUR"), 0x5, readback)
-
-    #[0x024] CLKGPLLPropCur
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLPROPCURWHENLOCKED"), 0x5, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLPROPCUR"), 0x5, readback)
-
-    #[0x025] CLKGCDRPropCur
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRPROPCURWHENLOCKED"), 0x5, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRPROPCUR"), 0x5, readback)
-
-    #[0x026] CLKGCDRIntCur
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRINTCURWHENLOCKED"), 0x5, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRINTCUR"), 0x5, readback)
-
-    #[0x027] CLKGCDRFFPropCur
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRFEEDFORWARDPROPCURWHENLOCKED"), 0x5, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRFEEDFORWARDPROPCUR"), 0x5, readback)
-
-    #[0x028] CLKGFLLIntCur
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFLLINTCURWHENLOCKED"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFLLINTCUR"), 0x5, readback)
-
-    #[0x029] CLKGFFCAP
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOCONNECTCDR"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCAPBANKOVERRIDEENABLE"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAPWHENLOCKED"), 0x3, readback) # quickstart suggests 0 but manual suggests 3
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAP"), 0x3, readback)           # quickstart suggests 0 but manual suggests 3
-
-    #[0x02a] CLKGCntOverride
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCOOVERRIDEVC"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOREFCLKSEL"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOENABLEPLL"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOENABLEFD"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOENABLECDR"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCODISDATACOUNTERREF"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCODISDESVBIASGEN"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOCONNECTPLL"), 0x0, readback)
-
-    #[0x02c] CLKGWaitTime
-    #writeReg(getNode("LPGBT.RWF.CALIBRATION.CLKGWAITCDRTIME"), 0x8, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITPLLTIME"), 0x8, readback)
-
-    #[0x02d] CLKGLFConfig0
-    if (boss):
-        if (override_lockcontrol):
-            writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x1, readback)
-            writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x0, readback)
-            writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0xA, readback)
-            #writeReg(getNode("LPGBT.RW.BERT.SKIPDISABLE"),1, readback)
-        else:
-            writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
-            writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x1, readback)
-    else:
-        # I am not sure what to do here
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x0, readback)
-
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCAPBANKSELECT_8"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCAPBANKSELECT_7TO0"), 0x0, readback) #[0x02b] CLKGOverrideCapBank
-
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERLOCKTHRCOUNTER"), 0x9, readback)
-
-    #[0x02e] CLKGLFConfig1
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERRELOCKTHRCOUNTER"), 0x9, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERUNLOCKTHRCOUNTER"), 0x9, readback)
-
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.PSFSMCLKALWAYSON"), 0x0, readback) #quickstart recommends 0
-
-    # Set H.S. Uplink Driver current:
-    writeReg(getNode("LPGBT.RWF.LINE_DRIVER.LDEMPHASISENABLE"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.LINE_DRIVER.LDMODULATIONCURRENT"), 0x20, readback)
+    # [0x036] ChipConfig
+    writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAOUTINVERT"), 0x0, readback)
+    writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAININVERT"), 0x1, readback)
 
 def set_uplink_group_data_source(type, readback, pattern=0x55555555):
     setting = 0
@@ -614,7 +540,6 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-i", "--input", action="store", dest="input_config_file", help="input_config_file = .txt or .xml file")
-    parser.add_argument("-c", "--config", action="store", dest="config", default="cern", help="config = cern (default) or basic")
     parser.add_argument("-e", "--configure_elinks", action="store", dest="configure_elinks", default=1, help="configure_elinks = 1 (default) or 0")
     parser.add_argument("-p", "--force_pusm_ready", action="store", dest="force_pusm_ready", default=0, help="force_pusm_ready = 1 or 0 (default)")
     parser.add_argument("-r", "--reset_before_config", action="store", dest="reset_before_config", default=0, help="reset_before_config = 1 or 0 (default)")
@@ -692,7 +617,7 @@ if __name__ == '__main__':
 
     # Configuring LPGBT
     readback = 0
-    main(args.system, boss, args.input_config_file, cernconfig, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
+    main(args.system, boss, args.input_config_file, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
 
     print ("==================================")
     print ("Checking register configuration...")
@@ -701,5 +626,5 @@ if __name__ == '__main__':
     # Checking LPGBT configuration
     readback = 1
     if (args.input_config_file is None):
-        main(args.system, boss, args.input_config_file, cernconfig, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
+        main(args.system, boss, args.input_config_file, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
 

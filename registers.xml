@@ -214,7 +214,7 @@
                     description="Sets the unlock threshold value of the instant lock low pass filter (16'h0001 shl lfUnLockThrCounter); only in TX mode; default: after SEU"
                     mask="0x0f" />
 
-                <!-- [0x02f] FAMaxHeaderFoundCount¶ -->
+                <!-- [0x02f] FAMaxHeaderFoundCount -->
                 <!-- Frame aligner configuration register. -->
                 <node id="FAMAXHEADERFOUNDCOUNT" address="0x0F" permission="rw"
                     description="The number of consecutive valid frame headers that have to be detected before frame lock is assumed."
