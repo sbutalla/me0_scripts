@@ -104,8 +104,8 @@ class lpgbt_rpi_chc:
             except IOError:
                 print("ERROR: I/O error in I2C connection again, check RPi or CHC connection")
                 success = 0
-        except:
-            print("ERROR: Other error, not I/O")
+        except Exception as e:
+            print("ERROR: " + e)
             success = 0
         return success
 
@@ -115,6 +115,7 @@ class lpgbt_rpi_chc:
         reg_add_h = (register >> 8) & 0xFF
         data = 0
         success = 1
+
         try:
             self.bus.write_i2c_block_data(self.lpgbt_address, reg_add_l, [reg_add_h])
         except IOError:
@@ -125,24 +126,24 @@ class lpgbt_rpi_chc:
             except IOError:
                 print("ERROR: I/O error in I2C connection again, check RPi or CHC connection")
                 success = 0
-        except:
-            print("ERROR: Other error, not I/O")
+        except Exception as e:
+            print("ERROR: " + e)
             success = 0
         if not success:
             return success, data
 
         try:
-            data = self.bus.read_byte(device_add)
+            data = self.bus.read_byte(self.lpgbt_address)
         except IOError:
             print("ERROR: I/O error in I2C connection for register: " + str(hex(register)) + ", Trying again")
             time.sleep(0.00001)
             try:
-                data = self.bus.read_byte(device_add)
+                data = self.bus.read_byte(self.lpgbt_address)
             except IOError:
                 print("ERROR: I/O error in I2C connection again, check RPi or CHC connection")
                 success = 0
-        except:
-            print("ERROR: Other error, not I/O")
+        except Exception as e:
+            print("ERROR: " + e)
             success = 0
 
         return success, data

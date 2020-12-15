@@ -1,5 +1,5 @@
 from rw_reg_dongle_chc import *
-from time import sleep, time, time_ns
+from time import sleep, time
 import sys
 import argparse
 
@@ -151,7 +151,7 @@ def blow_fuse(system, boss):
 
     # Start 2.5V
     lpgbt_efuse(boss, 1)
-    t0_efusepower = time_ns()
+    t0_efusepower = time()
     sleep (0.001) # 1 ms for the 2.5V to turn on
 
     # Write 1 to Fuseblow
@@ -159,18 +159,18 @@ def blow_fuse(system, boss):
 
     # Wait for Fuseblowdone
     done = 0;
-    t0 = time_ns()
+    t0 = time()
     while (done==0):
         if system!="dryrun":
             done = readReg(getNode("LPGBT.RO.FUSE_READ.FUSEBLOWDONE"))
         else:
             done = 1
-        if int(round((time_ns() - t0) / 1000000)) > FUSE_TIMEOUT_MS:
+        if int(round((time() - t0) * 1000)) > FUSE_TIMEOUT_MS:
             # Stop 2.5V
             lpgbt_efuse(boss, 0)
             # Write 0 to Fuseblow
             writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x0, 0)
-            TOTAL_EFUSE_ON_TIME_MS += int(round((time_ns() - t0_efusepower) / 1000000))
+            TOTAL_EFUSE_ON_TIME_MS += int(round((time() - t0_efusepower) * 1000 ))
             print ("ERROR: Fusing operation took longer than %d ms and was terminated due to a timeout" % FUSE_TIMEOUT_MS)
             print ("Total efuse power on time: %d ms" % TOTAL_EFUSE_ON_TIME_MS)
             write_fuse_magic(0)
@@ -179,7 +179,7 @@ def blow_fuse(system, boss):
     # Stop 2.5V
     lpgbt_efuse(boss, 0)
     sleep (0.001) # 1 ms for the 2.5V to turn off
-    TOTAL_EFUSE_ON_TIME_MS += int(round((time_ns() - t0_efusepower) / 1000000))
+    TOTAL_EFUSE_ON_TIME_MS += int(round((time() - t0_efusepower) * 1000))
     print ("Total EFUSE power on time: %d ms" % TOTAL_EFUSE_ON_TIME_MS)
 
     err = readReg(getNode("LPGBT.RO.FUSE_READ.FUSEBLOWERROR"))

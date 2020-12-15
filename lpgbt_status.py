@@ -24,13 +24,13 @@ def main(system, boss):
                         readReg(getNode("LPGBT.RWF.CHIPID.CHIPID2")) << 8  | \
                         readReg(getNode("LPGBT.RWF.CHIPID.CHIPID3")) << 0))
 
-    print ("USER ID:"
+    print ("USER ID:")
     print ("\t0x%08x" % (readReg(getNode("LPGBT.RWF.CHIPID.USERID0")) << 24 | \
                         readReg(getNode("LPGBT.RWF.CHIPID.USERID1")) << 16 | \
                         readReg(getNode("LPGBT.RWF.CHIPID.USERID2")) << 8  | \
                         readReg(getNode("LPGBT.RWF.CHIPID.USERID3")) << 0))
 
-    print ("Lock mode:"
+    print ("Lock mode:")
     if (readReg(getNode("LPGBT.RO.LPGBTSETTINGS.LOCKMODE"))):
         print ("\t1 = Reference-less locking. Recover frequency from the data stream.")
     else:
@@ -62,7 +62,7 @@ def main(system, boss):
     else:
         print ("\t0 = Normal operation.")
 
-    print ("VCO Bypass:"
+    print ("VCO Bypass:")
     if (readReg(getNode("LPGBT.RO.LPGBTSETTINGS.VCOBYPASS"))):
         print ("\t1 = VCO Bypass mode. System clock come from TSTCLKINP/N (5.12 GHz).")
     else:
@@ -119,10 +119,10 @@ def main(system, boss):
 
 
     print ("Frame Aligner State:")
-    print ("\t" + str(readReg(getNode("LPGBT.RO.PUSM.FASTATE")))
+    print ("\t" + str(readReg(getNode("LPGBT.RO.PUSM.FASTATE"))))
 
     print ("Frame Aligner Counter:")
-    print ("\t%d" % readReg(getNode("LPGBT.RO.PUSM.FACOUNTER"))
+    print ("\t%d" % readReg(getNode("LPGBT.RO.PUSM.FACOUNTER")))
 
     clkgfmstate = readReg(getNode("LPGBT.RO.CLKG.CLKG_SMSTATE"))
     print ("LJCDR State:")
@@ -150,13 +150,13 @@ def main(system, boss):
 
 
     print ("Lock Filter Loss of Lock Count:")
-    print ("\t%d" % readReg(getNode("LPGBT.RO.CLKG.CLKG_LFLOSSOFLOCKCOUNT"))
+    print ("\t%d" % readReg(getNode("LPGBT.RO.CLKG.CLKG_LFLOSSOFLOCKCOUNT")))
 
     print ("LJCDR Locked Flag:")
-    print ("\t%d" % readReg(getNode("LPGBT.RO.CLKG.CLKG_SMLOCKED"))
+    print ("\t%d" % readReg(getNode("LPGBT.RO.CLKG.CLKG_SMLOCKED")))
 
     print ("Downlink FEC Errors:")
-    print ("\t%d" % (readReg(getNode("LPGBT.RO.FEC.DLDPFECCORRECTIONCOUNT_H")) << 8 |readReg(getNode("LPGBT.RO.FEC.DLDPFECCORRECTIONCOUNT_L")))
+    print ("\t%d" % (readReg(getNode("LPGBT.RO.FEC.DLDPFECCORRECTIONCOUNT_H")) << 8 |readReg(getNode("LPGBT.RO.FEC.DLDPFECCORRECTIONCOUNT_L"))))
 
     print ("CDR Resistor:")
     if (readReg(getNode("LPGBT.RO.CLKG.CLKG_ENABLE_CDR_R"))):
@@ -165,19 +165,19 @@ def main(system, boss):
         print ("\t0 = disconnected")
 
     print ("CDR Proportional Charge Pump Current:")
-    print ("\t%f uA" % (5.46 * readReg(getNode("LPGBT.RO.CLKG.CLKG_CONFIG_P_CDR")))
+    print ("\t%f uA" % (5.46 * readReg(getNode("LPGBT.RO.CLKG.CLKG_CONFIG_P_CDR"))))
 
     print ("CDR Proportional Feedforward Current:")
-    print ("\t%f uA" % (5.46 * readReg(getNode("LPGBT.RO.CLKG.CLKG_CONFIG_P_FF_CDR")))
+    print ("\t%f uA" % (5.46 * readReg(getNode("LPGBT.RO.CLKG.CLKG_CONFIG_P_FF_CDR"))))
 
     print ("CDR Integral Current:")
-    print ("\t%f uA" % (5.46 * readReg(getNode("LPGBT.RO.CLKG.CLKG_CONFIG_I_CDR")))
+    print ("\t%f uA" % (5.46 * readReg(getNode("LPGBT.RO.CLKG.CLKG_CONFIG_I_CDR"))))
 
     print ("CDR FLL Current:")
-    print ("\t%f uA" % (5.46 * readReg(getNode("LPGBT.RO.CLKG.CLKG_CONFIG_I_FLL")))
+    print ("\t%f uA" % (5.46 * readReg(getNode("LPGBT.RO.CLKG.CLKG_CONFIG_I_FLL"))))
 
     print ("VCO Cap Select:")
-    print ("\t%d" % (readReg(getNode("LPGBT.RO.CLKG.CLKG_VCOCAPSELECTH")) << 1 |readReg(getNode("LPGBT.RO.CLKG.CLKG_VCOCAPSELECTH")))
+    print ("\t%d" % (readReg(getNode("LPGBT.RO.CLKG.CLKG_VCOCAPSELECTH")) << 1 |readReg(getNode("LPGBT.RO.CLKG.CLKG_VCOCAPSELECTH"))))
 
    #print ("Configuring adc...")
    #writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
@@ -296,6 +296,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Checking Status of LpGBT Configuration for ME0 Optohybrid')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    args = parser.parse_args()
 
     if args.system == "chc":
         print ("Using Rpi CHeeseCake for checking configuration")
