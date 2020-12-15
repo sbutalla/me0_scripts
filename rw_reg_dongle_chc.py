@@ -212,6 +212,7 @@ def mpoke(address, value):
     #elif system=="dongle":
     #    gbt_dongle.gbtx_write_register(address,value)
     elif system=="dryrun":
+        global reg_list_dryrun
         reg_list_dryrun[address] = value
     else:
         print("ERROR: Incorrect system")
