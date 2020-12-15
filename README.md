@@ -28,39 +28,43 @@ or alternatively it can be installed by Pip
 
 Configure the master/boss lpgbt with Cheesecake:
 
-```python3 lpgbt_config.py -s chc -l boss```
+```python lpgbt_config.py -s chc -l boss```
 
 and likewise configure the slave/sub lpgbt with Cheesecake:
 
-```python3 lpgbt_config.py -s chc -l sub```
+```python lpgbt_config.py -s chc -l sub```
 
-Check the status of the lpgbt with Cheesecake:
+Check the status of the master/boss lpgbt with Cheesecake:
 
-```python3 lpgbt_status.py -s chc```
+```python lpgbt_status.py -s chc -l boss```
+
+Check the status of the slave/sub lpgbt with Cheesecake:
+
+```python lpgbt_status.py -s chc -l sub```
 
 ## Fusing
 
 Fuse the master/boss lpgbt with Cheesecake from text file produced by lpgbt_config.py:
 
-```python3 lpgbt_efuse.py -s chc -l boss -f input_file -i config_boss.txt```
+```python lpgbt_efuse.py -s chc -l boss -f input_file -i config_boss.txt```
 
 and likewise fuse the slave/sub lpgbt with Cheesecake from text file produced by lpgbt_config.py:
 
-```python3 lpgbt_efuse.py -s chc -l sub -f input_file -i config_sub.txt```
+```python lpgbt_efuse.py -s chc -l sub -f input_file -i config_sub.txt```
 
 
 ## Eye Opening Monitor
 
 Take an eye scan with Cheesecake:
 
-```python3 lpgbt_eye.py -s chc -l boss```
+```python lpgbt_eye.py -s chc -l boss```
 
 Create an image:
 
-```python3 lpgbt_eye_plot.py```
+```python lpgbt_eye_plot.py```
 
 ## BERT
 
 Take a bert scan with Cheesecake, for example for DLFRAME (other data sources also possible, check script):
 
-```python3 lpgbt_bert.py -s chc -l boss -b DLFRAME```
+```python lpgbt_bert.py -s chc -l boss -b DLFRAME```
