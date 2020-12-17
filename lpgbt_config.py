@@ -1,5 +1,5 @@
-from rw_reg_dongle_chc import mpeek,mpoke,writeReg,readReg,getNode,parseXML,rw_initialize,chc_terminate,rw_terminate,lpgbt_write_config_file,lpgbt_dump_config
-from time import sleep
+from rw_reg_dongle_chc import *
+from time import sleep, time
 import sys
 import argparse
 
@@ -50,12 +50,12 @@ def main(system, boss, input_config_file, configure_elinks, force_pusm_ready, re
 
         # invert hsio and eptx
         invert_hsio(boss, readback)
-        #invert_eptx(boss, readback)
+        invert_eptx(boss, readback)
 
         # configure reset + led outputs
-        configure_gpio(boss, readback, loopback, watchdog_disable, force_pusm_ready, override_cdr)
+        configure_gpio(boss, readback)
 
-        set_uplink_group_data_source("normal", readback, pattern=0x55555555)
+        #set_uplink_group_data_source("normal", readback, pattern=0x55555555)
 
     print("Configuration finished... asserting config done")
     # Finally, Set pll&dllConfigDone to run chip:
@@ -79,7 +79,7 @@ def main(system, boss, input_config_file, configure_elinks, force_pusm_ready, re
         chc_terminate()
 
 def configLPGBT(readback, override_lockcontrol):
-    print ("Configuring Clock Generator, Line Drivers, Chip Config, Power Good for CERN configuration...")
+    print ("Configuring Clock Generator, Line Drivers, Power Good for CERN configuration...")
 
     # Configure ClockGen Block:
     # [0x01f] EPRXLOCKFILTER
@@ -209,30 +209,11 @@ def configLPGBT(readback, override_lockcontrol):
     writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGDELAY"), 0xC, readback)
 
     # Select TO0 internal signal:
-    writeReg(getNode("LPGBT.RW.DEBUG.TO0SELECT"), 0x02, readback) #40 mhz clock
-
-    # Select test pattern for eTx group 3: (initial value from Ted : 0x40 (PRBS), 0xc0 = constant, 0x80 = binary)
-    #mpoke(0x11d,0x40)
-
-    # [0x02f] FAMaxHeaderFoundCount
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNT"), 0xA, readback)
-    # [0x030] FAMaxHeaderFoundCountAfterNF
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNTAFTERNF"), 0xA, readback)
-    # [0x031] FAMaxHeaderNotFoundCount
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERNOTFOUNDCOUNT"), 0xA, readback)
-    # [0x032] FAFAMaxSkipCycleCountAfterNF
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXSKIPCYCLECOUNTAFTERNF"), 0xA, readback)
-
-    #[0x033] PSDllConfig
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.EPRXUNLOCKTHRESHOLD"), 0x5, readback)
-
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQATTENUATION"), 0x3, readback)
-    #writeReg(getNode("LPGBT.RW.BERT.SKIPDISABLE"),1, readback)
-    #writeReg(getNode("LPGBT.RW.RESET.RSTFRAMEALIGNER"), 1, readback)
+    #writeReg(getNode("LPGBT.RW.DEBUG.TO0SELECT"), 0x02, readback) #40 mhz clock
 
     # [0x036] ChipConfig
-    writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAOUTINVERT"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAININVERT"), 0x1, readback)
+    #riteReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAOUTINVERT"), 0x0, readback)
+    #writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAININVERT"), 0x1, readback)
 
 def set_uplink_group_data_source(type, readback, pattern=0x55555555):
     setting = 0
@@ -335,6 +316,7 @@ def configure_ec_channel(boss, readback):
     writeReg(getNode("LPGBT.RWF.EPORTTX.EPTXECENABLE"), 0x1, readback)
 
     # enable EC input
+    writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECPHASESELECT"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECENABLE"), 0x1, readback)
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECTERM"),   0x1, readback)
 
@@ -348,7 +330,7 @@ def configure_ec_channel(boss, readback):
         writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28DRIVESTRENGTH"), 0x3, readback)
 
 
-def configure_gpio(boss, readback, loopback, watchdog_disable, force_pusm_ready, override_cdr):
+def configure_gpio(boss, readback):
     print ("Configuring gpio...")
     if (boss):
         writeReg(getNode("LPGBT.RWF.PIO.PIODIRH"), 0x80 | 0x01, readback) # set as outputs
@@ -361,65 +343,26 @@ def configure_gpio(boss, readback, loopback, watchdog_disable, force_pusm_ready,
         writeReg(getNode("LPGBT.RWF.PIO.PIOOUTH"), 0x00, readback) #
         writeReg(getNode("LPGBT.RWF.PIO.PIOOUTL"), 0x00, readback) #
 
-    #       if (loopback):
-    #           writeReg(getNode("LPGBT.RW.TESTING.LDDATASOURCE"), 0x1, readback)
-    #       else:
-    #           writeReg(getNode("LPGBT.RW.TESTING.LDDATASOURCE"), 0x0, readback)
-
-    #       if (watchdog_disable):
-    #           writeReg(getNode("LPGBT.RWF.POWERUP.PUSMPLLWDOGDISABLE"),0x1, readback)
-    #           writeReg(getNode("LPGBT.RWF.POWERUP.PUSMDLLWDOGDISABLE"),0x1, readback)
-    #       else:
-    #           writeReg(getNode("LPGBT.RWF.POWERUP.PUSMPLLWDOGDISABLE"),0x0, readback)
-    #           writeReg(getNode("LPGBT.RWF.POWERUP.PUSMDLLWDOGDISABLE"),0x0, readback)
-
-    #       print ("Finishing configuration...")
-    #       #2.2.11. Finishing configuration
-    #       #writeReg(getNode("LPGBT.RWF.POWERUP.PUSMPLLTIMEOUTCONFIG"), 15, readback)
-    #       #writeReg(getNode("LPGBT.RWF.POWERUP.PUSMDLLTIMEOUTCONFIG"), 15, readback)
-
-
-    #       sleep(1)
-
-    #       if (force_pusm_ready):
-    #           writeReg(getNode("LPGBT.RW.POWERUP.PUSMFORCESTATE"), 0x1, readback)
-    #           writeReg(getNode("LPGBT.RW.POWERUP.PUSMFORCEMAGIC"), 0xA3, readback)
-    #           writeReg(getNode("LPGBT.RW.POWERUP.PUSMSTATEFORCED"), 18, readback)
-    #           writeReg(getNode("LPGBT.RWF.POWERUP.PUSMPLLWDOGDISABLE"),0x1, readback)
-    #           writeReg(getNode("LPGBT.RWF.POWERUP.PUSMDLLWDOGDISABLE"),0x1, readback)
-    #       else:
-    #           writeReg(getNode("LPGBT.RW.POWERUP.PUSMFORCESTATE"), 0x0, readback)
-    #           writeReg(getNode("LPGBT.RW.POWERUP.PUSMFORCEMAGIC"), 0x0, readback)
-    #           writeReg(getNode("LPGBT.RWF.POWERUP.PUSMPLLWDOGDISABLE"),0x0, readback)
-    #           writeReg(getNode("LPGBT.RWF.POWERUP.PUSMDLLWDOGDISABLE"),0x0, readback)
-
-
-    #if (override_cdr):
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCONTROLOVERRIDEENABLE") ,0x1, readback)
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOCONNECTCDR") ,0x1, readback)
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOREFCLKSEL") ,0x0, readback) # 0 = data/4, 1=external
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOENABLEPLL"), 0x1, readback) # enable the enablePLL switch. 0 = disable, 1 = enable
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOENABLEFD"), 0x1, readback)
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOENABLECDR"), 0x1, readback)
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCODISDATACOUNTERREF"), 0x1, readback)
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCODISDESVBIASGEN"), 0x1, readback)
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOCONNECTPLL"), 0x1, readback)
-
 
 def configure_downlink(readback):
     print ("Configuring downlink...")
     #2.2.6. Downlink: Frame aligner settings (if high speed receiver is used)
     # downlink
 
-    #[0x02f] FAMaxHeaderFoundCount
+    # [0x02f] FAMaxHeaderFoundCount
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNT"), 0xA, readback)
-    #[0x030] FAMaxHeaderFoundCountAfterNF
+    # [0x030] FAMaxHeaderFoundCountAfterNF
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNTAFTERNF"), 0xA, readback)
-    ##[0x031] FAMaxHeaderNotFoundCount
+    # [0x031] FAMaxHeaderNotFoundCount
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERNOTFOUNDCOUNT"), 0xA, readback)
-    ##[0x032] FAFAMaxSkipCycleCountAfterNF
+    # [0x032] FAFAMaxSkipCycleCountAfterNF
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXSKIPCYCLECOUNTAFTERNF"), 0xA, readback)
+
+    #[0x033] PSDllConfig
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.EPRXUNLOCKTHRESHOLD"), 0x5, readback)
+
+    # [0x037] EQConfig
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQATTENUATION"), 0x3, readback)
 
 
 def configure_eprx(readback):

@@ -10,6 +10,7 @@ system = ""
 reg_list_dryrun = {}
 for i in range(462):
     reg_list_dryrun[i] = 0x00
+n_rw_reg = (0x13C+1) # number of registers in LPGBT rwf + rw block
 
 #gbt_dongle = gbt_vldb.GBTx()
 gbt_rpi_chc = lpgbt_rpi_chc.lpgbt_rpi_chc()
@@ -345,7 +346,7 @@ def mask_to_lsb(mask):
 
 def lpgbt_write_config_file(config_file = 'config.txt'):
     f = open(config_file,"w+")
-    for i in range (317):
+    for i in range (n_rw_reg):
         val =  mpeek(i)
         write_string = "0x%03X  0x%02X\n" % (i, val)
         f.write(write_string)
