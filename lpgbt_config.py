@@ -3,7 +3,7 @@ from time import sleep, time
 import sys
 import argparse
 
-def main(system, boss, input_config_file, configure_elinks, force_pusm_ready, reset_before_config, watchdog_disable, loopback, override_lockcontrol, override_cdr,  readback=0):
+def main(system, boss, input_config_file, reset_before_config, minimal, readback=0):
     print ("Parsing xml file...")
     parseXML()
     print ("Parsing complete...")
@@ -24,36 +24,44 @@ def main(system, boss, input_config_file, configure_elinks, force_pusm_ready, re
         lpgbt_dump_config(input_config_file)
     else:
         # configure clocks, chip config, line driver
-        configLPGBT(readback, override_lockcontrol)
+        configLPGBT(readback)
 
-        # eportrx dll configuration
-        configure_eport_dlls(readback)
+        if not minimal:
+            # eportrx dll configuration
+            configure_eport_dlls(readback)
 
-        # eportrx channel configuration
-        if (configure_elinks):
+            # eportrx channel configuration
             configure_eprx(readback)
 
         # configure downlink
         if (boss):
             configure_downlink(readback)
 
-        # configure eport tx
-        if (boss and configure_elinks):
-            configure_eptx(readback)
+        if not minimal:
+            # configure eport tx
+            if (boss):
+                configure_eptx(readback)
 
-        # configure phase shifter on boss lpgbt
-        if (boss):
-            configure_phase_shifter(readback)
+            # configure phase shifter on boss lpgbt
+            if (boss):
+                configure_phase_shifter(readback)
 
-        # configure ec channels
-        configure_ec_channel(boss, readback)
+            # configure ec channels
+            configure_ec_channel(boss, readback)
 
-        # invert hsio and eptx
+        # invert hsio
         invert_hsio(boss, readback)
-        invert_eptx(boss, readback)
 
-        # configure reset + led outputs
-        configure_gpio(boss, readback)
+        if not minimal:
+            # invert eptx
+            invert_eptx(boss, readback)
+
+            # configure reset + led outputs
+            configure_gpio(boss, readback)
+
+        # Powerup settings
+        writeReg(getNode("LPGBT.RWF.POWERUP.PUSMPLLTIMEOUTCONFIG"), 0x3, readback)
+        writeReg(getNode("LPGBT.RWF.POWERUP.PUSMDLLTIMEOUTCONFIG"), 0x3, readback)
 
         #set_uplink_group_data_source("normal", readback, pattern=0x55555555)
 
@@ -78,7 +86,7 @@ def main(system, boss, input_config_file, configure_elinks, force_pusm_ready, re
     if system=="chc":
         chc_terminate()
 
-def configLPGBT(readback, override_lockcontrol):
+def configLPGBT(readback):
     print ("Configuring Clock Generator, Line Drivers, Power Good for CERN configuration...")
 
     # Configure ClockGen Block:
@@ -93,32 +101,22 @@ def configLPGBT(readback, override_lockcontrol):
     # [0x021] CLKGConfig1
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCONTROLOVERRIDEENABLE"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
-    #if (boss):
-    #    if (override_lockcontrol):
-    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x1, readback)
-    #    else:
-    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
-    #else:
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES"), 0x1, readback)
     # default: 1 when in RX/TRX mode, 0 when in TX mode
-    #if (boss):
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x1, readback)
-    #else:
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCORAILMODE"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCODAC"), 0x4, readback) # or 0x8?
+    if (boss):
+        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x1, readback)
+    else:
+        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x0, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCORAILMODE"), 0x1, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCODAC"), 0x8, readback)
 
     # [0x022] CLKGPllRes
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x4, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x4, readback)
     # default: 4; set to 0 if RX or TRX mode
-    #if (boss):
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x0, readback)
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x0, readback)
-    #else:
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x4, readback)
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x4, readback)
+    if (boss):
+        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x0, readback)
+        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x0, readback)
+    else:
+        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x4, readback)
+        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x4, readback)
 
     #[0x023] CLKGPLLIntCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLINTCURWHENLOCKED"), 0x5, readback)
@@ -165,30 +163,33 @@ def configLPGBT(readback, override_lockcontrol):
 
     #[0x02c] CLKGWaitTime
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0x8, readback)
-    #if (boss):
-    #    if (override_lockcontrol):
-    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0xA, readback)
-    #    else:
-    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0x8, readback)
-    #else:
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITCDRTIME"), 0x8,
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGWAITPLLTIME"), 0x8, readback)
 
     #[0x02d] CLKGLFCONFIG0
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x1, readback)
-    #if (boss):
-    #    if (override_lockcontrol):
-    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x0, readback)
-    #    else:
-    #        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x1, readback)
-    #else:
-    #    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERENABLE"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCAPBANKSELECT_8"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERLOCKTHRCOUNTER"), 0x9, readback)
 
     #[0x02e] CLKGLFConfig1
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERRELOCKTHRCOUNTER"), 0x9, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGLOCKFILTERUNLOCKTHRCOUNTER"), 0x9, readback)
+
+    #[0x033] PSDllConfig
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.EPRXUNLOCKTHRESHOLD"), 0x5, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.PSDLLCONFIRMCOUNT"), 0x1, readback) # 4 40mhz clock cycles to confirm lock
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.PSDLLCURRENTSEL"), 0x1, readback)
+
+    # [0x039] Set H.S. Uplink Driver current:
+    writeReg(getNode("LPGBT.RWF.LINE_DRIVER.LDEMPHASISENABLE"), 0x0, readback)
+    writeReg(getNode("LPGBT.RWF.LINE_DRIVER.LDMODULATIONCURRENT"), 0x20, readback)
+
+    # [0x03b] REFCLK
+    writeReg(getNode("LPGBT.RWF.LINE_DRIVER.REFCLKTERM"), 0x1, readback)
+
+    # Enable PowerGood @ 1.0 V, Delay 100 ms:
+    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGENABLE"), 0x1, readback)
+    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGLEVEL"), 0x5, readback)
+    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGDELAY"), 0xC, readback)
 
     # Datapath configuration
     writeReg(getNode("LPGBT.RW.DEBUG.DLDPBYPASDEINTERLEVEAR"), 0x0, readback)
@@ -199,21 +200,6 @@ def configLPGBT(readback, override_lockcontrol):
     writeReg(getNode("LPGBT.RW.DEBUG.ULDPBYPASSSCRAMBLER"), 0x0, readback)
     writeReg(getNode("LPGBT.RW.DEBUG.ULDPBYPASSFECCODER"), 0x0, readback)
 
-    # Set H.S. Uplink Driver current:
-    writeReg(getNode("LPGBT.RWF.LINE_DRIVER.LDEMPHASISENABLE"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.LINE_DRIVER.LDMODULATIONCURRENT"), 0x20, readback)
-
-    # Enable PowerGood @ 1.0 V, Delay 100 ms:
-    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGENABLE"), 0x1, readback)
-    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGLEVEL"), 0x5, readback)
-    writeReg(getNode("LPGBT.RWF.POWER_GOOD.PGDELAY"), 0xC, readback)
-
-    # Select TO0 internal signal:
-    #writeReg(getNode("LPGBT.RW.DEBUG.TO0SELECT"), 0x02, readback) #40 mhz clock
-
-    # [0x036] ChipConfig
-    #riteReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAOUTINVERT"), 0x0, readback)
-    #writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAININVERT"), 0x1, readback)
 
 def set_uplink_group_data_source(type, readback, pattern=0x55555555):
     setting = 0
@@ -299,14 +285,16 @@ def invert_hsio(boss, readback):
     print ("Configuring pin inversion...")
     if (boss):
         writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAININVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAOUTINVERT"), 0x0, readback)
     else:
+        writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAININVERT"), 0x0, readback)
         writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAOUTINVERT"), 0x1, readback)
 
 
 def invert_eptx(boss, readback):
     if (boss):
-        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX10INVERT"), 0x1, readback) #boss 4
-        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX23INVERT"), 0x1, readback) #boss 11
+        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX10INVERT"), 0x0, readback) #boss 4
+        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX23INVERT"), 0x0, readback) #boss 11
 
 
 def configure_ec_channel(boss, readback):
@@ -316,18 +304,20 @@ def configure_ec_channel(boss, readback):
     writeReg(getNode("LPGBT.RWF.EPORTTX.EPTXECENABLE"), 0x1, readback)
 
     # enable EC input
-    writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECPHASESELECT"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECENABLE"), 0x1, readback)
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECTERM"),   0x1, readback)
+    writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECENABLE"), 0x1, readback)
 
     if (boss):
-        # EC channel driver configuration
-        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTXECDRIVESTRENGTH"), 0x3, readback)
-
         # turn on 80 Mbps EC clock
         writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28INVERT"), 0x1, readback)
         writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28FREQ"), 0x2, readback)
         writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28DRIVESTRENGTH"), 0x3, readback)
+
+        # enable EC output
+        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTXECDRIVESTRENGTH"), 0x3, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECPHASESELECT"), 0x0, readback)
+    else:
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECPHASESELECT"), 0x0, readback)
 
 
 def configure_gpio(boss, readback):
@@ -357,9 +347,6 @@ def configure_downlink(readback):
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERNOTFOUNDCOUNT"), 0xA, readback)
     # [0x032] FAFAMaxSkipCycleCountAfterNF
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXSKIPCYCLECOUNTAFTERNF"), 0xA, readback)
-
-    #[0x033] PSDllConfig
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.EPRXUNLOCKTHRESHOLD"), 0x5, readback)
 
     # [0x037] EQConfig
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQATTENUATION"), 0x3, readback)
@@ -423,9 +410,6 @@ def configure_eprx(readback):
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX62ENABLE"), 1, readback)
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX63ENABLE"), 1, readback)
 
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.PSDLLCONFIRMCOUNT"), 0x1, readback) # 4 40mhz clock cycles to confirm lock
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.PSDLLCURRENTSEL"), 0x1, readback)
-
     #enable 100 ohm termination
     for i in range (28):
         writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX%dTERM" % i), 1, readback)
@@ -483,13 +467,8 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-i", "--input", action="store", dest="input_config_file", help="input_config_file = .txt or .xml file")
-    parser.add_argument("-e", "--configure_elinks", action="store", dest="configure_elinks", default=1, help="configure_elinks = 1 (default) or 0")
-    parser.add_argument("-p", "--force_pusm_ready", action="store", dest="force_pusm_ready", default=0, help="force_pusm_ready = 1 or 0 (default)")
     parser.add_argument("-r", "--reset_before_config", action="store", dest="reset_before_config", default=0, help="reset_before_config = 1 or 0 (default)")
-    parser.add_argument("-wd", "--watchdog_disable", action="store", dest="watchdog_disable", default=0, help="watchdog_disable = 1 or 0 (default)")
-    parser.add_argument("-b", "--loopback", action="store", dest="loopback", default=1, help="loopback = 1 (default) or 0")
-    parser.add_argument("-ol", "--override_lockcontrol", action="store", dest="override_lockcontrol", default=1, help="override_lockcontrol = 1 (default) or 0")
-    parser.add_argument("-oc", "--override_cdr", action="store", dest="override_cdr", default=0, help="override_cdr = 1 or 0 (default)")
+    parser.add_argument("-m", "--minimal", action="store", dest="minimal", default=0, help="minimal = Set 1 for a minimal configuration, 0 by default")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -527,31 +506,16 @@ if __name__ == '__main__':
     if args.input_config_file is not None:
         print ("Configruing lpGBT from file: " + args.input_config_file)
 
-    if args.configure_elinks not in [0,1]:
-        print ("Only 0 or 1 allowed for configure_elinks")
-        sys.exit()
-    if args.force_pusm_ready not in [0,1]:
-        print ("Only 0 or 1 allowed for force_pusm_ready")
-        sys.exit()
     if args.reset_before_config not in [0,1]:
         print ("Only 0 or 1 allowed for reset_before_config")
         sys.exit()
-    if args.watchdog_disable not in [0,1]:
-        print ("Only 0 or 1 allowed for watchdog_disable")
-        sys.exit()
-    if args.loopback not in [0,1]:
-        print ("Only 0 or 1 allowed for loopback")
-        sys.exit()
-    if args.override_lockcontrol not in [0,1]:
-        print ("Only 0 or 1 allowed for override_lockcontrol")
-        sys.exit()
-    if args.override_cdr not in [0,1]:
-        print ("Only 0 or 1 allowed for override_cdr")
+    if args.minimal not in [0,1]:
+        print ("Only 0 or 1 allowed for minimal")
         sys.exit()
 
     # Configuring LPGBT
     readback = 0
-    main(args.system, boss, args.input_config_file, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
+    main(args.system, boss, args.input_config_file, args.reset_before_config, args.minimal, readback)
 
     print ("==================================")
     print ("Checking register configuration...")
@@ -560,5 +524,5 @@ if __name__ == '__main__':
     # Checking LPGBT configuration
     readback = 1
     if (args.input_config_file is None):
-        main(args.system, boss, args.input_config_file, args.configure_elinks, args.force_pusm_ready, args.reset_before_config, args.watchdog_disable, args.loopback, args.override_lockcontrol, args.override_cdr, readback)
+        main(args.system, boss, args.input_config_file, args.reset_before_config, args.minimal, readback)
 

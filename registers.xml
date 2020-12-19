@@ -1223,7 +1223,7 @@
                     mask="0x10" />
                 <node id="PUSMPLLTIMEOUTCONFIG" address="0x0" permission="rw"
                     description="Determines the timeout duration in the WAIT_PLL_LOCK state in the power up state machine. For more details see Power-up state machine."
-                    mask="0xf" />
+                    mask="0x0f" />
 
                 <!-- [0x0ee] POWERUP1 -->
                 <node id="PUSMDLLTIMEOUTCONFIG" address="0x1" permission="rw"
