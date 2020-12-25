@@ -12,11 +12,11 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
     rw_initialize(system, boss)
     print ("Initialization Done")
 
-    # readback rom register to make sure communication is OK
+    # Readback rom register to make sure communication is OK
     if system!="dryrun":
         check_rom_readback()
 
-    # optionally reset LPGBT
+    # Optionally reset LPGBT
     if (reset_before_config):
         reset_lpgbt(readback)
 

@@ -56,7 +56,7 @@
                     mask="0x80" />
                 <node id="VREFTUNE" address="0x01c-0x8" permission="rw"
                     description="Tuning world for internal voltage reference."
-                    mask="0x1f" />
+                    mask="0x3f" />
 
                 <!--[0x01f] EPRXLOCKFILTER-->
                 <node id="EPRXLOCKTHRESHOLD" address="0x17" permission="rw"
@@ -393,6 +393,20 @@
             <!-- Reset  -->
             <!-- https://lpgbt.web.cern.ch/lpgbt/manual/registermap.html#reset -->
             <node id="RESET" address="0x3d" description="">
+                <!-- [0x03d] RESETConfig -->
+                <!-- Reset configuration. -->
+                <node id="RESETOUTDRIVESTRENGTH" address="0x0" permission="rw"
+                    description="Reset out pin driving strength."
+                    mask="0x80" />
+                <node id="RESETOUTLENGTH" address="0x0" permission="rw"
+                    description=""
+                    mask="0x60" />
+                <node id="BODENABLE" address="0x0" permission="rw"
+                    description="Enables brownout detector."
+                    mask="0x04" />
+                <node id="BODLEVEL" address="0x0" permission="rw"
+                    description=""
+                    mask="0x07" />
             </node>
 
             <!-- Power Good  -->
@@ -557,9 +571,9 @@
                 <node id="VOLDACVALUEH" address="0x0" permission="rw"
                     description="Sets output voltage for the Voltage DAC. Bits [11:8]"
                     mask="0x0f" />
-                    <!-- [0x069] DACConfigL -->
-                    <!-- DACs configuration register. -->
 
+                <!-- [0x069] DACConfigL -->
+                <!-- DACs configuration register. -->
                 <node id="VOLDACVALUEL" address="0x1" permission="rw"
                     description="Sets output voltage for the Voltage DAC. Bits [7:0]"
                     mask="0xff" />
@@ -568,11 +582,17 @@
 
             <!-- Current DAC  -->
             <node id="CUR_DAC" address="0x6A" description="">
-                <!-- [0x06a] CURDACValue¶ -->
-                <!-- Output current -->
 
+                <!-- [0x06a] CURDACValue -->
+                <!-- Output current -->
                 <node id="CURDACSELECT" address="0x0" permission="rw"
                     description="Sets output current for the current DAC. Current = CURDACSelect * XX uA."
+                    mask="0xff" />
+
+                <!-- [0x06b] CURDACCHN -->
+                <!-- Current DAC output multiplexer. -->
+                <node id="CURDACCHNENABLE" address="0x1" permission="rw"
+                    description="Setting Nth bit in this register attaches current DAC to ADCN pin. Current source can be attached to any number of channels."
                     mask="0xff" />
 
             </node>
@@ -1586,7 +1606,7 @@
                     description="Controls MUX for ADC Negative Input"
                     mask="0x0f" />
 
-                <!-- 0x112] ADCMon -->
+                <!-- [0x112] ADCMon -->
                 <!-- Control ADC's internal signals -->
 
                 <node id="TEMPSENSRESET" address="0x1" permission="rw"
@@ -2235,9 +2255,23 @@
 
             </node>
 
+            <node id="SEU" address="0x1aa-0x140" description="">
+                <!-- 15.3.7. SEU -->
+
+                <!-- [0x1aa] SEUCountH -->
+                <node id="SEUCOUNTH" address="0x0" permission="r"
+                    description="Bits 15:8 of SEU counter."
+                    mask="0xff" />
+
+                <!-- [0x1ab] SEUCountL -->
+                <node id="SEUCOUNTL" address="0x1" permission="r"
+                    description="Bits 7:0 of SEU counter."
+                    mask="0xff" />
+
+            </node>
 
             <node id="CLKG" address="0x1ac-0x140" description="">
-                <!-- 5.3.7. Clock Generator -->
+                <!-- 15.3.7. Clock Generator -->
                 <!-- [0x1ac] CLKGStatus0 -->
                 <node id="CLKG_PLL_R_CONFIG" address="0x0" permission="r"
                     description="Selected PLL's filter resistance value [min:step:max] Ohm"
@@ -2370,16 +2404,37 @@
             <!-- 15.3.12. ROM -->
             <!-- [0x1c5] ROM -->
             <!-- Register with fixed (non zero value). Can be used for testing purposes. -->
-
             <node id="ROMREG" address="0x1c5-0x140" permission="r"
                 description="All read requests for this register should yield value 0xA5."
                 mask="0xFF" />
 
+            <!-- 15.3.13. POR -->
+            <!-- [0x1c6] PORBOR -->
+            <!-- Status of POR and BOR instances -->
+            <node id="PORBOR" address="0x1c6-0x140" permission="r" description="All read requests for this register should yield value 0xA5.">
+                <node id="PORC" address="0x0" permission="r"
+                    description="State of PORC output"
+                    mask="0x40" />
+                <node id="PORB" address="0x0" permission="r"
+                    description="State of PORB output"
+                    mask="0x20" />
+                <node id="PORA" address="0x0" permission="r"
+                    description="State of PORA output"
+                    mask="0x10" />
+                <node id="BODC" address="0x0" permission="r"
+                    description="State of BODC output"
+                    mask="0x04" />
+                <node id="BODB" address="0x0" permission="r"
+                    description="State of BODB output"
+                    mask="0x02" />
+                <node id="BODA" address="0x0" permission="r"
+                    description="State of BODA output"
+                    mask="0x01" />
+            </node>
 
             <!-- 15.3.4. ECLK -->
             <!-- [0x19e] PSStatus -->
             <!-- Status of phase-shifter DLL initialization state machines -->
-
             <node id="PSSTATUS" address="0x19e-0x140" description="">
                 <node id="PS3DllInitState" address="0x0" permission="r"
                     description="Status of the DLL initialization state machine for phase-shifter channel 3"

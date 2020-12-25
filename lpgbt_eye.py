@@ -1,16 +1,20 @@
-from rw_reg_dongle import mpeek,mpoke,writeReg,readReg,getNode,parseXML
+from rw_reg_dongle_chc import *
 from time import sleep
 import sys
+import argparse
 
-def main():
+def main(system, boss):
 
+    print ("Parsing xml file...")
     parseXML()
-    print "parsing complete..."
+    print ("Parsing complete...")
 
-    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
-    if (romreg != 0xa5):
-        print "Error: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xa5)
-        return
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(system, boss)
+    print ("Initialization Done")
+
+    # Readback rom register to make sure communication is OK
+    check_rom_readback()
 
     cntsel = 0x7
     #num_clocks = 2**(cntsel + 1)
@@ -33,23 +37,21 @@ def main():
     eomphaseselreg = getNode("LPGBT.RW.EOM.EOMPHASESEL")
     eomstartreg = getNode("LPGBT.RW.EOM.EOMSTART")
     eomstatereg = getNode("LPGBT.RO.EOM.EOMSMSTATE")
+    eomvofsel = getNode("LPGBT.RW.EOM.EOMVOFSEL")
 
     cntvalmax = 0
     cntvalmin = 2**20
 
     ymin=1
-    ymax=31
+    ymax=30
     xmin=0
     xmax=64
 
-    for y_axis  in range (ymin,ymax):
-
+    for y_axis in range (ymin,ymax):
         # update yaxis
-
-        writeReg(getNode("LPGBT.RW.EOM.EOMVOFSEL"), y_axis)
+        writeReg(eomvofsel, y_axis)
 
         for x_axis in range (xmin,xmax):
-
             if (x_axis >= 32):
                 x_axis_wr = 63-(x_axis-32)
             else:
@@ -76,8 +78,8 @@ def main():
             if (countervalue < cntvalmin):
                 cntvalmin = countervalue
 
-            #print num_clocks_read
-            #print num_clocks
+            #print (num_clocks_read)
+            #print (num_clocks)
 
             eyeimage[x_axis][y_axis] = countervalue
             #print (4149 - countervalue)
@@ -95,15 +97,14 @@ def main():
         sys.stdout.write("\n")
 
         #percent_done = 100. * (y_axis*64. +64. ) / (32.*64.)
-        #print "%f percent done" % percent_done
+        #print ("%f percent done" % percent_done)
 
-    print "Counter value max=%d" % cntvalmax
+    print ("Counter value max=%d" % cntvalmax)
     f = open ("eye_data.py", "w+")
     f.write ("eye_data=[\n")
     for y  in range (ymin,ymax):
         f.write ("    [")
         for x in range (xmin,xmax):
-
             # normalize for plotting
             f.write("%d" % (100*(cntvalmax - eyeimage[x][y])/(cntvalmax-cntvalmin)))
             if (x<(xmax-1)):
@@ -115,5 +116,52 @@ def main():
         else:
             f.write("]\n")
 
+    # Termination
+    if system=="chc":
+        chc_terminate()
+
+def check_rom_readback():
+    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
+    if (romreg != 0xA5):
+        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
+        rw_terminate()
+    else:
+        print ("Successfully read from ROM. I2C communication OK")
+
 if __name__ == '__main__':
-    main()
+    # Parsing arguments
+    parser = argparse.ArgumentParser(description='LPGBT EYE')
+    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle")
+    parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+
+    if args.system == "chc":
+        print ("Using Rpi CHeeseCake for checking configuration")
+    elif args.system == "backend":
+        #print ("Using Backend for checking configuration")
+        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        sys.exit()
+    elif args.system == "dongle":
+        #print ("Using USB Dongle for checking configuration")
+        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        sys.exit()
+    else:
+        print ("Only valid options: chc, backend, dongle")
+        sys.exit()
+
+    boss = None
+    if args.lpgbt is None:
+        print ("Please select boss or sub")
+        sys.exit()
+    elif (args.lpgbt=="boss"):
+        print ("EYE for boss LPGBT")
+        boss=1
+    elif (args.lpgbt=="sub"):
+        print ("EYE for sub LPGBT")
+        boss=0
+    else:
+        print ("Please select boss or sub")
+        sys.exit()
+    if boss is None:
+        sys.exit()
+
+    main(args.system, boss)
