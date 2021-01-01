@@ -73,7 +73,7 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
     # Check READY status
     pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
     if (pusmstate==18):
-        print ("LPGBT status is READY")
+        print ("lpGBT status is READY")
 
     # Writing lpGBT configuration to text file
     if not readback:
@@ -464,7 +464,7 @@ if __name__ == '__main__':
 
     # Parsing arguments
     parser = argparse.ArgumentParser(description='LpGBT Configuration for ME0 Optohybrid')
-    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle")
+    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-i", "--input", action="store", dest="input_config_file", help="input_config_file = .txt or .xml file")
     parser.add_argument("-r", "--reset_before_config", action="store", dest="reset_before_config", default=0, help="reset_before_config = 1 or 0 (default)")
@@ -484,7 +484,7 @@ if __name__ == '__main__':
     elif args.system == "dryrun":
         print ("Dry Run - not actually configuring lpGBT")
     else:
-        print ("Only valid options: chc, backend, dongle")
+        print ("Only valid options: chc, backend, dongle, dryrun")
         sys.exit()
 
     boss = None

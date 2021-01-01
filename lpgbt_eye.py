@@ -14,18 +14,30 @@ def main(system, boss):
     print ("Initialization Done")
 
     # Readback rom register to make sure communication is OK
-    check_rom_readback()
+    if system!="dryrun":
+        check_rom_readback()
+
+    # Check iif lpGBT is READY
+    if system!="dryrun":
+        pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
+        if (pusmstate==18):
+            print ("lpGBT status is READY")
+        else:
+            print ("lpGBT is not READY, configure lpGBT first")
+            if system=="chc":
+                chc_terminate()
+            sys.exit()
 
     cntsel = 0x7
     #num_clocks = 2**(cntsel + 1)
-    writeReg(getNode("LPGBT.RW.EOM.EOMENDOFCOUNTSEL"), cntsel)
-    writeReg(getNode("LPGBT.RW.EOM.EOMENABLE"), 1)
+    writeReg(getNode("LPGBT.RW.EOM.EOMENDOFCOUNTSEL"), cntsel, 0)
+    writeReg(getNode("LPGBT.RW.EOM.EOMENABLE"), 1, 0)
 
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQCAP"), 1)
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES0"), 1)
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES1"), 1)
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES2"), 1)
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES3"), 1)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQCAP"), 1, 0)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES0"), 1, 0)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES1"), 1, 0)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES2"), 1, 0)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES3"), 1, 0)
 
     eyeimage = [[0 for y in range(32)] for x in range(64)]
 
@@ -49,7 +61,7 @@ def main(system, boss):
 
     for y_axis in range (ymin,ymax):
         # update yaxis
-        writeReg(eomvofsel, y_axis)
+        writeReg(eomvofsel, y_axis, 0)
 
         for x_axis in range (xmin,xmax):
             if (x_axis >= 32):
@@ -58,13 +70,13 @@ def main(system, boss):
                 x_axis_wr = x_axis
 
             # update xaxis
-            writeReg(eomphaseselreg, x_axis_wr)
+            writeReg(eomphaseselreg, x_axis_wr, 0)
 
             # wait few miliseconds
             sleep(0.002)
 
             # start measurement
-            writeReg(eomstartreg, 0x1)
+            writeReg(eomstartreg, 0x1, 0)
 
             # wait until measurement is finished
             status = 0
@@ -85,7 +97,7 @@ def main(system, boss):
             #print (4149 - countervalue)
 
             # deassert eomstart bit
-            writeReg(eomstartreg, 0x0)
+            writeReg(eomstartreg, 0x0, 0)
 
             #line = line + ("%x" % (eyeimage[x][y]/260))
             #print ("%x" % (eyeimage[x_axis][y_axis]/260))
@@ -131,21 +143,24 @@ def check_rom_readback():
 if __name__ == '__main__':
     # Parsing arguments
     parser = argparse.ArgumentParser(description='LPGBT EYE')
-    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle")
+    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    args = parser.parse_args()
 
     if args.system == "chc":
         print ("Using Rpi CHeeseCake for checking configuration")
     elif args.system == "backend":
         #print ("Using Backend for checking configuration")
-        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
         sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for checking configuration")
-        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
         sys.exit()
+    elif args.system == "dryrun":
+        print ("Dry Run - not actually running on lpGBT")
     else:
-        print ("Only valid options: chc, backend, dongle")
+        print ("Only valid options: chc, backend, dongle, dryrun")
         sys.exit()
 
     boss = None

@@ -1902,6 +1902,34 @@
                 <!-- 2'd3	CONST_PATTERN	Constant pattern -->
             </node>
 
+            <node id="DPDataPattern" address="0x11e-0x0f0" description="">
+
+                <!-- [0x11e] DPDataPattern3 -->
+                <!-- Constant pattern to be used in test pattern generation/checking -->
+                <node id="DPDataPattern3" address="0x0" permission="rw"
+                    description="Bits 31:24 of the canst pattern."
+                    mask="0xff" />
+
+                <!-- [0x11f] DPDataPattern2 -->
+                <!-- Constant pattern to be used in test pattern generation/checking -->
+                <node id="DPDataPattern2" address="0x1" permission="rw"
+                    description="Bits 23:16 of the canst pattern."
+                    mask="0xff" />
+
+                <!-- [0x120] DPDataPattern1 -->
+                <!-- Constant pattern to be used in test pattern generation/checking -->
+                <node id="DPDataPattern1" address="0x2" permission="rw"
+                    description="Bits 15:8 of the canst pattern."
+                    mask="0xff" />
+
+                <!-- [0x121] DPDataPattern0 -->
+                <!-- Constant pattern to be used in test pattern generation/checking -->
+                <node id="DPDataPattern0" address="0x3" permission="rw"
+                    description="Bits 7:0 of the canst pattern."
+                    mask="0xff" />
+
+            </node>
+
             <node id="BERT" address="0x126-0x0f0" description="">
 
                 <!-- [0x126] BERTSource -->

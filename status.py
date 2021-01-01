@@ -180,10 +180,10 @@ def main(system, boss):
     print ("\t%d" % (readReg(getNode("LPGBT.RO.CLKG.CLKG_VCOCAPSELECTH")) << 1 |readReg(getNode("LPGBT.RO.CLKG.CLKG_VCOCAPSELECTH")))
 
    #print ("Configuring adc...")
-   #writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1)
-   #writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x15)
-   #writeReg(getNode("LPGBT.RW.ADC.CONVERT"), 0x1)
-   #writeReg(getNode("LPGBT.RW.ADC.GAINSELECT"), 0x1)
+   #writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
+   #writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x15, 0)
+   #writeReg(getNode("LPGBT.RW.ADC.CONVERT"), 0x1, 0)
+   #writeReg(getNode("LPGBT.RW.ADC.GAINSELECT"), 0x1, 0)
 
     init_adc()
     print ("ADC Readings:")
