@@ -330,10 +330,10 @@
                 <!-- [0x038] EQRes -->
                 <!-- Resistance configuration for the equalizer -->
                 <node id="EQRES3" address="0x1" permission="rw"
-                    description="Resistance to be used in the fourth stage of the data input equalizer. Resistance [kOhm]: 2d0=0, 2d1=3.0, 2d2=4.9, 2d3=7.1"
+                    description="Resistance to be used in the fourth stage of the data input equalizer. EQRes3[1:0] Resistance [kOhm]: 2d0=0, 2d1=0.4, 2d2=1.0, 2d3=1.6"
                     mask="0xc0" />
                 <node id="EQRES2" address="0x1" permission="rw"
-                    description="Resistance to be used in the third stage of the data input equalizer. EQRes2[1:0] Resistance [kOhm] 2d0=0, 2d1=3.0, 2d2=4.9, 2d3=7.1"
+                    description="Resistance to be used in the third stage of the data input equalizer. EQRes2[1:0] Resistance [kOhm] 2d0=0, 2d1=0.6, 2d2=1.2, 2d3=2.4"
                     mask="0x30" />
                 <node id="EQRES1" address="0x1" permission="rw"
                     description="Resistance to be used in the second stage of the data input equalizer. EQRes1[1:0] Resistance [kOhm] 2d0=0, 2d1=3.0, 2d2=4.9, 2d3=7.1"

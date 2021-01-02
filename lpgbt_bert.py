@@ -82,7 +82,7 @@ def main(system, bert_source, time, boss):
     if system!="dryrun":
         check_rom_readback()
 
-    # Check iif lpGBT is READY
+    # Check if lpGBT is READY
     if system!="dryrun":
         pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
         if (pusmstate==18):

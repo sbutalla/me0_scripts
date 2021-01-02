@@ -1,9 +1,10 @@
 from rw_reg_dongle_chc import *
 from time import sleep
 import sys
+import os
 import argparse
 
-def main(system, boss):
+def main(system, count, boss):
 
     print ("Parsing xml file...")
     parseXML()
@@ -17,7 +18,7 @@ def main(system, boss):
     if system!="dryrun":
         check_rom_readback()
 
-    # Check iif lpGBT is READY
+    # Check if lpGBT is READY
     if system!="dryrun":
         pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
         if (pusmstate==18):
@@ -28,16 +29,16 @@ def main(system, boss):
                 chc_terminate()
             sys.exit()
 
-    cntsel = 0x7
-    #num_clocks = 2**(cntsel + 1)
+    cntsel = count
     writeReg(getNode("LPGBT.RW.EOM.EOMENDOFCOUNTSEL"), cntsel, 0)
     writeReg(getNode("LPGBT.RW.EOM.EOMENABLE"), 1, 0)
 
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQCAP"), 1, 0)
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES0"), 1, 0)
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES1"), 1, 0)
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES2"), 1, 0)
-    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES3"), 1, 0)
+    # Equalizer settings
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQCAP"), 0x1, 0)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES0"), 0x1, 0)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES1"), 0x1, 0)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES2"), 0x1, 0)
+    writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES3"), 0x1, 0)
 
     eyeimage = [[0 for y in range(32)] for x in range(64)]
 
@@ -59,6 +60,7 @@ def main(system, boss):
     xmin=0
     xmax=64
 
+    print ("Starting loops: \n")
     for y_axis in range (ymin,ymax):
         # update yaxis
         writeReg(eomvofsel, y_axis, 0)
@@ -81,44 +83,43 @@ def main(system, boss):
             # wait until measurement is finished
             status = 0
             while (status == 0):
-                status = readReg(eomstatereg)
+                if system!="dryrun":
+                    status = readReg(eomstatereg)
+                else:
+                    status = 1
 
-            #num_clocks_read = (readReg(cntvalregh)) << 8 |readReg(cntvalregl)
             countervalue = (readReg(datavalregh)) << 8 |readReg(datavalregl)
             if (countervalue > cntvalmax):
                 cntvalmax = countervalue
             if (countervalue < cntvalmin):
                 cntvalmin = countervalue
-
-            #print (num_clocks_read)
-            #print (num_clocks)
-
             eyeimage[x_axis][y_axis] = countervalue
-            #print (4149 - countervalue)
 
             # deassert eomstart bit
             writeReg(eomstartreg, 0x0, 0)
 
-            #line = line + ("%x" % (eyeimage[x][y]/260))
-            #print ("%x" % (eyeimage[x_axis][y_axis]/260))
-
-            #print countervalue/1000
-            sys.stdout.write("%x" % (eyeimage[x_axis][y_axis]/1000))
+            #sys.stdout.write("%x" % (eyeimage[x_axis][y_axis]/1000))
+            sys.stdout.write("%x" % (eyeimage[x_axis][y_axis]))
             sys.stdout.flush()
 
         sys.stdout.write("\n")
-
         #percent_done = 100. * (y_axis*64. +64. ) / (32.*64.)
         #print ("%f percent done" % percent_done)
+    print ("\nEnd Loops \n")
 
     print ("Counter value max=%d" % cntvalmax)
-    f = open ("eye_data.py", "w+")
+    if not os.path.isdir("eye_scan_results"):
+        os.mkdir("eye_scan_results")
+    f = open ("eye_scan_results/eye_data.py", "w+")
     f.write ("eye_data=[\n")
     for y  in range (ymin,ymax):
         f.write ("    [")
         for x in range (xmin,xmax):
             # normalize for plotting
-            f.write("%d" % (100*(cntvalmax - eyeimage[x][y])/(cntvalmax-cntvalmin)))
+            if system!="dryrun":
+                f.write("%d" % (100*(cntvalmax - eyeimage[x][y])/(cntvalmax-cntvalmin)))
+            else:
+                f.write("0")
             if (x<(xmax-1)):
                 f.write(",")
             else:
@@ -145,6 +146,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LPGBT EYE')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    parser.add_argument("-c", "--count", action="store", dest="count", default="0x7", help="EOMendOfCountSel[3:0] in hex")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -179,4 +181,8 @@ if __name__ == '__main__':
     if boss is None:
         sys.exit()
 
-    main(args.system, boss)
+    if int(args.count,16) > 15:
+        print ("EOMendOfCountSel[3:0] can be max 4 bits")
+        sys.exit()
+
+    main(args.system, int(args.count,16), boss)
