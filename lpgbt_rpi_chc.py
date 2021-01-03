@@ -2,8 +2,8 @@
 import os, sys
 import math
 import shutil, subprocess
-import RPi.GPIO as GPIO
-import smbus
+#import RPi.GPIO as GPIO
+#import smbus
 import time
 
 class lpgbt_rpi_chc:
@@ -11,16 +11,16 @@ class lpgbt_rpi_chc:
 
     def __init__(self):
         # Setting the pin numbering scheme
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
+        #GPIO.setmode(GPIO.BCM)
+        #GPIO.setwarnings(False)
         # Set up the I2C bus
         device_bus = 1  # for SDA1 and SCL1
-        self.bus = smbus.SMBus(device_bus)
+        #self.bus = smbus.SMBus(device_bus)
         self.lpgbt_address = 0x70
 
-    def __del__(self):
-        self.bus.close()
-        GPIO.cleanup()
+    #def __del__(self):
+        #self.bus.close()
+        #GPIO.cleanup()
 
     def config_select(self, boss):
         # Setting GPIO 13/26 high, connected to config_select enabling I2C

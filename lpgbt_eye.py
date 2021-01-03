@@ -181,8 +181,10 @@ if __name__ == '__main__':
         print ("EYE for boss LPGBT")
         boss=1
     elif (args.lpgbt=="sub"):
-        print ("EYE for sub LPGBT")
+        #print ("EYE for sub LPGBT")
+        print ("EYE only for boss since sub is only TX mode")
         boss=0
+        sys.exit()
     else:
         print ("Please select boss or sub")
         sys.exit()

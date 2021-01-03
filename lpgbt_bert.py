@@ -247,6 +247,10 @@ if __name__ == '__main__':
     if boss is None:
         sys.exit()
 
+    if args.bert_source is None:
+        print ("Need a BERT source")
+        sys.exit()
+
     for bert in args.bert_source:
         if bert not in BERT_source_coarse:
             print ("Invalid course BERT source : " + bert + " (See lpGBT manual Table 14.4 for options)")

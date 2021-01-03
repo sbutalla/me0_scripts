@@ -26,30 +26,30 @@ or alternatively it can be installed by Pip
 
 ## Configuration
 
-configure the master/boss lpgbt with:
+configure the master/boss lpgbt with Cheesecake:
 
-```sudo python lpgbt_config.py -s chc -l boss```
+```python lpgbt_config.py -s chc -l boss```
 
-and likewise configure the slave/sub lpgbt with
+and likewise configure the slave/sub lpgbt with Cheesecake:
 
-```sudo python lpgbt_config.py -s chc -l sub```
+```python lpgbt_config.py -s chc -l sub```
 
-check the status of the lpgbt with
+check the status of the lpgbt with Cheesecake:
 
-```sudo python status.py -s chc```
+```python status.py -s chc```
 
 ## Eye Opening Monitor
 
-take an eye scan with
+take an eye scan with Cheesecake:
 
-```sudo python lpgbt_eye.py```
+```python lpgbt_eye.py -s chc -l boss```
 
-create an image with
+create an image:
 
-```sudo python lpgbt_eye_plot.py```
+```python lpgbt_eye_plot.py```
 
 ## BERT
 
-take a bert scan with
+take a bert scan with Cheesecake, for example for DLFRAME (other data sources also possible, check script):
 
-```sudo python lpgbt_bert.py```
+```python lpgbt_bert.py -s chc -l boss -b DLFRAME```

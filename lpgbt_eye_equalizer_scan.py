@@ -60,7 +60,7 @@ def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, bos
     eq_res0_node = getNode("LPGBT.RWF.EQUALIZER.EQRES0")
 
     if os.path.isdir("eye_scan_results"):
-        files = glob.glob("eye_scan_results/*.py", recursive=True)
+        files = glob.glob("eye_scan_results/eye_data_eqa*.py", recursive=True)
         for f in files:
             os.remove(f)
     else:
@@ -220,8 +220,10 @@ if __name__ == '__main__':
         print ("EYE for boss LPGBT")
         boss=1
     elif (args.lpgbt=="sub"):
-        print ("EYE for sub LPGBT")
+        #print ("EYE for sub LPGBT")
+        print ("EYE only for boss since sub is only TX mode")
         boss=0
+        sys.exit()
     else:
         print ("Please select boss or sub")
         sys.exit()
