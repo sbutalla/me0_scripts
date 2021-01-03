@@ -40,7 +40,8 @@ def main(system, count, boss):
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES2"), 0x1, 0)
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES3"), 0x1, 0)
 
-    eyeimage = [[0 for y in range(32)] for x in range(64)]
+    #eyeimage = [[0 for y in range(32)] for x in range(64)]
+    eyeimage = [[0 for y in range(31)] for x in range(64)]
 
     datavalregh = getNode("LPGBT.RO.EOM.EOMCOUNTERVALUEH")
     datavalregl = getNode("LPGBT.RO.EOM.EOMCOUNTERVALUEL")
@@ -50,13 +51,17 @@ def main(system, count, boss):
     eomphaseselreg = getNode("LPGBT.RW.EOM.EOMPHASESEL")
     eomstartreg = getNode("LPGBT.RW.EOM.EOMSTART")
     eomstatereg = getNode("LPGBT.RO.EOM.EOMSMSTATE")
+    eombusyreg = getNode("LPGBT.RO.EOM.EOMBUSY")
+    eomendreg = getNode("LPGBT.RO.EOM.EOMEND")
     eomvofsel = getNode("LPGBT.RW.EOM.EOMVOFSEL")
 
     cntvalmax = 0
     cntvalmin = 2**20
 
-    ymin=1
-    ymax=30
+    #ymin=1
+    #ymax=30
+    ymin=0
+    ymax=31
     xmin=0
     xmax=64
 
@@ -75,18 +80,21 @@ def main(system, count, boss):
             writeReg(eomphaseselreg, x_axis_wr, 0)
 
             # wait few miliseconds
-            sleep(0.002)
+            sleep(0.005)
 
             # start measurement
             writeReg(eomstartreg, 0x1, 0)
 
             # wait until measurement is finished
-            status = 0
-            while (status == 0):
+            busy = 1
+            end = 0
+            while (busy and not end):
                 if system!="dryrun":
-                    status = readReg(eomstatereg)
+                    busy = readReg(eombusyreg)
+                    end = readReg(eomendreg)
                 else:
-                    status = 1
+                    busy = 0
+                    end = 1
 
             countervalue = (readReg(datavalregh)) << 8 |readReg(datavalregl)
             if (countervalue > cntvalmax):
