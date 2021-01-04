@@ -281,6 +281,36 @@ def writeReg(reg, value, readback):
         # mpoke
         mpoke(address, value)
 
+def writeandcheckReg(reg, value):
+    try:
+        address = reg.real_address
+    except:
+        print ('Reg',reg,'not a Node')
+        return
+    if 'w' not in reg.permission:
+        return 'No write permission!'
+
+    # Apply Mask if applicable
+    if (reg.mask != 0):
+        value = value << reg.lsb_pos
+        value = value & reg.mask
+        if 'r' in reg.permission:
+            value = (value) | (mpeek(address) & ~reg.mask)
+    # mpoke
+    mpoke(address, value)
+
+    # Check register value
+    if 'r' not in reg.permission:
+        return 'No read permission!, cant check'
+    value_check = mpeek(address)
+    if (reg.mask != 0):
+        value_check = (reg.mask & value_check) >> reg.lsb_pos
+
+    check=0
+    if value == value_check:
+        check=1
+    return check
+
 def isValid(address):
     #try: subprocess.check_output('mpeek '+str(address), stderr=subprocess.STDOUT , shell=True)
     #except subprocess.CalledProcessError as e: return False
