@@ -6,6 +6,7 @@ import shutil, subprocess
 #import smbus
 import time
 
+
 class lpgbt_rpi_chc:
     # Raspberry CHeeseCake interface for I2C
 
@@ -147,3 +148,38 @@ class lpgbt_rpi_chc:
             success = 0
 
         return success, data
+
+    def arm_fuse(self, boss):
+        """Given selection of Boss or Sub, drives LDO for EFUSE at 2.5V"""
+        if boss:
+            efuse_pwr = 12
+        elif not boss:
+            efuse_pwr = 19
+
+        reset_success = 0
+        try:
+            GPIO.setup(efuse_pwr, GPIO.OUT)
+            GPIO.output(efuse_pwr, 1)
+            print("GPIO" + str(efuse_pwr) + "set to high, EFUSE ARMED")
+            reset_success = 1
+        except:
+            print("ERROR: Unable to arm fuse, check RPi connection")
+        return reset_success
+
+    def disarm_fuse(self, boss):
+        """Given selection of Boss or Sub, brings EFUSE to GND"""
+        if boss:
+            efuse_pwr = 12
+        elif not boss:
+            efuse_pwr = 19
+
+        reset_success = 0
+        try:
+            GPIO.setup(efuse_pwr, GPIO.OUT)
+            GPIO.output(efuse_pwr, 0)
+            print("GPIO" + str(efuse_pwr) + "set to high, EFUSE DISARMED")
+            reset_success = 1
+        except:
+            print("ERROR: Unable to disarm efuse, check RPi connection")
+        return reset_success
+
