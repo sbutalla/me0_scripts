@@ -32,8 +32,9 @@ def main(system, boss, fusing, input_config_file, input_register, input_data, us
         fuse_user_id(system, boss, user_id)
     print ("")
 
-    # Fusing 0xEF (dllConfigDone, pllConfigDone, updateEnable)
-    #fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1
+    # Fusing 0xEF (dllConfigDone, pllConfigDone, updateEnable) - uncomment only one of the following two lines
+    #fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1 - Complete configuration fused, cannot configure with IC/EC
+    #fuse_register(system, boss, "0xEF", "0x03") #dllConfigDone=0, pllConfigDone=1, updateEnable=1 - Only pllConfigDone is set, can configure using IC/EC, need to set dllConfigDone through IC/EC
 
     # Write the fuse values of registers in text file
     if boss:
@@ -152,7 +153,7 @@ def blow_fuse(system, boss):
     # Start 2.5V
     lpgbt_efuse(boss, 1)
     t0_efusepower = time_ns()
-    #sleep (0.01) # sleep required?
+    sleep (0.001) # 1 ms for the 2.5V to turn on
 
     # Write 1 to Fuseblow
     writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x1, 0) # fuse blow
@@ -178,6 +179,7 @@ def blow_fuse(system, boss):
 
     # Stop 2.5V
     lpgbt_efuse(boss, 0)
+    sleep (0.001) # 1 ms for the 2.5V to turn off
     TOTAL_EFUSE_ON_TIME_MS += int(round((time_ns() - t0_efusepower) / 1000000))
     print ("Total EFUSE power on time: %d ms" % TOTAL_EFUSE_ON_TIME_MS)
 
