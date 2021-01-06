@@ -160,7 +160,19 @@ def rw_initialize(system_val, boss):
         if initialize_success:
             initialize_success *= gbt_rpi_chc.i2c_channel_sel(boss)
         if not initialize_success:
-            print ("ERROR: Problem in initialization")
+            print("ERROR: Problem in initialization")
+            rw_terminate()
+
+def lpgbt_efuse(boss, enable):
+    fuse_success = 1
+    if system=="chc":
+        fuse_success = gbt_rpi_chc.fuse_arm_disarm(boss, enable)
+        if not fuse_success:
+            print("ERROR: Problem in fusing")
+            fuse_off = gbt_rpi_chc.fuse_arm_disarm(boss, 0)
+            if not fuse_off:
+                print ("FUSE Power cannot be turned OFF")
+                print ("Turn OFF 2.5V Power Supply Immediately")
             rw_terminate()
 
 def chc_terminate():
@@ -380,6 +392,7 @@ def lpgbt_write_config_file(config_file = 'config.txt'):
         val =  mpeek(i)
         write_string = "0x%03X  0x%02X\n" % (i, val)
         f.write(write_string)
+    f.close()
 
 def lpgbt_dump_config(config_file = 'Loopback_test.txt'):
         #dump configuration to lpGBT - accepts .txt of .xml input

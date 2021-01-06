@@ -2,26 +2,24 @@
 import os, sys
 import math
 import shutil, subprocess
-#import RPi.GPIO as GPIO
-#import smbus
+import RPi.GPIO as GPIO
+import smbus
 import time
-
 
 class lpgbt_rpi_chc:
     # Raspberry CHeeseCake interface for I2C
-
     def __init__(self):
         # Setting the pin numbering scheme
-        #GPIO.setmode(GPIO.BCM)
-        #GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
         # Set up the I2C bus
         device_bus = 1  # for SDA1 and SCL1
-        #self.bus = smbus.SMBus(device_bus)
+        self.bus = smbus.SMBus(device_bus)
         self.lpgbt_address = 0x70
 
-    #def __del__(self):
-        #self.bus.close()
-        #GPIO.cleanup()
+    def __del__(self):
+        self.bus.close()
+        GPIO.cleanup()
 
     def config_select(self, boss):
         # Setting GPIO 13/26 high, connected to config_select enabling I2C
@@ -149,37 +147,27 @@ class lpgbt_rpi_chc:
 
         return success, data
 
-    def arm_fuse(self, boss):
-        """Given selection of Boss or Sub, drives LDO for EFUSE at 2.5V"""
+    def fuse_arm_disarm(self, boss, enable):
+        # Given selection of Boss or Sub, drives LDO for EFUSE at 2.5V
+        efuse_pwr = 0
         if boss:
             efuse_pwr = 12
-        elif not boss:
+        else:
             efuse_pwr = 19
 
-        reset_success = 0
+        efuse_success = 0
+        if enable not in [0,1]:
+            print("ERROR: Unable to arm/disarm fuse, invalid option")
+            return efuse_success
         try:
             GPIO.setup(efuse_pwr, GPIO.OUT)
-            GPIO.output(efuse_pwr, 1)
-            print("GPIO" + str(efuse_pwr) + "set to high, EFUSE ARMED")
-            reset_success = 1
+            GPIO.output(efuse_pwr, enable)
+            if enable:
+                print("GPIO" + str(efuse_pwr) + "set to high, EFUSE ARMED")
+            else:
+                print("GPIO" + str(efuse_pwr) + "set to low, EFUSE DISARMED")
+            efuse_success = 1
         except:
-            print("ERROR: Unable to arm fuse, check RPi connection")
-        return reset_success
-
-    def disarm_fuse(self, boss):
-        """Given selection of Boss or Sub, brings EFUSE to GND"""
-        if boss:
-            efuse_pwr = 12
-        elif not boss:
-            efuse_pwr = 19
-
-        reset_success = 0
-        try:
-            GPIO.setup(efuse_pwr, GPIO.OUT)
-            GPIO.output(efuse_pwr, 0)
-            print("GPIO" + str(efuse_pwr) + "set to high, EFUSE DISARMED")
-            reset_success = 1
-        except:
-            print("ERROR: Unable to disarm efuse, check RPi connection")
-        return reset_success
+            print("ERROR: Unable to arm/disarm fuse, check RPi connection")
+        return efuse_success
 

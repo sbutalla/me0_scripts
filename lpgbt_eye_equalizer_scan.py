@@ -26,9 +26,7 @@ def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, bos
             print ("lpGBT status is READY")
         else:
             print ("lpGBT is not READY, configure lpGBT first")
-            if system=="chc":
-                chc_terminate()
-            sys.exit()
+            rw_terminate()
 
     cntsel = count
     writeReg(getNode("LPGBT.RW.EOM.EOMENDOFCOUNTSEL"), cntsel, 0)

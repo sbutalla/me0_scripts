@@ -89,9 +89,7 @@ def main(system, bert_source, time, boss):
             print ("lpGBT status is READY")
         else:
             print ("lpGBT is not READY, configure lpGBT first")
-            if system=="chc":
-                chc_terminate()
-            sys.exit()
+            rw_terminate()
 
     # Getting the register nodes
     bert_coarse_node = getNode("LPGBT.RW.BERT.COARSEBERTSOURCE")
