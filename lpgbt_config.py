@@ -72,6 +72,7 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
 
     # Check READY status
     pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
+    print ("PUSMSTATE register value: " + str(pusmstate))
     if (pusmstate==18):
         print ("lpGBT status is READY")
 
@@ -101,22 +102,13 @@ def configLPGBT(readback):
     # [0x021] CLKGConfig1
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCONTROLOVERRIDEENABLE"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGDISABLEFRAMEALIGNERLOCKCONTROL"), 0x0, readback)
-    # default: 1 when in RX/TRX mode, 0 when in TX mode
-    if (boss):
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x1, readback)
-    else:
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x0, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCDRRES") ,0x1, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCORAILMODE"), 0x1, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGVCODAC"), 0x8, readback)
 
     # [0x022] CLKGPllRes
-    # default: 4; set to 0 if RX or TRX mode
-    if (boss):
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x0, readback)
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x0, readback)
-    else:
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x4, readback)
-        writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x4, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRESWHENLOCKED"), 0x4, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLRES"), 0x4, readback)
 
     #[0x023] CLKGPLLIntCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGPLLINTCURWHENLOCKED"), 0x5, readback)
@@ -140,13 +132,13 @@ def configLPGBT(readback):
 
     #[0x028] CLKGFLLIntCur
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFLLINTCURWHENLOCKED"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFLLINTCUR"), 0xF, readback) # or 0x5 from register map?
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFLLINTCUR"), 0x5, readback)
 
     #[0x029] CLKGFFCAP
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CDRCOCONNECTCDR"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCAPBANKOVERRIDEENABLE"), 0x0, readback)
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAPWHENLOCKED"), 0x0, readback) # or 0x3 from register map?
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAP"), 0x0, readback) # or 0x3 from register map?
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAPWHENLOCKED"), 0x3, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGFEEDFORWARDCAP"), 0x3, readback)
 
     #[0x02a] CLKGCntOverride
     writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.CLKGCOOVERRIDEVC"), 0x0, readback)
@@ -339,14 +331,15 @@ def configure_downlink(readback):
     #2.2.6. Downlink: Frame aligner settings (if high speed receiver is used)
     # downlink
 
+    # The following 4 register values might change for lpGBT_v1
     # [0x02f] FAMaxHeaderFoundCount
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNT"), 0xA, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNT"), 0x0A, readback)
     # [0x030] FAMaxHeaderFoundCountAfterNF
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNTAFTERNF"), 0xA, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERFOUNDCOUNTAFTERNF"), 0x1A, readback)
     # [0x031] FAMaxHeaderNotFoundCount
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERNOTFOUNDCOUNT"), 0xA, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXHEADERNOTFOUNDCOUNT"), 0x2A, readback)
     # [0x032] FAFAMaxSkipCycleCountAfterNF
-    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXSKIPCYCLECOUNTAFTERNF"), 0xA, readback)
+    writeReg(getNode("LPGBT.RWF.CLOCKGENERATOR.FAMAXSKIPCYCLECOUNTAFTERNF"), 0x3A, readback)
 
     # [0x037] EQConfig
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQATTENUATION"), 0x3, readback)

@@ -206,7 +206,7 @@
 
                 <!-- [0x02d] CLKGLFConfig0 -->
                 <node id="CLKGLOCKFILTERENABLE" address="0x0D" permission="rw"
-                    description="Enables the lock filter on the instant lock signal; only in TX mode  disable, 1 enable; default: 1"
+                    description="Enables the lock filter on the instant lock signal; only in TX mode, 0 disable, 1 enable; default: 1"
                     mask="0x80" />
                 <node id="CLKGCAPBANKSELECT_8" address="0x0D" permission="rw"
                     description="Selects the capacitor bank value for the VCO [check attached table] (only when CLKGCapBankOverrideEnable is 1); default: n/a"
@@ -1255,10 +1255,10 @@
 
                 <!-- [0x0ef] POWERUP2 -->
                 <node id="DLLCONFIGDONE" address="0x2" permission="rw"
-                    description="When asserted, the power up state machine is allowed to proceed to PLL initialization. Please refer Configuration for more details."
+                    description="When asserted, the power up state machine is allowed to proceed to initialization of components containing DLLs (ePortRx, phase-shifter). Please refer Configuration for more details."
                     mask="0x4" />
                 <node id="PLLCONFIGDONE" address="0x2" permission="rw"
-                    description="When asserted, the power up state machine is allowed to proceed to initialization of components containing DLLs (ePortRx, phase-shifter). Please refer Configuration for more details."
+                    description="When asserted, the power up state machine is allowed to proceed to PLL initialization. Please refer Configuration for more details."
                     mask="0x2" />
                 <node id="UPDATEENABLE" address="0x2" permission="rw"
                     description="When asserted, the power up state machine copies the values from fuses to configuration registers during power. Please refer Configuration for more details."

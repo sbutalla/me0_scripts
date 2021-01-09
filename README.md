@@ -36,7 +36,7 @@ and likewise configure the slave/sub lpgbt with Cheesecake:
 
 Check the status of the lpgbt with Cheesecake:
 
-```python3 status.py -s chc```
+```python3 lpgbt_status.py -s chc```
 
 ## Fusing
 

@@ -32,9 +32,8 @@ def main(system, boss, fusing, input_config_file, input_register, input_data, us
         fuse_user_id(system, boss, user_id)
     print ("")
 
-    # Fusing 0xEF (dllConfigDone, pllConfigDone, updateEnable) - uncomment only one of the following two lines
-    #fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1 - Complete configuration fused, cannot configure with IC/EC
-    #fuse_register(system, boss, "0xEF", "0x03") #dllConfigDone=0, pllConfigDone=1, updateEnable=1 - Only pllConfigDone is set, can configure using IC/EC, need to set dllConfigDone through IC/EC
+    # Fusing 0xEF (dllConfigDone, pllConfigDone, updateEnable)
+    fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1
 
     # Write the fuse values of registers in text file
     if boss:
