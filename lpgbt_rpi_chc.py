@@ -105,7 +105,7 @@ class lpgbt_rpi_chc:
                 print("ERROR: I/O error in I2C connection again, check RPi or CHC connection")
                 success = 0
         except Exception as e:
-            print("ERROR: " + e)
+            print("ERROR: " + str(e))
             success = 0
         return success
 
@@ -127,7 +127,7 @@ class lpgbt_rpi_chc:
                 print("ERROR: I/O error in I2C connection again, check RPi or CHC connection")
                 success = 0
         except Exception as e:
-            print("ERROR: " + e)
+            print("ERROR: " + str(e))
             success = 0
         if not success:
             return success, data
@@ -143,7 +143,7 @@ class lpgbt_rpi_chc:
                 print("ERROR: I/O error in I2C connection again, check RPi or CHC connection")
                 success = 0
         except Exception as e:
-            print("ERROR: " + e)
+            print("ERROR: " + str(e))
             success = 0
 
         return success, data

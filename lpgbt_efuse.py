@@ -111,10 +111,22 @@ def write_fuse_block_data(system, adr, data, fullblock=False):
        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA3"), 0)
 
     if (fullblock):
-        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA0"), 0xff & (data >> 0))
-        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA1"), 0xff & (data >> 8))
-        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA2"), 0xff & (data >> 16))
-        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA3"), 0xff & (data >> 24))
+        data0 = 0xff & (data >> 0)
+        data1 = 0xff & (data >> 8)
+        data2 = 0xff & (data >> 16)
+        data3 = 0xff & (data >> 24)
+        if "L" in str(hex(data0)):
+            data0 = int(hex(data0).rstrip("L"),16)
+        if "L" in str(hex(data1)):
+            data1 = int(hex(data1).rstrip("L"),16)
+        if "L" in str(hex(data2)):
+            data2 = int(hex(data2).rstrip("L"),16)
+        if "L" in str(hex(data3)):
+            data3 = int(hex(data3).rstrip("L"),16)
+        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA0"), data0)
+        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA1"), data1)
+        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA2"), data2)
+        ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA3"), data3)
     else:
         if (fuse_block_subadr==0):
             ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA0"), data)
