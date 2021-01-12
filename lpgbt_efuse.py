@@ -162,8 +162,8 @@ def blow_fuse(system, boss):
     writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x0, 0)
 
     # Start 2.5V
-    lpgbt_efuse(boss, 1)
     t0_efusepower = time()
+    lpgbt_efuse(boss, 1)
     sleep (0.001) # 1 ms for the 2.5V to turn on
 
     # Write 1 to Fuseblow
@@ -252,7 +252,7 @@ def check_fuse_block_data(system, adr, data, fullblock=False):
 
     print ("Checking FUSE Address = 0X%03X, Block = 0X%03X Sub = %d, Valid = %d, Data_Expect = 0X%X, Data_read = 0X%X\n" % (adr, fuse_block_adr, fuse_block_subadr, valid, data, read_dword))
     if (system!="dryrun" and data!=read_dword):
-        print ("ERROR: Mismatch in expected and read data from  EFUSE")
+        print ("ERROR: Mismatch in expected and read data from EFUSE")
         write_fuse_magic(0)
         rw_terminate()
 
