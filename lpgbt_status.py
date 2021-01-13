@@ -14,7 +14,8 @@ def main(system, boss):
     print ("Initialization Done")
 
     # Readback rom register to make sure communication is OK
-    check_rom_readback()
+    if system!="dryrun":
+        check_rom_readback()
 
     # Checking Status of Registers
 
@@ -206,7 +207,7 @@ def main(system, boss):
         if (i==14):  name="Temperature sensor (internal signal)"
         if (i==15):  name="VREF/2 (internal signal)"
 
-        read = read_adc(i)
+        read = read_adc(i, system)
         print ("\tch %X: 0x%03X = %f (%s)" % (i, read, read/1024., name))
 
     # Termination
@@ -242,7 +243,7 @@ def powerdown_adc():
     writeReg(getNode("LPGBT.RW.ADC.VDDANMONENA"), 0x0, 0) # disable dividers
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x0, 0) # vref disable
 
-def read_adc(channel):
+def read_adc(channel, system):
     # ADCInPSelect[3:0]	|  Input
     # ------------------|----------------------------------------
     # 4'd0	        |  ADC0 (external pin)
@@ -277,7 +278,10 @@ def read_adc(channel):
     done = 0
     while (done==0):
         #done = 0x1 & (mpeek(0x1b8) >> 6) # "LPGBT.RO.ADC.ADCDONE"
-        done = readReg(getNode("LPGBT.RO.ADC.ADCDONE"))
+        if system!="dryrun":
+            done = readReg(getNode("LPGBT.RO.ADC.ADCDONE"))
+        else:
+            done=1
 
     #val  = mpeek(0x1b9)               # LPGBT.RO.ADC.ADCVALUEL
     val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
@@ -294,22 +298,24 @@ if __name__ == '__main__':
 
     # Parsing arguments
     parser = argparse.ArgumentParser(description='Checking Status of LpGBT Configuration for ME0 Optohybrid')
-    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle")
+    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     args = parser.parse_args()
 
     if args.system == "chc":
-        print ("Using Rpi CHeeseCake for checking configuration")
+        print ("Using Rpi CHeeseCake for configuration")
     elif args.system == "backend":
-        #print ("Using Backend for checking configuration")
-        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        #print ("Using Backend for configuration")
+        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
         sys.exit()
     elif args.system == "dongle":
-        #print ("Using USB Dongle for checking configuration")
-        print ("Only chc (Rpi Cheesecake) supported at the moment")
+        #print ("Using USB Dongle for configuration")
+        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
         sys.exit()
+    elif args.system == "dryrun":
+        print ("Dry Run - not actually configuring lpGBT")
     else:
-        print ("Only valid options: chc, backend, dongle")
+        print ("Only valid options: chc, backend, dongle, dryrun")
         sys.exit()
 
     boss = None

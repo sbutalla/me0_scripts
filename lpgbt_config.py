@@ -17,7 +17,7 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
         check_rom_readback()
 
     # Optionally reset LPGBT
-    if (reset_before_config):
+    if (reset_before_config and not readback):
         reset_lpgbt(readback)
 
     if input_config_file is not None:
@@ -460,8 +460,8 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-i", "--input", action="store", dest="input_config_file", help="input_config_file = .txt or .xml file")
-    parser.add_argument("-r", "--reset_before_config", action="store", dest="reset_before_config", default=0, help="reset_before_config = 1 or 0 (default)")
-    parser.add_argument("-m", "--minimal", action="store", dest="minimal", default=0, help="minimal = Set 1 for a minimal configuration, 0 by default")
+    parser.add_argument("-r", "--reset_before_config", action="store", dest="reset_before_config", default="0", help="reset_before_config = 1 or 0 (default)")
+    parser.add_argument("-m", "--minimal", action="store", dest="minimal", default="0", help="minimal = Set 1 for a minimal configuration, 0 by default")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -499,16 +499,16 @@ if __name__ == '__main__':
     if args.input_config_file is not None:
         print ("Configruing lpGBT from file: " + args.input_config_file)
 
-    if args.reset_before_config not in [0,1]:
+    if args.reset_before_config not in ["0","1"]:
         print ("Only 0 or 1 allowed for reset_before_config")
         sys.exit()
-    if args.minimal not in [0,1]:
+    if args.minimal not in ["0","1"]:
         print ("Only 0 or 1 allowed for minimal")
         sys.exit()
 
     # Configuring LPGBT
     readback = 0
-    main(args.system, boss, args.input_config_file, args.reset_before_config, args.minimal, readback)
+    main(args.system, boss, args.input_config_file, int(args.reset_before_config), int(args.minimal), readback)
 
     print ("==================================")
     print ("Checking register configuration...")
@@ -517,5 +517,5 @@ if __name__ == '__main__':
     # Checking LPGBT configuration
     readback = 1
     if (args.input_config_file is None):
-        main(args.system, boss, args.input_config_file, args.reset_before_config, args.minimal, readback)
+        main(args.system, boss, args.input_config_file, int(args.reset_before_config), int(args.minimal), readback)
 

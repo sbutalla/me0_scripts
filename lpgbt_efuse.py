@@ -10,7 +10,7 @@ for i in range(240):
     fuse_list[i] = 0x00
 n_rw_fuse = (0xEF+1) # number of registers in LPGBT rwf block
 
-def main(system, boss, fusing, input_config_file, input_register, input_data, user_id):
+def main(system, boss, fusing, input_config_file, input_register, input_data, user_id, complete):
     print("Parsing xml file...")
     parseXML()
     print("Parsing complete...")
@@ -26,14 +26,14 @@ def main(system, boss, fusing, input_config_file, input_register, input_data, us
     # Fusing of registers
     if fusing == "input_file":
         fuse_from_file(system, boss, input_config_file)
+        if complete==1:
+            print ("Fusing Complete Configuration: 0xEF (dllConfigDone, pllConfigDone, updateEnable)")
+            fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1
     elif fusing == "register":
         fuse_register(system, boss, input_register, input_data)
     elif fusing == "user_id":
         fuse_user_id(system, boss, user_id)
     print ("")
-
-    # Fusing 0xEF (dllConfigDone, pllConfigDone, updateEnable)
-    fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1
 
     # Write the fuse values of registers in text file
     if boss:
@@ -319,6 +319,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--register", action="store", dest="register", help="register = Enter a 16 bit register address in hex format")
     parser.add_argument("-d", "--data", action="store", dest="data", help="data = Enter a 8 bit data for the register in hex format")
     parser.add_argument("-u", "--user_id", action="store", dest="user_id", help="user_id = Enter a 32 bit number in hex format")
+    parser.add_argument("-c", "--complete", action="store", dest="complete", default = "0", help="complete = Set to 1 to fuse complete configuration with by fusing dllConfigDone, pllConfigDone, updateEnable")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -409,7 +410,7 @@ if __name__ == '__main__':
         sys.exit()
 
     # Fusing lpGBT
-    main(args.system, boss, args.fusing, args.input_config_file, args.register, args.data, args.user_id)
+    main(args.system, boss, args.fusing, args.input_config_file, args.register, args.data, args.user_id, int(args.complete))
 
 
 
