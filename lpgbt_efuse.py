@@ -187,7 +187,7 @@ def blow_fuse(system, boss):
 
     err = readReg(getNode("LPGBT.RO.FUSE_READ.FUSEBLOWERROR"))
     # Write 0 to Fuseblow
-    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x0, 0) # fuse blow
+    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x0, 0) # deassert fuse blow
 
     if err:
         print ("ERROR: \tFuse blown, err=%d" % err)
