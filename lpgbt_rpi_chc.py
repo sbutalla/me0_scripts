@@ -78,7 +78,7 @@ class lpgbt_rpi_chc:
                 pass
 
     def terminate(self):
-        # Setting GPIO17 to Low to deselect both channels for I2C switch, and cleans up rpi
+        # Setting GPIO17 to Low to deselect both channels for I2C switch
         reset_channel = 17
         reset_success = 0
         try:
@@ -171,4 +171,25 @@ class lpgbt_rpi_chc:
         except:
             print("ERROR: Unable to arm/disarm fuse, check RPi connection")
         return efuse_success
+
+    def fuse_status(self, boss):
+        # Return the status of the EFUSE GPIO
+        efuse_pwr = 0
+        if boss:
+            efuse_pwr = 12
+        else:
+            efuse_pwr = 19
+
+        efuse_success = 0
+        status = 0
+        try:
+            GPIO.setup(efuse_pwr, GPIO.IN)
+            status = GPIO.input(efuse_pwr)
+            efuse_success = 1
+        except:
+            print("ERROR: Unable to check status of fuse, check RPi connection")
+        return efuse_success, status
+
+
+
 

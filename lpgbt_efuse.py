@@ -11,13 +11,6 @@ for i in range(240):
 n_rw_fuse = (0xEF+1) # number of registers in LPGBT rwf block
 
 def main(system, boss, fusing, input_config_file, input_register, input_data, user_id, complete):
-    print("Parsing xml file...")
-    parseXML()
-    print("Parsing complete...")
-
-    # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(system, boss)
-    print("Initialization Done\n")
 
     # Readback rom register to make sure communication is OK
     if system != "dryrun":
@@ -41,10 +34,6 @@ def main(system, boss, fusing, input_config_file, input_register, input_data, us
     else:
         lpgbt_write_fuse_file("fuse_sub.txt")
 
-    # Termination
-    if system=="chc":
-        chc_terminate()
-
 def check_rom_readback():
     romreg=readReg(getNode("LPGBT.RO.ROMREG"))
     if (romreg != 0xA5):
@@ -61,12 +50,14 @@ def fuse_from_file(system, boss, filename):
     f.close()
     data = 0x00
 
-    write_fuse_magic(1)
-
     print("Fusing from file \"%s\"" % filename)
-    en = "No"
-    while (en != "yes"):
-        en = input("Please type \"yes\" to continue: ")
+    en = "no"
+    en = input("Please type \"yes\" to continue: ")
+    if (en != "yes"):
+        print ("Fusing not done, exiting")
+        rw_terminate()
+
+    write_fuse_magic(1)
 
     for reg_addr in range(0, len(config)):
         # Maximum fusible register
@@ -264,9 +255,11 @@ def fuse_register(system, boss, input_register, input_data):
     else:
         print ("Fusing Sub lpGBT, register: " + str(hex(input_register)) + ", data: " + str(hex(input_data)))
 
-    en="No"
-    while (en!="yes"):
-        en = input("Please type \"yes\" to continue: ")
+    en = "no"
+    en = input("Please type \"yes\" to continue: ")
+    if (en != "yes"):
+        print ("Fusing not done, exiting")
+        rw_terminate()
 
     write_fuse_magic(1)
     write_blow_and_check_fuse(system, input_register, input_data, False)
@@ -279,9 +272,11 @@ def fuse_user_id(system, boss, user_id):
     else:
         print ("Fusing Sub lpGBT with USER ID: " + str(hex(user_id)))
 
-    en="No"
-    while (en!="yes"):
-        en = input("Please type \"yes\" to continue: ")
+    en = "no"
+    en = input("Please type \"yes\" to continue: ")
+    if (en != "yes"):
+        print ("Fusing not done, exiting")
+        rw_terminate()
 
     write_fuse_magic(1)
 
@@ -319,7 +314,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--register", action="store", dest="register", help="register = Enter a 16 bit register address in hex format")
     parser.add_argument("-d", "--data", action="store", dest="data", help="data = Enter a 8 bit data for the register in hex format")
     parser.add_argument("-u", "--user_id", action="store", dest="user_id", help="user_id = Enter a 32 bit number in hex format")
-    parser.add_argument("-c", "--complete", action="store", dest="complete", default = "0", help="complete = Set to 1 to fuse complete configuration with by fusing dllConfigDone, pllConfigDone, updateEnable")
+    parser.add_argument("-c", "--complete", action="store", dest="complete", default = "0", help="complete = Set to 1 to fuse complete configuration by fusing dllConfigDone, pllConfigDone, updateEnable")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -409,10 +404,27 @@ if __name__ == '__main__':
         print ("Invalid option for fusing")
         sys.exit()
 
+    # Parsing Registers XML File
+    print("Parsing xml file...")
+    parseXML()
+    print("Parsing complete...")
+
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(args.system, boss)
+    print("Initialization Done\n")
+
     # Fusing lpGBT
-    main(args.system, boss, args.fusing, args.input_config_file, args.register, args.data, args.user_id, int(args.complete))
+    try:
+        main(args.system, boss, args.fusing, args.input_config_file, args.register, args.data, args.user_id, int(args.complete))
+    except KeyboardInterrupt:
+        print ("\nKeyboard Interrupt encountered")
+        rw_terminate()
+    except EOFError:
+        print ("\nEOF Error")
+        rw_terminate()
 
-
+    # Termination
+    rw_terminate()
 
 
 

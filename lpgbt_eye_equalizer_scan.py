@@ -7,14 +7,6 @@ import argparse
 
 def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, boss):
 
-    print ("Parsing xml file...")
-    parseXML()
-    print ("Parsing complete...")
-
-    # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(system, boss)
-    print ("Initialization Done")
-
     # Readback rom register to make sure communication is OK
     if system!="dryrun":
         check_rom_readback()
@@ -168,10 +160,6 @@ def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, bos
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES2"), 0x0, 0)
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES3"), 0x0, 0)
 
-    # Termination
-    if system=="chc":
-        chc_terminate()
-
 def check_rom_readback():
     romreg=readReg(getNode("LPGBT.RO.ROMREG"))
     if (romreg != 0xA5):
@@ -257,4 +245,24 @@ if __name__ == '__main__':
             print ("Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3")
             sys.exit()
 
-    main(args.system, int(args.count,16), args.eq_attn, args.eq_cap, args.eq_res3, args.eq_res2, args.eq_res1, args.eq_res0, boss)
+    # Parsing Registers XML File
+    print("Parsing xml file...")
+    parseXML()
+    print("Parsing complete...")
+
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(args.system, boss)
+    print("Initialization Done\n")
+
+    try:
+        main(args.system, int(args.count,16), args.eq_attn, args.eq_cap, args.eq_res3, args.eq_res2, args.eq_res1, args.eq_res0, boss)
+    except KeyboardInterrupt:
+        print ("\nKeyboard Interrupt encountered")
+        rw_terminate()
+    except EOFError:
+        print ("\nEOF Error")
+        rw_terminate()
+
+    # Termination
+    rw_terminate()
+

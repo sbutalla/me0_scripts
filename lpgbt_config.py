@@ -4,13 +4,6 @@ import sys
 import argparse
 
 def main(system, boss, input_config_file, reset_before_config, minimal, readback=0):
-    print ("Parsing xml file...")
-    parseXML()
-    print ("Parsing complete...")
-
-    # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(system, boss)
-    print ("Initialization Done")
 
     # Readback rom register to make sure communication is OK
     if system!="dryrun":
@@ -82,10 +75,6 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
             lpgbt_write_config_file("config_boss.txt")
         else:
             lpgbt_write_config_file("config_sub.txt")
-
-    # Termination
-    if system=="chc":
-        chc_terminate()
 
 def configLPGBT(readback):
     print ("Configuring Clock Generator, Line Drivers, Power Good for CERN configuration...")
@@ -506,9 +495,25 @@ if __name__ == '__main__':
         print ("Only 0 or 1 allowed for minimal")
         sys.exit()
 
+    # Parsing Registers XML File
+    print("Parsing xml file...")
+    parseXML()
+    print("Parsing complete...")
+
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(args.system, boss)
+    print("Initialization Done\n")
+
     # Configuring LPGBT
     readback = 0
-    main(args.system, boss, args.input_config_file, int(args.reset_before_config), int(args.minimal), readback)
+    try:
+        main(args.system, boss, args.input_config_file, int(args.reset_before_config), int(args.minimal), readback)
+    except KeyboardInterrupt:
+        print ("Keyboard Interrupt encountered")
+        rw_terminate()
+    except EOFError:
+        print ("\nEOF Error")
+        rw_terminate()
 
     print ("==================================")
     print ("Checking register configuration...")
@@ -517,5 +522,14 @@ if __name__ == '__main__':
     # Checking LPGBT configuration
     readback = 1
     if (args.input_config_file is None):
-        main(args.system, boss, args.input_config_file, int(args.reset_before_config), int(args.minimal), readback)
+        try:
+            main(args.system, boss, args.input_config_file, int(args.reset_before_config), int(args.minimal), readback)
+        except KeyboardInterrupt:
+            print ("\nKeyboard Interrupt encountered")
+            rw_terminate()
+        except EOFError:
+            print ("\nEOF Error")
+            rw_terminate()
 
+    # Termination
+    rw_terminate()

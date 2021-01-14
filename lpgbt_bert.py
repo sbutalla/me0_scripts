@@ -70,14 +70,6 @@ BERT_source_fine["DLFRAME_FIXED"] = 0x7 # Check the data against constant patter
 
 def main(system, bert_source, time, boss):
 
-    print ("Parsing xml file...")
-    parseXML()
-    print ("Parsing complete...")
-
-    # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(system, boss)
-    print ("Initialization Done")
-
     # Readback rom register to make sure communication is OK
     if system!="dryrun":
         check_rom_readback()
@@ -192,10 +184,6 @@ def main(system, bert_source, time, boss):
         writeReg(bert_fine_node, 0x0, 0)
         writeReg(bert_coarse_node, 0x0, 0)
 
-    # Termination
-    if system=="chc":
-        chc_terminate()
-
 def check_rom_readback():
     romreg=readReg(getNode("LPGBT.RO.ROMREG"))
     if (romreg != 0xA5):
@@ -258,4 +246,23 @@ if __name__ == '__main__':
         print ("Invalid BERT measurement time (See lpGBT manual Table 14.5 for options)")
         sys.exit()
 
-    main(args.system, args.bert_source, args.time, boss)
+    # Parsing Registers XML File
+    print("Parsing xml file...")
+    parseXML()
+    print("Parsing complete...")
+
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(args.system, boss)
+    print("Initialization Done\n")
+
+    try:
+        main(args.system, args.bert_source, args.time, boss)
+    except KeyboardInterrupt:
+        print ("\nKeyboard Interrupt encountered")
+        rw_terminate()
+    except EOFError:
+        print ("\nEOF Error")
+        rw_terminate()
+
+    # Termination
+    rw_terminate()

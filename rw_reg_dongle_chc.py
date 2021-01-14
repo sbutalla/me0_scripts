@@ -165,17 +165,42 @@ def rw_initialize(system_val, boss):
 
 def lpgbt_efuse(boss, enable):
     fuse_success = 1
+    if boss:
+        lpgbt_type = "Boss"
+    else:
+        lpgbt_type = "Sub"
     if system=="chc":
         fuse_success = gbt_rpi_chc.fuse_arm_disarm(boss, enable)
         if not fuse_success:
-            print("ERROR: Problem in fusing")
+            print("ERROR: Problem in fusing for: " + lpgbt_type)
             fuse_off = gbt_rpi_chc.fuse_arm_disarm(boss, 0)
             if not fuse_off:
-                print ("FUSE Power cannot be turned OFF")
-                print ("Turn OFF 2.5V Power Supply Immediately")
+                print ("ERROR: EFUSE Power cannot be turned OFF for: " + lpgbt_type)
+                print ("Turn OFF 2.5V fusing Power Supply or Switch Immediately for: " + lpgbt_type)
             rw_terminate()
 
 def chc_terminate():
+    # Check EFUSE status and disarm EFUSE if necessary
+    efuse_success_boss, efuse_status_boss = gbt_rpi_chc.fuse_status(1) # boss
+    efuse_success_sub, efuse_status_sub = gbt_rpi_chc.fuse_status(0) # sub
+    if efuse_success_boss and efuse_success_sub:
+        if (efuse_status_boss):
+            print ("EFUSE for Boss was ARMED for Boss")
+            fuse_off = gbt_rpi_chc.fuse_arm_disarm(1, 0) # boss
+            if not fuse_off:
+                print ("ERROR: EFUSE Power cannot be turned OFF for Boss")
+                print ("Turn OFF 2.5V fusing Power Supply or Switch Immediately for Boss")
+        if (efuse_status_sub):
+            print ("EFUSE for Sub was ARMED for Sub")
+            fuse_off = gbt_rpi_chc.fuse_arm_disarm(0, 0) # sub
+            if not fuse_off:
+                print ("ERROR: EFUSE Power cannot be turned OFF for Sub")
+                print ("Turn OFF 2.5V fusing Power Supply or Switch Immediately for Sub")
+    else:
+        print ("ERROR: Problem in reading EFUSE status")
+        print ("Turn OFF 2.5V fusing Power Supply or Switch Immediately (if they were ON) for both Boss and Sub")
+
+    # Terminating RPi
     terminate_success = gbt_rpi_chc.terminate()
     if not terminate_success:
         print("ERROR: Problem in RPi_CHC termination")

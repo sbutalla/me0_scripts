@@ -5,14 +5,6 @@ import argparse
 
 def main(system, boss):
 
-    print ("Parsing xml file...")
-    parseXML()
-    print ("Parsing complete...")
-
-    # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(system, boss)
-    print ("Initialization Done")
-
     # Readback rom register to make sure communication is OK
     if system!="dryrun":
         check_rom_readback()
@@ -210,10 +202,6 @@ def main(system, boss):
         read = read_adc(i, system)
         print ("\tch %X: 0x%03X = %f (%s)" % (i, read, read/1024., name))
 
-    # Termination
-    if system=="chc":
-        chc_terminate()
-
 def check_rom_readback():
     romreg=readReg(getNode("LPGBT.RO.ROMREG"))
     if (romreg != 0xA5):
@@ -334,6 +322,26 @@ if __name__ == '__main__':
     if boss is None:
         sys.exit()
 
-    main(args.system, boss)
+    # Parsing Registers XML File
+    print("Parsing xml file...")
+    parseXML()
+    print("Parsing complete...")
+
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(args.system, boss)
+    print("Initialization Done\n")
+
+    try:
+        main(args.system, boss)
+    except KeyboardInterrupt:
+        print ("\nKeyboard Interrupt encountered")
+        rw_terminate()
+    except EOFError:
+        print ("\nEOF Error")
+        rw_terminate()
+
+    # Termination
+    rw_terminate()
+
 
 
