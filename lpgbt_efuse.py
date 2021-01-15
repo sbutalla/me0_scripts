@@ -20,7 +20,7 @@ def main(system, boss, fusing, input_config_file, input_register, input_data, us
     if fusing == "input_file":
         fuse_from_file(system, boss, input_config_file)
         if complete==1:
-            print ("Fusing Complete Configuration: 0xEF (dllConfigDone, pllConfigDone, updateEnable)")
+            print ("\nFusing Complete Configuration: 0xEF (dllConfigDone, pllConfigDone, updateEnable)")
             fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1
     elif fusing == "register":
         fuse_register(system, boss, input_register, input_data)
@@ -52,7 +52,7 @@ def fuse_from_file(system, boss, filename):
 
     print("Fusing from file \"%s\"" % filename)
     en = "no"
-    en = input("Please type \"yes\" to continue: ")
+    en = raw_input("Please type \"yes\" to continue: ")
     if (en != "yes"):
         print ("Fusing not done, exiting")
         rw_terminate()
@@ -256,7 +256,7 @@ def fuse_register(system, boss, input_register, input_data):
         print ("Fusing Sub lpGBT, register: " + str(hex(input_register)) + ", data: " + str(hex(input_data)))
 
     en = "no"
-    en = input("Please type \"yes\" to continue: ")
+    en = raw_input("Please type \"yes\" to continue: ")
     if (en != "yes"):
         print ("Fusing not done, exiting")
         rw_terminate()
@@ -273,7 +273,7 @@ def fuse_user_id(system, boss, user_id):
         print ("Fusing Sub lpGBT with USER ID: " + str(hex(user_id)))
 
     en = "no"
-    en = input("Please type \"yes\" to continue: ")
+    en = raw_input("Please type \"yes\" to continue: ")
     if (en != "yes"):
         print ("Fusing not done, exiting")
         rw_terminate()
