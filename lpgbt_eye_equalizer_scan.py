@@ -88,10 +88,10 @@ def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, bos
                                 writeReg(eomvofsel, y_axis, 0)
 
                                 for x_axis in range (xmin,xmax):
-                                    if (x_axis >= 32):
-                                        x_axis_wr = 63-(x_axis-32)
-                                    else:
-                                        x_axis_wr = x_axis
+                                    #if (x_axis >= 32):
+                                    #    x_axis_wr = 63-(x_axis-32)
+                                    #else:
+                                    x_axis_wr = x_axis
 
                                     # update xaxis
                                     writeReg(eomphaseselreg, x_axis_wr, 0)
@@ -132,7 +132,7 @@ def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, bos
                             sys.stdout.write("\n")
 
                             print ("Counter value max=%d \n" % cntvalmax)
-                            f = open("eye_scan_results/eye_data_eqa_"+eq_attn_setting+"_eqc_"+eq_cap_setting+"_eqr3_"+eq_res3_setting+"_eqr2_"+eq_res2_setting+"_eqr1_"+eq_res1_setting+"_eqr0_"+eq_res0_setting+".py", "w+")
+                            f = open("eye_scan_results/eye_data_eqa_"+eq_attn_setting+"_eqc_"+eq_cap_setting+"_eqr3_"+eq_res3_setting+"_eqr2_"+eq_res2_setting+"_eqr1_"+eq_res1_setting+"_eqr0_"+eq_res0_setting+".txt", "w+")
                             f.write("eye_data=[\n")
                             for y  in range (ymin,ymax):
                                 f.write("    [")

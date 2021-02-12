@@ -61,10 +61,10 @@ def main(system, count, boss):
         writeReg(eomvofsel, y_axis, 0)
 
         for x_axis in range (xmin,xmax):
-            if (x_axis >= 32):
-                x_axis_wr = 63-(x_axis-32)
-            else:
-                x_axis_wr = x_axis
+            #if (x_axis >= 32):
+            #    x_axis_wr = 63-(x_axis-32)
+            #else:
+            x_axis_wr = x_axis
 
             # update xaxis
             writeReg(eomphaseselreg, x_axis_wr, 0)
@@ -108,7 +108,7 @@ def main(system, count, boss):
     print ("Counter value max=%d" % cntvalmax)
     if not os.path.isdir("eye_scan_results"):
         os.mkdir("eye_scan_results")
-    f = open ("eye_scan_results/eye_data.py", "w+")
+    f = open ("eye_scan_results/eye_data.txt", "w+")
     f.write ("eye_data=[\n")
     for y  in range (ymin,ymax):
         f.write ("    [")
