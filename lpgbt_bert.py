@@ -177,7 +177,7 @@ def main(system, bert_source, time, boss):
             writeReg(bert_start_node, 0x0, 0)
 
             # Calculate Bit Error Rate
-            ber = bert_result / bits_checked
+            ber = float(bert_result) / float(bits_checked)
             print ("Result for coarse BERT source: " + bert + " and fine BERT source: " + bert_fine)
             print ("BER = " + str(ber) + "\n")
 
