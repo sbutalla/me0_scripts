@@ -64,6 +64,8 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
     writeReg(getNode("LPGBT.RWF.POWERUP.PLLCONFIGDONE"), 0x1, readback)
 
     # Check READY status
+    if not readback:
+        sleep(1) # Waiting for 1 sec for the lpGBT configuration to be complete
     pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
     print ("PUSMSTATE register value: " + str(pusmstate))
     if (pusmstate==18):
