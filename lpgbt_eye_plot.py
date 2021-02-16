@@ -47,6 +47,9 @@ if __name__ == '__main__':
                     n_open+=1
         frac_open = float(n_open)/float(n_total)
         print ("Fraction of eye open = " + str(frac_open) + "\n")
+        file_output = open(os.path.join(eye_data_dir, eye_data_filepath.split(".txt")[0]+"_out.txt"), "w")
+        file_output.write("Fraction of eye open = " + str(frac_open) + "\n")
+        file_output.close()
 
         (fig, axs) = plt.subplots(1, 1, figsize=(10, 8))
         print ("fig type = " + str(type(fig)))
