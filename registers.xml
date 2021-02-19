@@ -427,6 +427,108 @@
 
             <!-- Masters  -->
             <node id="I2C_MASTERS" address="0x3f" description="">
+            
+                <!-- [0x03f] I2CMTransConfig -->
+                <node id="I2CMTransEnable" address="0x0" permission="rw"
+                    description=""
+                    mask="0x80" />
+                <node id="I2CMTransChannel" address="0x0" permission="rw"
+                    description=""
+                    mask="0x60" />
+                <node id="I2CMTransAddressExt" address="0x0" permission="rw"
+                    description=""
+                    mask="0x1c" />
+            
+                <!-- [0x040] I2CMTransAddress -->
+                <node id="I2CMTransAddress" address="0x1" permission="rw"
+                    description=""
+                    mask="0x7f" />
+                    
+                <!-- [0x041] I2CMTransCtrl -->
+                <node id="I2CMTransCtrl" address="0x2" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x042] I2CMTransData0 -->
+                <node id="I2CMTransData0" address="0x3" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x043] I2CMTransData1 -->
+                <node id="I2CMTransData1" address="0x4" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x044] I2CMTransData2 -->
+                <node id="I2CMTransData2" address="0x5" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x045] I2CMTransData3 -->
+                <node id="I2CMTransData3" address="0x6" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x046] I2CMTransData4 -->
+                <node id="I2CMTransData4" address="0x7" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x047] I2CMTransData5 -->
+                <node id="I2CMTransData5" address="0x8" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x048] I2CMTransData6 -->
+                <node id="I2CMTransData6" address="0x9" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x049] I2CMTransData7 -->
+                <node id="I2CMTransData7" address="0xa" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x04a] I2CMTransData8 -->
+                <node id="I2CMTransData8" address="0xb" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x04b] I2CMTransData9 -->
+                <node id="I2CMTransData9" address="0xc" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x04c] I2CMTransData10 -->
+                <node id="I2CMTransData10" address="0xd" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x04d] I2CMTransData11 -->
+                <node id="I2CMTransData11" address="0xe" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x04e] I2CMTransData12 -->
+                <node id="I2CMTransData12" address="0xf" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x04f] I2CMTransData13 -->
+                <node id="I2CMTransData13" address="0x10" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x050] I2CMTransData14 -->
+                <node id="I2CMTransData14" address="0x11" permission="rw"
+                    description=""
+                    mask="0xff" />
+                    
+                <!-- [0x051] I2CMTransData15 -->
+                <node id="I2CMTransData15" address="0x12" permission="rw"
+                    description=""
+                    mask="0xff" />
+
             </node>
 
             <!-- Parallel IO  -->
@@ -2169,7 +2271,326 @@
 
             </node>
 
-            <node id="PROCESS_MONITOR_STATUS" address="0x1a6-0xf0" description="">
+            <node id="I2CREAD" address="0x15f-0x140" description="I2C Read">
+            
+                <!-- [0x15f] I2CM0Ctrl -->
+                <node id="I2CM0CTRL" address="0x0" permission="r"
+                    description="Contents of control register written by user for I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x160] I2CM0Mask -->
+                <node id="I2CM0MASK" address="0x1" permission="r"
+                    description="Contents of mask register written by user for I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x161] I2CM0Status -->
+                <node id="I2CM0STATUS" address="0x2" permission="r"
+                    description="Contents of status register for I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x162] I2CM0TranCnt -->
+                <node id="I2CM0TRANCNT" address="0x3" permission="r"
+                    description="Contents of transaction counter for I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x163] I2CM0ReadByte -->
+                <node id="I2CM0READBYTE" address="0x4" permission="r"
+                    description="Data read from an I2C slave in a single-byte-read for I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x164] I2CM0Read0 -->
+                <node id="I2CM0READ0" address="0x5" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x165] I2CM0Read1 -->
+                <node id="I2CM0READ0" address="0x6" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                   
+                <!-- [0x166] I2CM0Read2 -->
+                <node id="I2CM0READ0" address="0x7" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x167] I2CM0Read3 -->
+                <node id="I2CM0READ0" address="0x8" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x168] I2CM0Read4 -->
+                <node id="I2CM0READ0" address="0x9" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x169] I2CM0Read5 -->
+                <node id="I2CM0READ0" address="0xa" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                   
+                <!-- [0x16a] I2CM0Read6 -->
+                <node id="I2CM0READ0" address="0xb" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x16b] I2CM0Read7 -->
+                <node id="I2CM0READ0" address="0xc" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x16c] I2CM0Read8 -->
+                <node id="I2CM0READ0" address="0xd" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x16d] I2CM0Read9 -->
+                <node id="I2CM0READ0" address="0xe" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                   
+                <!-- [0x16e] I2CM0Read10 -->
+                <node id="I2CM0READ0" address="0xf" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x16f] I2CM0Read11 -->
+                <node id="I2CM0READ0" address="0x10" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                 !-- [0x170] I2CM0Read12 -->
+                <node id="I2CM0READ0" address="0x11" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x171] I2CM0Read13 -->
+                <node id="I2CM0READ0" address="0x12" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                   
+                <!-- [0x172] I2CM0Read14 -->
+                <node id="I2CM0READ0" address="0x13" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+                    
+                <!-- [0x173] I2CM0Read15 -->
+                <node id="I2CM0READ0" address="0x14" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 0"
+                    mask="0xff" />
+              
+                <!-- [0x174] I2CM1Ctrl -->
+                <node id="I2CM1CTRL" address="0x15" permission="r"
+                    description="Contents of control register written by user for I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x175] I2CM1Mask -->
+                <node id="I2CM1MASK" address="0x16" permission="r"
+                    description="Contents of mask register written by user for I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x176] I2CM1Status -->
+                <node id="I2CM1STATUS" address="0x17" permission="r"
+                    description="Contents of status register for I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x177] I2CM1TranCnt -->
+                <node id="I2CM1TRANCNT" address="0x18" permission="r"
+                    description="Contents of transaction counter for I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x178] I2CM1ReadByte -->
+                <node id="I2CM1READBYTE" address="0x19" permission="r"
+                    description="Data read from an I2C slave in a single-byte-read for I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x179] I2CM1Read0 -->
+                <node id="I2CM1READ0" address="0x1a" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x17a] I2CM1Read1 -->
+                <node id="I2CM1READ0" address="0x1b" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                   
+                <!-- [0x17b] I2CM1Read2 -->
+                <node id="I2CM1READ0" address="0x1c" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x17c] I2CM1Read3 -->
+                <node id="I2CM1READ0" address="0x1d" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x17d] I2CM1Read4 -->
+                <node id="I2CM1READ0" address="0x1e" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x17e] I2CM1Read5 -->
+                <node id="I2CM1READ0" address="0x1f" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                   
+                <!-- [0x17f] I2CM1Read6 -->
+                <node id="I2CM1READ0" address="0x20" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x180] I2CM1Read7 -->
+                <node id="I2CM1READ0" address="0x21" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x181] I2CM1Read8 -->
+                <node id="I2CM1READ0" address="0x22" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x182] I2CM1Read9 -->
+                <node id="I2CM1READ0" address="0x23" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                   
+                <!-- [0x183] I2CM1Read10 -->
+                <node id="I2CM1READ0" address="0x24" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x184] I2CM1Read11 -->
+                <node id="I2CM1READ0" address="0x25" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x185] I2CM1Read12 -->
+                <node id="I2CM1READ0" address="0x26" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x186] I2CM1Read13 -->
+                <node id="I2CM1READ0" address="0x27" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                   
+                <!-- [0x187] I2CM1Read14 -->
+                <node id="I2CM1READ0" address="0x28" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                    
+                <!-- [0x188] I2CM1Read15 -->
+                <node id="I2CM1READ0" address="0x29" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 1"
+                    mask="0xff" />
+                  
+                <!-- [0x189] I2CM2Ctrl -->
+                <node id="I2CM2CTRL" address="0x2a" permission="r"
+                    description="Contents of control register written by user for I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x18a] I2CM2Mask -->
+                <node id="I2CM2MASK" address="0x2b" permission="r"
+                    description="Contents of mask register written by user for I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x18b] I2CM2Status -->
+                <node id="I2CM2STATUS" address="0x2c" permission="r"
+                    description="Contents of status register for I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x18c] I2CM2TranCnt -->
+                <node id="I2CM2TRANCNT" address="0x2d" permission="r"
+                    description="Contents of transaction counter for I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x18d] I2CM2ReadByte -->
+                <node id="I2CM2READBYTE" address="0x2e" permission="r"
+                    description="Data read from an I2C slave in a single-byte-read for I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x18e] I2CM2Read0 -->
+                <node id="I2CM2READ0" address="0x2f" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x18f] I2CM2Read1 -->
+                <node id="I2CM2READ0" address="0x30" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                   
+                <!-- [0x190] I2CM2Read2 -->
+                <node id="I2CM2READ0" address="0x31" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x191] I2CM2Read3 -->
+                <node id="I2CM2READ0" address="0x32" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x192] I2CM2Read4 -->
+                <node id="I2CM2READ0" address="0x33" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x193] I2CM2Read5 -->
+                <node id="I2CM2READ0" address="0x34" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                   
+                <!-- [0x194] I2CM2Read6 -->
+                <node id="I2CM2READ0" address="0x35" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x195] I2CM2Read7 -->
+                <node id="I2CM2READ0" address="0x36" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x196] I2CM2Read8 -->
+                <node id="I2CM2READ0" address="0x37" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x197] I2CM2Read9 -->
+                <node id="I2CM2READ0" address="0x38" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                   
+                <!-- [0x198] I2CM2Read10 -->
+                <node id="I2CM2READ0" address="0x39" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x199] I2CM2Read11 -->
+                <node id="I2CM2READ0" address="0x3a" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x19a] I2CM2Read12 -->
+                <node id="I2CM2READ0" address="0x3b" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x19b] I2CM2Read13 -->
+                <node id="I2CM2READ0" address="0x3c" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                   
+                <!-- [0x19c] I2CM2Read14 -->
+                <node id="I2CM2READ0" address="0x3d" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />
+                    
+                <!-- [0x19d] I2CM2Read15 -->
+                <node id="I2CM2READ0" address="0x3e" permission="r"
+                    description="Data read from an I2C slave in a multi-byte-read by I2C Master 2"
+                    mask="0xff" />                   
+
+            </node>
+
+            <node id="PROCESS_MONITOR_STATUS" address="0x1a6-0x140" description="">
 
                 <!-- [0x1a6] ProcessMonitorStatus -->
                 <!-- Process Monitor block status register. -->

@@ -139,7 +139,7 @@ if __name__ == '__main__':
     # Parsing arguments
     parser = argparse.ArgumentParser(description='LPGBT EYE')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
-    parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss allowed")
     parser.add_argument("-c", "--count", action="store", dest="count", default="0x7", help="EOMendOfCountSel[3:0] in hex")
     args = parser.parse_args()
 
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 
     boss = None
     if args.lpgbt is None:
-        print ("Please select boss or sub")
+        print ("Please select boss")
         sys.exit()
     elif (args.lpgbt=="boss"):
         print ("EYE for boss LPGBT")
@@ -172,7 +172,7 @@ if __name__ == '__main__':
         boss=0
         sys.exit()
     else:
-        print ("Please select boss or sub")
+        print ("Please select boss")
         sys.exit()
     if boss is None:
         sys.exit()

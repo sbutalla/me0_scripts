@@ -196,7 +196,7 @@ if __name__ == '__main__':
     # Parsing arguments
     parser = argparse.ArgumentParser(description='LPGBT Bit Error Rate Test (BERT)')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
-    parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss allowed")
     parser.add_argument("-b", "--bert_source", action="store", nargs='+', dest="bert_source", help="COURSE BERT SOURCE = See lpGBT manual Table 14.4 for options")
     parser.add_argument("-t", "--time", action="store", dest="time", default="BC_MT_2e35", help="TIME = measurement time (See lpGBT manual Table 14.5 for options), default: BC_MT_2e35")
     args = parser.parse_args()
@@ -219,16 +219,16 @@ if __name__ == '__main__':
 
     boss = None
     if args.lpgbt is None:
-        print ("Please select boss or sub")
+        print ("Please select boss")
         sys.exit()
     elif (args.lpgbt=="boss"):
         print ("BER for boss LPGBT")
         boss=1
     elif (args.lpgbt=="sub"):
-        print ("BER for sub LPGBT")
+        print ("Only boss LPGBT allowed for BER")
         boss=0
     else:
-        print ("Please select boss or sub")
+        print ("Please select boss")
         sys.exit()
     if boss is None:
         sys.exit()
