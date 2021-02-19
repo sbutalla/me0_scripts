@@ -14,21 +14,16 @@ TX_reg["TX3"] = { "ctrl_reg": 0x0C, "biascur_reg": 0x0D, "modcur_reg":0x0E, "emp
 TX_reg["TX4"] = { "ctrl_reg": 0x010, "biascur_reg": 0x11, "modcur_reg":0x12, "empamp_reg":0x13}
 
 def i2cmaster_write(system, reg_addr, data):
-    
-    reg_addr_low = (reg_addr & 0xFF) >> 0
-    reg_addr_high = (reg_addr >> 8) & 0xFF
-    nbytes = 3
-    
+
     # Writing control register of I2CMaster 2
+    nbytes = 2
     control_register_data = nbytes<<2 | 0 # using 100 kHz
     writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), control_register_data, 0)
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x0, 0) # I2C_WRITE_CR
     
     # Writing multi byte data to I2CMaster 2
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), reg_addr_low, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA1"), reg_addr_high, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA2"), data, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA3"), 0x00, 0) 
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), reg_addr, 0)
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA1"), data, 0)
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x8, 0) # I2C_W_MULTI_4BYTE0
     
     writeReg(getNode("LPGBT.RW.I2C.I2CM2ADDRESS"), vtrx_slave_addr, 0)
@@ -56,20 +51,14 @@ def i2cmaster_write(system, reg_addr, data):
 
 def i2cmaster_read(system, reg_addr):
 
-    reg_addr_low = (reg_addr & 0xFF) >> 0
-    reg_addr_high = (reg_addr >> 8) & 0xFF
-
     # Writing control register of I2CMaster 2
-    nbytes = 2
+    nbytes = 1
     control_register_data = nbytes<<2 | 0 # using 100 kHz
     writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), control_register_data, 0)
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x0, 0) # I2C_WRITE_CR
 
     # Writing register address to I2CMaster 2
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), reg_addr_low, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA1"), reg_addr_high, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA2"), 0x00, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA3"), 0x00, 0)
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), reg_addr, 0)
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x8, 0) # I2C_W_MULTI_4BYTE0
 
     writeReg(getNode("LPGBT.RW.I2C.I2CM2ADDRESS"), vtrx_slave_addr, 0)
