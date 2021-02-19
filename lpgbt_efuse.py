@@ -10,7 +10,7 @@ for i in range(240):
     fuse_list[i] = 0x00
 n_rw_fuse = (0xEF+1) # number of registers in LPGBT rwf block
 
-def main(system, boss, fusing, input_config_file, input_register, input_data, user_id, complete):
+def main(system, boss, fusing, input_config_file, input_vtrx, input_register, input_data, user_id, complete):
 
     # Readback rom register to make sure communication is OK
     if system != "dryrun":
@@ -18,7 +18,7 @@ def main(system, boss, fusing, input_config_file, input_register, input_data, us
 
     # Fusing of registers
     if fusing == "input_file":
-        fuse_from_file(system, boss, input_config_file)
+        fuse_from_file(system, boss, input_config_file, input_vtrx)
         if complete==1:
             print ("\nFusing Complete Configuration: 0xEF (dllConfigDone, pllConfigDone, updateEnable)")
             fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1
@@ -42,12 +42,21 @@ def check_rom_readback():
     else:
         print ("Successfully read from ROM. I2C communication OK")
 
-def fuse_from_file(system, boss, filename):
+def fuse_from_file(system, boss, filename, vtrx):
     f = open(filename, 'r')
     config = {}
     for line in f.readlines():
         config[int(line.split()[0],16)] = int(line.split()[1],16)
     f.close()
+    
+    # Fuse settings to enable TX2 of VTRX+ on start-up
+    if vtrx and boss:
+        config[0x03f] = 0xC0 # I2CMaster 2 selected
+        config[0x040] = 0x50 # VTRX+ I2C slave address
+        config[0x041] = 0x08 # Set 100 kHz and 2 bytes of data to be written
+        config[0x042] = 0x08 # Data0: register address for TX2 enable
+        config[0x043] = 0x0f # Data1: data value to enable TX2
+        
     data = 0x00
 
     print("Fusing from file \"%s\"" % filename)
@@ -311,6 +320,7 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-f", "--fusing", action="store", dest="fusing", help="fusing = input_file, register, user_id")
     parser.add_argument("-i", "--input", action="store", dest="input_config_file", help="input_config_file = .txt file")
+    parser.add_argument("-v", "--vtrx", action="store", default = "0", dest="vtrx", help="vtrx = 1 if you want to fuse settings to enable TX2 on startup, 0 by default")
     parser.add_argument("-r", "--register", action="store", dest="register", help="register = Enter a 16 bit register address in hex format")
     parser.add_argument("-d", "--data", action="store", dest="data", help="data = Enter a 8 bit data for the register in hex format")
     parser.add_argument("-u", "--user_id", action="store", dest="user_id", help="user_id = Enter a 32 bit number in hex format")
@@ -349,6 +359,14 @@ if __name__ == '__main__':
     if boss is None:
         sys.exit()
 
+    args.vtrx = int(args.vtrx)
+    if args.vtrx not in [0,1]:
+        print ("Invalid value for vtrx option, only 0 or 1 allowed")
+        sys.exit()
+    if args.complete not in ["0", "1"]:
+        print ("Invalid valuefor complete option, only 0 or 1 allowed")
+        sys.exit()
+        
     if args.fusing == "input_file":
         if args.register is not None:
             print ("Register not needed")
@@ -362,6 +380,9 @@ if __name__ == '__main__':
         if args.input_config_file is None:
             print ("Need input file for fusing")
             sys.exit()
+        if args.vtrx and not boss:
+            print ("Can fuse settings for VTRX+ only for boss")
+            sys.exit()
         print ("Fusing from Input File: " + args.input_config_file)
     elif args.fusing == "register":
         if args.user_id is not None:
@@ -369,6 +390,9 @@ if __name__ == '__main__':
             sys.exit()
         if args.input_config_file is not None:
             print ("Input file not needed")
+            sys.exit()
+        if not args.vtrx:
+            print ("Fusing settings for VTRX+ only allowed when fusing from input file")
             sys.exit()
         if args.register is None:
             print ("Provide register to be fused")
@@ -393,6 +417,9 @@ if __name__ == '__main__':
         if args.input_config_file is not None:
             print ("Input file not needed")
             sys.exit()
+        if not args.vtrx:
+            print ("Fusing settings for VTRX+ only allowed when fusing from input file")
+            sys.exit()
         if args.user_id is None:
             print ("Enter the USER ID to be fused")
             sys.exit()
@@ -415,7 +442,7 @@ if __name__ == '__main__':
 
     # Fusing lpGBT
     try:
-        main(args.system, boss, args.fusing, args.input_config_file, args.register, args.data, args.user_id, int(args.complete))
+        main(args.system, boss, args.fusing, args.input_config_file, args.vtrx, args.register, args.data, args.user_id, int(args.complete))
     except KeyboardInterrupt:
         print ("\nKeyboard Interrupt encountered")
         rw_terminate()

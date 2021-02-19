@@ -2,6 +2,7 @@ from rw_reg_dongle_chc import *
 from time import sleep, time
 import sys
 import argparse
+from lpgbt_vtrx import i2cmaster_write, i2cmaster_read
 
 def main(system, boss, input_config_file, reset_before_config, minimal, readback=0):
 
@@ -51,7 +52,11 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
 
             # configure reset + led outputs
             configure_gpio(boss, readback)
-
+            
+        # enable TX2 channel on VTRX+
+        if boss and not readback:
+            i2cmaster_write(system, 0x08, 0x0f)
+        
         # Powerup settings
         writeReg(getNode("LPGBT.RWF.POWERUP.PUSMPLLTIMEOUTCONFIG"), 0x3, readback)
         writeReg(getNode("LPGBT.RWF.POWERUP.PUSMDLLTIMEOUTCONFIG"), 0x3, readback)
