@@ -55,6 +55,7 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
             
         # enable TX2 (also TX1 which is enabled by default) channel on VTRX+
         if boss and not readback:
+            print ("Enabling TX2 channel for VTRX+")
             i2cmaster_write(system, 0x00, 0x03)
         
         # Powerup settings

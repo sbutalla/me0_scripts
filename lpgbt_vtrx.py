@@ -72,7 +72,22 @@ def i2cmaster_read(system, reg_addr):
 
     writeReg(getNode("LPGBT.RW.I2C.I2CM2ADDRESS"), vtrx_slave_addr, 0)
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0xC, 0) # I2C_WRITE_MULTI
-    
+
+    success=0
+    while(success==0):
+        # Status register of I2CMaster 2
+        if system!="dryrun":
+            status = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2STATUS"))
+        else:
+            status = 0x04
+        if (status>>6) & 0x1:
+            print ("ERROR: Last transaction was not acknowledged by the I2C slave")
+            rw_terminate()
+        elif (status>>3) & 0x1:
+            print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
+            rw_terminate()
+        success = (status>>2) & 0x1
+
     # Reading the register value to I2CMaster 2
     nbytes = 1
     control_register_data = nbytes<<2 | 0 # using 100 kHz
@@ -128,6 +143,7 @@ def main(system, boss, channel, enable, reg_list, data_list):
         enable_mask = 1 << enable_channel_bit
         enable_data = (enable_status & (~enable_mask)) | (en << enable_channel_bit)     
         i2cmaster_write(system, enable_reg, enable_data)
+        enable_status = i2cmaster_read(system, enable_reg)
         print ("")
  
     if len(reg_list) == 0:
