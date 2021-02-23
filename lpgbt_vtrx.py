@@ -22,22 +22,16 @@ TX_enable_bit["TX4"] = 3
 
 
 def i2cmaster_write(system, reg_addr, data):
-    
-    address_data = []
-    address_data.append(reg_addr)
-    address_data.append(data)
-    nbytes = len(address_data)
-    
+
     # Writing control register of I2CMaster 2
+    nbytes = 2
     control_register_data = nbytes<<2 | 0 # using 100 kHz
     writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), control_register_data, 0)
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x0, 0) # I2C_WRITE_CR
     
     # Writing multi byte data to I2CMaster 2
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), address_data[0], 0) 
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA1"), address_data[1], 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA2"), 0x00, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA3"), 0x00, 0) 
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), reg_addr, 0)
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA1"), data, 0)
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x8, 0) # I2C_W_MULTI_4BYTE0
     
     writeReg(getNode("LPGBT.RW.I2C.I2CM2ADDRESS"), vtrx_slave_addr, 0)
@@ -66,18 +60,26 @@ def i2cmaster_write(system, reg_addr, data):
 def i2cmaster_read(system, reg_addr):
 
     # Writing control register of I2CMaster 2
-    control_register_data = 0 # using 100 kHz
+    nbytes = 1
+    control_register_data = nbytes<<2 | 0 # using 100 kHz
     writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), control_register_data, 0)
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x0, 0) # I2C_WRITE_CR
 
     # Writing register address to I2CMaster 2
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), reg_addr, 0)
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x8, 0) # I2C_W_MULTI_4BYTE0
+
     writeReg(getNode("LPGBT.RW.I2C.I2CM2ADDRESS"), vtrx_slave_addr, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), reg_addr, 0) 
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x2, 0) # I2C_1BYTE_WRITE
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0xC, 0) # I2C_WRITE_MULTI
     
     # Reading the register value to I2CMaster 2
+    nbytes = 1
+    control_register_data = nbytes<<2 | 0 # using 100 kHz
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2DATA0"), control_register_data, 0)
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x0, 0) # I2C_WRITE_CR
+
     writeReg(getNode("LPGBT.RW.I2C.I2CM2ADDRESS"), vtrx_slave_addr, 0)
-    writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0x3, 0) # I2C_1BYTE_READ
+    writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0xD, 0) # I2C_READ_MULTI
     
     success=0
     while(success==0):
@@ -93,7 +95,7 @@ def i2cmaster_read(system, reg_addr):
             print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")  
         success = (status>>2) & 0x1
     
-    data = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2READBYTE"))
+    data = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2READ15"))
     reg_addr_string = "0x%02X" % (reg_addr)
     data_string = "0x%02X" % (data)
     print ("Successful read from slave register: " + reg_addr_string + ", data: " + data_string + " (" + '{0:08b}'.format(data) + ")")
