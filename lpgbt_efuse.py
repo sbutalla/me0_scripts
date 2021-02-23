@@ -54,8 +54,8 @@ def fuse_from_file(system, boss, filename, vtrx):
         config[0x03f] = 0xC0 # I2CMaster 2 selected
         config[0x040] = 0x50 # VTRX+ I2C slave address
         config[0x041] = 0x08 # Set 100 kHz and 2 bytes of data to be written
-        config[0x042] = 0x08 # Data0: register address for TX2 enable
-        config[0x043] = 0x0f # Data1: data value to enable TX2
+        config[0x042] = 0x00 # Data0: register address for TX2 enable
+        config[0x043] = 0x03 # Data1: data value to enable TX2 (also TX1 which is enabled by default)
         
     data = 0x00
 

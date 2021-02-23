@@ -53,9 +53,9 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
             # configure reset + led outputs
             configure_gpio(boss, readback)
             
-        # enable TX2 channel on VTRX+
+        # enable TX2 (also TX1 which is enabled by default) channel on VTRX+
         if boss and not readback:
-            i2cmaster_write(system, 0x08, 0x0f)
+            i2cmaster_write(system, 0x00, 0x03)
         
         # Powerup settings
         writeReg(getNode("LPGBT.RWF.POWERUP.PUSMPLLTIMEOUTCONFIG"), 0x3, readback)

@@ -8,10 +8,18 @@ vtrx_slave_addr = 0x50
 
 # VTRX+ registers
 TX_reg = {}
-TX_reg["TX1"] = { "ctrl_reg": 0x04, "biascur_reg": 0x05, "modcur_reg":0x06, "empamp_reg":0x07}
-TX_reg["TX2"] = { "ctrl_reg": 0x08, "biascur_reg": 0x09, "modcur_reg":0x0A, "empamp_reg":0x0B}
-TX_reg["TX3"] = { "ctrl_reg": 0x0C, "biascur_reg": 0x0D, "modcur_reg":0x0E, "empamp_reg":0x0F}
-TX_reg["TX4"] = { "ctrl_reg": 0x010, "biascur_reg": 0x11, "modcur_reg":0x12, "empamp_reg":0x13}
+TX_reg["TX1"] = { "biascur_reg": 0x03, "modcur_reg":0x04, "empamp_reg":0x05}
+TX_reg["TX2"] = { "biascur_reg": 0x06, "modcur_reg":0x07, "empamp_reg":0x08}
+TX_reg["TX3"] = { "biascur_reg": 0x09, "modcur_reg":0x0A, "empamp_reg":0x0B}
+TX_reg["TX4"] = { "biascur_reg": 0x0C, "modcur_reg":0x0D, "empamp_reg":0x0E}
+
+enable_reg = 0x00
+TX_enable_bit = {}
+TX_enable_bit["TX1"] = 0
+TX_enable_bit["TX2"] = 1
+TX_enable_bit["TX3"] = 2
+TX_enable_bit["TX4"] = 3
+
 
 def i2cmaster_write(system, reg_addr, data):
     
@@ -93,7 +101,7 @@ def i2cmaster_read(system, reg_addr):
 
 
 
-def main(system, boss, reg_list, data_list):
+def main(system, boss, channel, enable, reg_list, data_list):
 
     # Readback rom register to make sure communication is OK
     if system!="dryrun":
@@ -101,6 +109,24 @@ def main(system, boss, reg_list, data_list):
 
     if not boss:
         print ("ERROR: VTRX+ control only for boss since I2C master of boss connected to VTRX+")
+        return
+
+    # Enabling TX Channel
+    if channel is not None and enable is not None:
+        en = 0
+        if int(enable):
+            print ("Enabling channel: "+channel)
+            en = 1
+        else:
+            print ("Disabling channel: "+channel)
+        enable_status = i2cmaster_read(system, enable_reg)
+        enable_channel_bit = TX_enable_bit[channel]
+        enable_mask = 1 << enable_channel_bit
+        enable_data = (enable_status & (~enable_mask)) | (en << enable_channel_bit)     
+        i2cmaster_write(system, enable_reg, enable_data)
+        print ("")
+ 
+    if len(reg_list) == 0:
         return
 
     # Reading registers
@@ -115,7 +141,7 @@ def main(system, boss, reg_list, data_list):
     # Writing registers
     print ("Writing to VTRX+ registers: ")
     for i, reg in enumerate(reg_list):
-        data = i2cmaster_write(system, reg, data_list[i])
+        i2cmaster_write(system, reg, data_list[i])
     print ("")  
 
     # Reading registers
@@ -144,7 +170,8 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--type", action="store", dest="type", help="type = reg or name")
     parser.add_argument("-r", "--reg", action="store", nargs='+', dest="reg", help="reg = list of registers to read/write; only use with type: reg")
     parser.add_argument("-c", "--channel", action="store", dest="channel", help="channel = TX1, TX2, TX3, TX4; only use with type: name")
-    parser.add_argument("-n", "--name", action="store", dest="name", nargs='+', help="name = ctrl_reg, biascur_reg, modcur_reg, empamp_reg; only use with type: name")
+    parser.add_argument("-e", "--enable", action="store", dest="enable", help="enable = 0 or 1; only use with type: name")
+    parser.add_argument("-n", "--name", action="store", dest="name", nargs='+', help="name = biascur_reg, modcur_reg, empamp_reg; only use with type: name")
     parser.add_argument("-d", "--data", action="store", nargs='+', dest="data", help="data = list of data values to write")
     args = parser.parse_args()
 
@@ -190,6 +217,9 @@ if __name__ == '__main__':
         if args.channel is not None or args.name is not None:
             print ("For type reg only register values can be given")
             sys.exit()
+        if args.enable is not None:
+            print ("Enable option not available for type: reg")
+            sys.exit()
         if args.reg == None:
             print ("Enter registers to read/write")
             sys.exit()
@@ -200,22 +230,27 @@ if __name__ == '__main__':
             reg_list.append(int(reg,16))
     elif args.type == "name":
         if args.reg is not None:
-            print ("For type name only channel and name can be given")
+            print ("For type name only channel, enable or name can be given")
             sys.exit()
         if args.channel == None:
             print ("Enter channel")
-            sys.exit()
-        if args.name == None:
-            print ("Enter register name")
-            sys.exit()
+            sys.exit()          
+        if args.enable is not None:
+            if args.enable not in ["0", "1"]:
+                print ("Enter valid value for enable: 0 or 1")
+                sys.exit()
+        if args.enable is None and args.name == None:
+            print ("Enter enable option or register name")
+            sys.exit() 
         if args.channel not in ["TX1", "TX2", "TX3", "TX4"]:
             print ("Only allowed channels: TX1, TX2, TX3, TX4")
             sys.exit()
-        for name in args.name:
-            if name not in ["ctrl_reg", "biascur_reg", "modcur_reg", "empamp_reg"]:
-                print ("Invalid register name")
-                sys.exit()
-            reg_list.append(TX_reg[args.channel][name])
+        if args.name is not None:
+            for name in args.name:
+                if name not in ["biascur_reg", "modcur_reg", "empamp_reg"]:
+                    print ("Invalid register name")
+                    sys.exit()
+                reg_list.append(TX_reg[args.channel][name])
     else:
         print ("Only allowed type: reg, name")
         sys.exit()
@@ -241,7 +276,7 @@ if __name__ == '__main__':
     print("Initialization Done\n")
 
     try:
-        main(args.system, boss, reg_list, data_list)
+        main(args.system, boss, args.channel, args.enable, reg_list, data_list)
     except KeyboardInterrupt:
         print ("\nKeyboard Interrupt encountered")
         rw_terminate()
