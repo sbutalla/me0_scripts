@@ -48,7 +48,8 @@ def i2cmaster_write(system, reg_addr, data):
             print ("ERROR: Last transaction was not acknowledged by the I2C slave")
             rw_terminate()
         elif (status>>3) & 0x1:
-            print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")  
+            print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
+            rw_terminate()
         success = (status>>2) & 0x1
         
     reg_addr_string = "0x%02X" % (reg_addr)
@@ -92,7 +93,8 @@ def i2cmaster_read(system, reg_addr):
             print ("ERROR: Last transaction was not acknowledged by the I2C slave")
             rw_terminate()
         elif (status>>3) & 0x1:
-            print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")  
+            print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
+            rw_terminate()
         success = (status>>2) & 0x1
     
     data = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2READ15"))
