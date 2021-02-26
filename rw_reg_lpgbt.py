@@ -198,7 +198,7 @@ def check_lpgbt_ready(ohIdx, gbtIdx):
             print ("lpGBT is not READY, configure lpGBT first")
             rw_terminate()
     if system=="backend":
-        link_ready = rw_reg.parseInt(rw_reg.readReg(getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))) 
+        link_ready = parseInt(rw_reg.readReg(getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))) 
         if (link_ready==1):
             print ("OH lpGBT links are READY")  
         else:
@@ -286,7 +286,7 @@ def mpeek(address):
         #    print ("ERROR: Bus Error")
         #    rw_terminate()
         #data = rw_reg.rReg(ADDR_IC_READ_DATA)
-        #if rw_reg.parseInt(data) == 0xdeaddead:
+        #if parseInt(data) == 0xdeaddead:
         #    print ("ERROR: Bus Error")
         #    rw_terminate()
         #return data

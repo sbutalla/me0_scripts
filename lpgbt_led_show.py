@@ -1,5 +1,4 @@
 from rw_reg_lpgbt import *
-from time import sleep, time
 import sys
 import argparse
 from rw_reg import *
