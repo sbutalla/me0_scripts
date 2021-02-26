@@ -11,7 +11,7 @@ class Prompt(Cmd):
             name = 'stranger'
         else:
             name = args
-        print "Hello, %s" % name
+        print ("Hello, %s" % name)
 
 
     def do_read(self, args):
@@ -20,13 +20,13 @@ class Prompt(Cmd):
         if reg is not None:
             address = reg.real_address
             if 'r' in str(reg.permission):
-                print displayReg(reg)
+                print (displayReg(reg))
             elif reg.isModule:
-                print 'This is a module!'
+                print ('This is a module!')
             else:
-                print hex(address),'\t',reg.name,'\t','No read permission!'
+                print (hex(address),'\t',reg.name,'\t','No read permission!')
         else:
-            print args,'not found!'
+            print (args,'not found!')
 
 
     def complete_read(self, text, line, begidx, endidx):
@@ -37,20 +37,20 @@ class Prompt(Cmd):
         """Writes register. USAGE: write <register name> <register value>"""
         arglist = args.split()
         if len(arglist)!=2:
-            print "Incorrect number of arguments!"
+            print ("Incorrect number of arguments!")
         else:
             reg = getNode(arglist[0])
             if reg is not None:
                 try: value = parseInt(arglist[1])
                 except:
-                    print 'Write Value must be a number!'
+                    print ('Write Value must be a number!')
                     return
                 if 'w' in str(reg.permission):
-                    print writeReg(reg,value)
+                    print (writeReg(reg,value))
                 else:
-                    print 'No write permission!'
+                    print ('No write permission!')
             else:
-                print arglist[0],'not found!'
+                print (arglist[0],'not found!')
 
     def complete_write(self, text, line, begidx, endidx):
         return completeReg(text)
@@ -60,13 +60,13 @@ class Prompt(Cmd):
         """Read all registers below node in register tree. USAGE: readGroup <register/node name> """
         node = getNode(args)
         if node is not None:
-            print 'NODE:',node.name
+            print ('NODE:',node.name)
             kids = []
             getAllChildren(node, kids)
-            print len(kids),'CHILDREN'
+            print (len(kids),'CHILDREN')
             for reg in kids:
                 if 'r' in str(reg.permission): print displayReg(reg)
-        else: print args,'not found!'
+        else: print (args,'not found!')
 
     def complete_readGroup(self, text, line, begidx, endidx):
         return completeReg(text)
@@ -74,7 +74,7 @@ class Prompt(Cmd):
     def do_readFW(self, args):
         """Quick read of all FW-related registers"""
         for reg in getNodesContaining('STATUS.FW'):
-            if 'r' in str(reg.permission): print hex(reg.real_address),reg.permission,'\t',tabPad(reg.name,4),readRegStr(reg)
+            if 'r' in str(reg.permission): print (hex(reg.real_address),reg.permission,'\t',tabPad(reg.name,4),readRegStr(reg))
 
     def do_readKW(self, args):
         """Read all registers containing KeyWord. USAGE: readKW <KeyWord>"""
@@ -82,10 +82,10 @@ class Prompt(Cmd):
             for reg in getNodesContaining(args):
                 address = reg.real_address
                 if 'r' in str(reg.permission):
-                    print hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7),readRegStr(reg)
-                elif reg.isModule: print hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7) #,'Module!'
-                else: print hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7) #,'No read permission!'
-        else: print args,'not found!'
+                    print (hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7),readRegStr(reg))
+                elif reg.isModule: print (hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7)) #,'Module!'
+                else: print (hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7)) #,'No read permission!'
+        else: print (args,'not found!')
 
 
 
@@ -93,7 +93,7 @@ class Prompt(Cmd):
         """Read all registers with read-permission"""
         for reg in getNodesContaining(''):
             if 'r' in (reg.permission):
-                print displayReg(reg)
+                print (displayReg(reg))
 
     def do_exit(self, args):
         """Exit program"""
@@ -103,35 +103,35 @@ class Prompt(Cmd):
         """ Directly read address. USAGE: readAddress <address> """
         try: reg = getNodeFromAddress(parseInt(args))
         except:
-            print 'Error retrieving node.'
+            print ('Error retrieving node.')
             return
         if reg is not None:
             address = reg.real_address
             if 'r' in str(reg.permission):
-                print hex(address),'{0:#010x}'.format(reg.mask),reg.permission,'\t',reg.name,'\t',readRegStr(reg)
+                print (hex(address),'{0:#010x}'.format(reg.mask),reg.permission,'\t',reg.name,'\t',readRegStr(reg))
             elif reg.isModule:
-                print 'This is a module!'
+                print ('This is a module!')
             else:
-                print hex(address),'\t',reg.name,'\t','No read permission!'
+                print (hex(address),'\t',reg.name,'\t','No read permission!')
         else:
-            print args,'not found!'
+            print (args,'not found!')
 
     def do_readRawAddress(self, args):
         """Read raw address (from XML file). USAGE: readRawAddress <address> """
-        try: print readRawAddress(args)
-        except: print 'Error reading address. (reg_interface)'
+        try: print (readRawAddress(args))
+        except: print ('Error reading address. (reg_interface)')
 
 
     def do_mpeek(self,args):
         """Basic mpeek command to read register. USAGE: mpeek <address>"""
-        print mpeek(args)
+        print (mpeek(args))
 
     def do_mpoke(self,args):
         """Basic mpoke command to write register. USAGE: mpoke <address> <value>"""
         arglist = args.split()
         if len(arglist)==2:
-            print mpoke(arglist[0],arglist[1])
-        else: print "Incorrect number of arguments!"
+            print (mpoke(arglist[0],arglist[1]))
+        else: print ("Incorrect number of arguments!")
 
 
 if __name__ == '__main__':
