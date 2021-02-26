@@ -513,7 +513,7 @@ if __name__ == '__main__':
             sys.exit()
 
     if args.system == "backend":
-        if args.input is None or ".txt" not in args.input:
+        if args.input_config_file is None or ".txt" not in args.input_config_file:
             print ("Need input .txt file to configure from backend")
             sys.exit()
 
