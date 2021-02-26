@@ -1,5 +1,5 @@
 from rw_reg_lpgbt import *
-from time import sleep
+from time import time, sleep
 import sys
 import os
 import argparse
@@ -20,6 +20,7 @@ TX_enable_bit["TX2"] = 1
 TX_enable_bit["TX3"] = 2
 TX_enable_bit["TX4"] = 3
 
+i2c_master_timeout = 1 # 1s
 
 def i2cmaster_write(system, reg_addr, data):
 
@@ -38,9 +39,10 @@ def i2cmaster_write(system, reg_addr, data):
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0xC, 0) # I2C_WRITE_MULTI
     
     success=0
+    t0 = time()
     while(success==0):
         # Status register of I2CMaster 2
-        if system!="dryrun":
+        if system!="dryrun" and system!="backend":
             status = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2STATUS"))
         else:
             status = 0x04
@@ -51,11 +53,13 @@ def i2cmaster_write(system, reg_addr, data):
             print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
             rw_terminate()
         success = (status>>2) & 0x1
-        
+        if int(round((time() - t0))) > i2c_master_timeout:
+            print ("ERROR: I2C master timeout")
+            rw_terminate()
+
     reg_addr_string = "0x%02X" % (reg_addr)
     data_string = "0x%02X" % (data)
     print ("Successful I2C write to slave register: " + reg_addr_string + ", data: " + data_string + " (" + '{0:08b}'.format(data) + ")")
-
 
 
 def i2cmaster_read(system, reg_addr):
@@ -74,9 +78,10 @@ def i2cmaster_read(system, reg_addr):
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0xC, 0) # I2C_WRITE_MULTI
 
     success=0
+    t0 = time()
     while(success==0):
         # Status register of I2CMaster 2
-        if system!="dryrun":
+        if system!="dryrun" and system!="backend":
             status = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2STATUS"))
         else:
             status = 0x04
@@ -87,6 +92,9 @@ def i2cmaster_read(system, reg_addr):
             print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
             rw_terminate()
         success = (status>>2) & 0x1
+        if int(round((time() - t0))) > i2c_master_timeout:
+            print ("ERROR: I2C master timeout")
+            rw_terminate()
 
     # Reading the register value to I2CMaster 2
     nbytes = 1
@@ -98,9 +106,10 @@ def i2cmaster_read(system, reg_addr):
     writeReg(getNode("LPGBT.RW.I2C.I2CM2CMD"), 0xD, 0) # I2C_READ_MULTI
     
     success=0
+    t0 = time()
     while(success==0):
         # Status register of I2CMaster 2
-        if system!="dryrun":
+        if system!="dryrun" and system!="backend":
             status = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2STATUS"))
         else:
             status = 0x04
@@ -111,13 +120,15 @@ def i2cmaster_read(system, reg_addr):
             print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
             rw_terminate()
         success = (status>>2) & 0x1
+        if int(round((time() - t0))) > i2c_master_timeout:
+            print ("ERROR: I2C master timeout")
+            rw_terminate()
     
     data = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2READ15"))
     reg_addr_string = "0x%02X" % (reg_addr)
     data_string = "0x%02X" % (data)
     print ("Successful read from slave register: " + reg_addr_string + ", data: " + data_string + " (" + '{0:08b}'.format(data) + ")")
     return data
-
 
 
 def main(system, boss, channel, enable, reg_list, data_list):
@@ -167,7 +178,6 @@ def main(system, boss, channel, enable, reg_list, data_list):
     print ("")
     
 
-
 def check_rom_readback():
     romreg=readReg(getNode("LPGBT.RO.ROMREG"))
     if (romreg != 0xA5):
@@ -175,7 +185,6 @@ def check_rom_readback():
         rw_terminate()
     else:
         print ("Successfully read from ROM. I2C communication OK")
-
 
 
 if __name__ == '__main__':
@@ -314,6 +323,10 @@ if __name__ == '__main__':
     # Readback rom register to make sure communication is OK
     if args.system!="dryrun" and args.system!="backend":
         check_rom_readback()
+
+    # Check if lpGBT is READY if running through backend
+    if args.system=="backend":
+        check_lpgbt_ready(args.ohid, args.gbtid)
 
     try:
         main(args.system, boss, args.channel, args.enable, reg_list, data_list)

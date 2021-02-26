@@ -176,8 +176,8 @@ def rw_initialize(system_val, boss, ohIdx, gbtIdx):
             print ("ERROR: Invalid ohIdx or gbtIdx")
             rw_terminate()
         linkIdx = ohIdx * 3 + gbtIdx
-        rw_reg.writeReg(getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
-        rw_reg.writeReg(getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)     
+        rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
+        rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)
         global ADDR_IC_ADDR
         global ADDR_IC_WRITE_DATA
         global ADDR_IC_READ_DATA
@@ -198,7 +198,7 @@ def check_lpgbt_ready(ohIdx, gbtIdx):
             print ("lpGBT is not READY, configure lpGBT first")
             rw_terminate()
     if system=="backend":
-        link_ready = parseInt(rw_reg.readReg(getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))) 
+        link_ready = parseInt(rw_reg.readReg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx))))
         if (link_ready==1):
             print ("OH lpGBT links are READY")  
         else:
@@ -276,7 +276,7 @@ def mpeek(address):
             print("ERROR: Problem in reading register: " + str(hex(address)))
             rw_terminate()
     elif system=="backend":
-        #rw_reg.writeReg(getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
+        #rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
         #output = rw_reg.wReg(ADDR_IC_ADDR, address)
         #if output<0:
         #    print ("ERROR: Bus Error")
@@ -300,13 +300,14 @@ def mpeek(address):
         rw_terminate()
 
 def mpoke(address, value):
+    global reg_list_dryrun
     if system=="chc":
         success = gbt_rpi_chc.lpgbt_write_register(address, value)
         if not success:
             print("ERROR: Problem in writing register: " + str(hex(address)))
             rw_terminate()
     elif system=="backend":
-        rw_reg.writeReg(getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
+        rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
         output = rw_reg.wReg(ADDR_IC_ADDR, address)
         if output<0:
             print ("ERROR: Bus Error")
@@ -319,10 +320,10 @@ def mpoke(address, value):
         if output<0:
             print ("ERROR: Bus Error")
             rw_terminate()
+        reg_list_dryrun[address] = value
     #elif system=="dongle":
     #    gbt_dongle.gbtx_write_register(address,value)
     elif system=="dryrun":
-        global reg_list_dryrun
         reg_list_dryrun[address] = value
     else:
         print("ERROR: Incorrect system")
@@ -487,6 +488,8 @@ def lpgbt_write_config_file(config_file = 'config.txt'):
     f = open(config_file,"w+")
     for i in range (n_rw_reg):
         val =  mpeek(i)
+        if i in range(0x0f0, 0x105): # I2C Masters
+            val = 0x00
         write_string = "0x%03X  0x%02X\n" % (i, val)
         f.write(write_string)
     f.close()
@@ -530,6 +533,8 @@ def lpgbt_dump_config(config_file = 'Loopback_test.txt'):
             for line in input_file.readlines():
                 reg_addr = int(line.split()[0],16)
                 value = int(line.split()[1],16)
+                if reg_addr in range(0x0f0, 0x105): # I2C Masters
+                    value = 0x00
                 mpoke(reg_addr, value)
             input_file.close()
         print('lpGBT Configuration Done')

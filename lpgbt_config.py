@@ -7,7 +7,7 @@ from lpgbt_vtrx import i2cmaster_write, i2cmaster_read
 def main(system, boss, input_config_file, reset_before_config, minimal, readback=0):
 
     # Optionally reset LPGBT
-    if (reset_before_config and not readback):
+    if (reset_before_config and not readback and system!="backend"):
         reset_lpgbt(readback)
 
     if input_config_file is not None:
@@ -62,8 +62,11 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
 
     print("Configuration finished... asserting config done")
     # Finally, Set pll&dllConfigDone to run chip:
-    writeReg(getNode("LPGBT.RWF.POWERUP.DLLCONFIGDONE"), 0x1, readback)
-    writeReg(getNode("LPGBT.RWF.POWERUP.PLLCONFIGDONE"), 0x1, readback)
+    if system=="backend":
+        mpoke(0x0EF, 0x06)
+    else:
+        writeReg(getNode("LPGBT.RWF.POWERUP.DLLCONFIGDONE"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.POWERUP.PLLCONFIGDONE"), 0x1, readback)
 
     # Check READY status
     if not readback:
@@ -508,7 +511,12 @@ if __name__ == '__main__':
         if args.ohid is not None or args.gbtid is not None:
             print ("OHID and GBTID only needed for backend")
             sys.exit()
-    
+
+    if args.system == "backend":
+        if args.input is None or ".txt" not in args.input:
+            print ("Need input .txt file to configure from backend")
+            sys.exit()
+
     if args.input_config_file is not None:
         print ("Configruing lpGBT from file: " + args.input_config_file)
 
@@ -531,6 +539,10 @@ if __name__ == '__main__':
     # Readback rom register to make sure communication is OK
     if args.system!="dryrun" and args.system!="backend":
         check_rom_readback()
+
+    # Check if lpGBT is READY if running through backend
+    if args.system=="backend":
+        check_lpgbt_ready(args.ohid, args.gbtid)
 
     # Configuring LPGBT
     readback = 0

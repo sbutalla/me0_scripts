@@ -351,6 +351,10 @@ if __name__ == '__main__':
     if args.system!="dryrun":
         check_rom_readback()
 
+    # Check if lpGBT is READY if running through backend
+    if args.system=="backend":
+        check_lpgbt_ready(args.ohid, args.gbtid)
+
     try:
         main(args.system, boss)
     except KeyboardInterrupt:
