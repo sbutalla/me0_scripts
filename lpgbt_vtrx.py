@@ -1,4 +1,4 @@
-from rw_reg_dongle_chc import *
+from rw_reg_lpgbt import *
 from time import sleep
 import sys
 import os
@@ -122,10 +122,6 @@ def i2cmaster_read(system, reg_addr):
 
 def main(system, boss, channel, enable, reg_list, data_list):
 
-    # Readback rom register to make sure communication is OK
-    if system!="dryrun":
-        check_rom_readback()
-
     if not boss:
         print ("ERROR: VTRX+ control only for boss since I2C master of boss connected to VTRX+")
         return
@@ -187,6 +183,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LPGBT VTRX+ CONTROL')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss allowed")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-t", "--type", action="store", dest="type", help="type = reg or name")
     parser.add_argument("-r", "--reg", action="store", nargs='+', dest="reg", help="reg = list of registers to read/write; only use with type: reg")
     parser.add_argument("-c", "--channel", action="store", dest="channel", help="channel = TX1, TX2, TX3, TX4; only use with type: name")
@@ -198,9 +196,9 @@ if __name__ == '__main__':
     if args.system == "chc":
         print ("Using Rpi CHeeseCake for checking configuration")
     elif args.system == "backend":
-        #print ("Using Backend for checking configuration")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
-        sys.exit()
+        print ("Using Backend for checking configuration")
+        #print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        #sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for checking configuration")
         print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
@@ -227,6 +225,24 @@ if __name__ == '__main__':
         sys.exit()
     if boss is None:
         sys.exit()
+
+    if args.system == "backend":
+        if args.ohid is None:
+            print ("Need OHID for backend")
+            sys.exit()
+        if args.gbtid is None:
+            print ("Need GBTID for backend")
+            sys.exit()
+        if int(args.ohid)>7:
+            print ("Only OHID 0-7 allowed")
+            sys.exit()
+        if int(args.gbtid)>1:
+            print ("Only GBTID 0 and 1 allowed")
+            sys.exit() 
+    else:
+        if args.ohid is not None or args.gbtid is not None:
+            print ("OHID and GBTID only needed for backend")
+            sys.exit()
 
     reg_list = []
     data_list = []
@@ -292,8 +308,12 @@ if __name__ == '__main__':
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(args.system, boss)
+    rw_initialize(args.system, boss, args.ohid, args.gbtid)
     print("Initialization Done\n")
+    
+    # Readback rom register to make sure communication is OK
+    if args.system!="dryrun" and args.system!="backend":
+        check_rom_readback()
 
     try:
         main(args.system, boss, args.channel, args.enable, reg_list, data_list)

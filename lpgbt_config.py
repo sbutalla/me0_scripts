@@ -1,14 +1,10 @@
-from rw_reg_dongle_chc import *
+from rw_reg_lpgbt import *
 from time import sleep, time
 import sys
 import argparse
 from lpgbt_vtrx import i2cmaster_write, i2cmaster_read
 
 def main(system, boss, input_config_file, reset_before_config, minimal, readback=0):
-
-    # Readback rom register to make sure communication is OK
-    if system!="dryrun":
-        check_rom_readback()
 
     # Optionally reset LPGBT
     if (reset_before_config and not readback):
@@ -456,6 +452,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LpGBT Configuration for ME0 Optohybrid')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-i", "--input", action="store", dest="input_config_file", help="input_config_file = .txt or .xml file")
     parser.add_argument("-r", "--reset_before_config", action="store", dest="reset_before_config", default="0", help="reset_before_config = 1 or 0 (default)")
     parser.add_argument("-m", "--minimal", action="store", dest="minimal", default="0", help="minimal = Set 1 for a minimal configuration, 0 by default")
@@ -464,9 +462,9 @@ if __name__ == '__main__':
     if args.system == "chc":
         print ("Using Rpi CHeeseCake for configuration")
     elif args.system == "backend":
-        #print ("Using Backend for configuration")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
-        sys.exit()
+        print ("Using Backend for configuration")
+        #print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        #sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for configuration")
         print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
@@ -492,7 +490,25 @@ if __name__ == '__main__':
         sys.exit()
     if boss is None:
         sys.exit()
-
+        
+    if args.system == "backend":
+        if args.ohid is None:
+            print ("Need OHID for backend")
+            sys.exit()
+        if args.gbtid is None:
+            print ("Need GBTID for backend")
+            sys.exit()
+        if int(args.ohid)>7:
+            print ("Only OHID 0-7 allowed")
+            sys.exit()
+        if int(args.gbtid)>1:
+            print ("Only GBTID 0 and 1 allowed")
+            sys.exit() 
+    else:
+        if args.ohid is not None or args.gbtid is not None:
+            print ("OHID and GBTID only needed for backend")
+            sys.exit()
+    
     if args.input_config_file is not None:
         print ("Configruing lpGBT from file: " + args.input_config_file)
 
@@ -509,8 +525,12 @@ if __name__ == '__main__':
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(args.system, boss)
+    rw_initialize(args.system, boss, args.ohid, args.gbtid)
     print("Initialization Done\n")
+    
+    # Readback rom register to make sure communication is OK
+    if args.system!="dryrun" and args.system!="backend":
+        check_rom_readback()
 
     # Configuring LPGBT
     readback = 0
@@ -529,7 +549,7 @@ if __name__ == '__main__':
 
     # Checking LPGBT configuration
     readback = 1
-    if (args.input_config_file is None):
+    if (args.input_config_file is None and args.system!="backend"):
         try:
             main(args.system, boss, args.input_config_file, int(args.reset_before_config), int(args.minimal), readback)
         except KeyboardInterrupt:

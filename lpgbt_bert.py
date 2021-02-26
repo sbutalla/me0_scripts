@@ -1,4 +1,4 @@
-from rw_reg_dongle_chc import *
+from rw_reg_lpgbt import *
 from time import sleep
 import sys
 import argparse
@@ -69,19 +69,6 @@ BERT_source_fine["DLFRAME_PRBS31"] = 0x5 # PRBS31 (no header)
 BERT_source_fine["DLFRAME_FIXED"] = 0x7 # Check the data against constant pattern
 
 def main(system, bert_source, time, boss):
-
-    # Readback rom register to make sure communication is OK
-    if system!="dryrun":
-        check_rom_readback()
-
-    # Check if lpGBT is READY
-    if system!="dryrun":
-        pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
-        if (pusmstate==18):
-            print ("lpGBT status is READY")
-        else:
-            print ("lpGBT is not READY, configure lpGBT first")
-            rw_terminate()
 
     # Getting the register nodes
     bert_coarse_node = getNode("LPGBT.RW.BERT.COARSEBERTSOURCE")
@@ -197,6 +184,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LPGBT Bit Error Rate Test (BERT)')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss allowed")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-b", "--bert_source", action="store", nargs='+', dest="bert_source", help="COURSE BERT SOURCE = See lpGBT manual Table 14.4 for options")
     parser.add_argument("-t", "--time", action="store", dest="time", default="BC_MT_2e35", help="TIME = measurement time (See lpGBT manual Table 14.5 for options), default: BC_MT_2e35")
     args = parser.parse_args()
@@ -236,6 +225,24 @@ if __name__ == '__main__':
     if args.bert_source is None:
         print ("Need a BERT source")
         sys.exit()
+        
+    if args.system == "backend":
+        if args.ohid is None:
+            print ("Need OHID for backend")
+            sys.exit()
+        if args.gbtid is None:
+            print ("Need GBTID for backend")
+            sys.exit()
+        if int(args.ohid)>7:
+            print ("Only OHID 0-7 allowed")
+            sys.exit()
+        if int(args.gbtid)>1:
+            print ("Only GBTID 0 and 1 allowed")
+            sys.exit() 
+    else:
+        if args.ohid is not None or args.gbtid is not None:
+            print ("OHID and GBTID only needed for backend")
+            sys.exit()
 
     for bert in args.bert_source:
         if bert not in BERT_source_coarse:
@@ -252,8 +259,15 @@ if __name__ == '__main__':
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(args.system, boss)
+    rw_initialize(args.system, boss, args.ohid, args.gbtid)
     print("Initialization Done\n")
+    
+    # Readback rom register to make sure communication is OK
+    if args.system!="dryrun":
+        check_rom_readback()
+
+    # Check if lpGBT is READY
+    check_lpgbt_ready(args.ohid, args.gbtid)
 
     try:
         main(args.system, args.bert_source, args.time, boss)

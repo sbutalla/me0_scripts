@@ -1,23 +1,10 @@
-from rw_reg_dongle_chc import *
+from rw_reg_lpgbt import *
 from time import sleep
 import sys
 import os
 import argparse
 
 def main(system, count, boss):
-
-    # Readback rom register to make sure communication is OK
-    if system!="dryrun":
-        check_rom_readback()
-
-    # Check if lpGBT is READY
-    if system!="dryrun":
-        pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
-        if (pusmstate==18):
-            print ("lpGBT status is READY")
-        else:
-            print ("lpGBT is not READY, configure lpGBT first")
-            rw_terminate()
 
     cntsel = count
     writeReg(getNode("LPGBT.RW.EOM.EOMENDOFCOUNTSEL"), cntsel, 0)
@@ -140,6 +127,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LPGBT EYE')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss allowed")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-c", "--count", action="store", dest="count", default="0x7", help="EOMendOfCountSel[3:0] in hex")
     args = parser.parse_args()
 
@@ -176,6 +165,24 @@ if __name__ == '__main__':
         sys.exit()
     if boss is None:
         sys.exit()
+    
+    if args.system == "backend":
+        if args.ohid is None:
+            print ("Need OHID for backend")
+            sys.exit()
+        if args.gbtid is None:
+            print ("Need GBTID for backend")
+            sys.exit()
+        if int(args.ohid)>7:
+            print ("Only OHID 0-7 allowed")
+            sys.exit()
+        if int(args.gbtid)>1:
+            print ("Only GBTID 0 and 1 allowed")
+            sys.exit() 
+    else:
+        if args.ohid is not None or args.gbtid is not None:
+            print ("OHID and GBTID only needed for backend")
+            sys.exit()
 
     if int(args.count,16) > 15:
         print ("EOMendOfCountSel[3:0] can be max 4 bits")
@@ -187,8 +194,15 @@ if __name__ == '__main__':
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(args.system, boss)
+    rw_initialize(args.system, boss, args.ohid, args.gbtid)
     print("Initialization Done\n")
+    
+    # Readback rom register to make sure communication is OK
+    if args.system!="dryrun":
+        check_rom_readback()
+
+    # Check if lpGBT is READY
+    check_lpgbt_ready(args.ohid, args.gbtid)
 
     try:
         main(args.system, int(args.count,16), boss)

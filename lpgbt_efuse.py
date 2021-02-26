@@ -1,4 +1,4 @@
-from rw_reg_dongle_chc import *
+from rw_reg_lpgbt import *
 from time import sleep, time
 import sys
 import argparse
@@ -11,10 +11,6 @@ for i in range(240):
 n_rw_fuse = (0xEF+1) # number of registers in LPGBT rwf block
 
 def main(system, boss, fusing, input_config_file, input_vtrx, input_register, input_data, user_id, complete):
-
-    # Readback rom register to make sure communication is OK
-    if system != "dryrun":
-        check_rom_readback()
 
     # Fusing of registers
     if fusing == "input_file":
@@ -437,8 +433,12 @@ if __name__ == '__main__':
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(args.system, boss)
+    rw_initialize(args.system, boss, None, None)
     print("Initialization Done\n")
+    
+    # Readback rom register to make sure communication is OK
+    if args.system!="dryrun":
+        check_rom_readback()
 
     # Fusing lpGBT
     try:

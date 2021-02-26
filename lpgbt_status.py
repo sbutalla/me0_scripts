@@ -1,13 +1,9 @@
-from rw_reg_dongle_chc import *
+from rw_reg_lpgbt import *
 from time import sleep
 import sys
 import argparse
 
 def main(system, boss):
-
-    # Readback rom register to make sure communication is OK
-    if system!="dryrun":
-        check_rom_readback()
 
     # Checking Status of Registers
 
@@ -288,6 +284,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Checking Status of LpGBT Configuration for ME0 Optohybrid')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -321,6 +319,24 @@ if __name__ == '__main__':
         sys.exit()
     if boss is None:
         sys.exit()
+        
+    if args.system == "backend":
+        if args.ohid is None:
+            print ("Need OHID for backend")
+            sys.exit()
+        if args.gbtid is None:
+            print ("Need GBTID for backend")
+            sys.exit()
+        if int(args.ohid)>7:
+            print ("Only OHID 0-7 allowed")
+            sys.exit()
+        if int(args.gbtid)>1:
+            print ("Only GBTID 0 and 1 allowed")
+            sys.exit() 
+    else:
+        if args.ohid is not None or args.gbtid is not None:
+            print ("OHID and GBTID only needed for backend")
+            sys.exit()
 
     # Parsing Registers XML File
     print("Parsing xml file...")
@@ -328,8 +344,12 @@ if __name__ == '__main__':
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(args.system, boss)
+    rw_initialize(args.system, boss, args.ohid, args.gbtid)
     print("Initialization Done\n")
+    
+    # Readback rom register to make sure communication is OK
+    if args.system!="dryrun":
+        check_rom_readback()
 
     try:
         main(args.system, boss)

@@ -1,16 +1,22 @@
 import xml.etree.ElementTree as xml
 import sys, os, subprocess
-import gbt_vldb
+#import gbt_vldb
 import lpgbt_rpi_chc
+import rw_reg
 
 DEBUG = True
-ADDRESS_TABLE_TOP = './registers.xml'
+ADDRESS_TABLE_TOP = './address_table/lpgbt_registers.xml'
 nodes = []
 system = ""
 reg_list_dryrun = {}
 for i in range(462):
     reg_list_dryrun[i] = 0x00
 n_rw_reg = (0x13C+1) # number of registers in LPGBT rwf + rw block
+ADDR_IC_ADDR = None
+ADDR_IC_WRITE_DATA = None
+ADDR_IC_READ_DATA = None
+ADDR_IC_EXEC_WRITE = None
+ADDR_IC_EXEC_READ = None
 
 #gbt_dongle = gbt_vldb.GBTx()
 gbt_rpi_chc = lpgbt_rpi_chc.lpgbt_rpi_chc()
@@ -67,7 +73,7 @@ def main():
     #getAllChildren(random_node, kids)
     #print len(kids), kids.name
 
-# Functions related to parsing registers.xml
+# Functions related to parsing lpgbt_registers.xml
 def parseXML(filename = None, num_of_oh = None):
     if filename == None:
         filename = ADDRESS_TABLE_TOP
@@ -149,7 +155,7 @@ def getRegsContaining(nodeString):
     else: return None
 
 # Functions regarding reading/writing registers
-def rw_initialize(system_val, boss):
+def rw_initialize(system_val, boss, ohIdx, gbtIdx):
     initialize_success = 1
     global system
     system = system_val
@@ -162,7 +168,43 @@ def rw_initialize(system_val, boss):
         if not initialize_success:
             print("ERROR: Problem in initialization")
             rw_terminate()
+    elif system=="backend":
+        rw_reg.parseXML()
+        ohIdx = int(ohIdx)
+        gbtIdx = int(gbtIdx)
+        if ohIdx not in range(0,8) or gbtIdx not in [0,1]:
+            print ("ERROR: Invalid ohIdx or gbtIdx")
+            rw_terminate()
+        linkIdx = ohIdx * 3 + gbtIdx
+        rw_reg.writeReg(getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
+        rw_reg.writeReg(getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)     
+        global ADDR_IC_ADDR
+        global ADDR_IC_WRITE_DATA
+        global ADDR_IC_READ_DATA
+        global ADDR_IC_EXEC_WRITE
+        global ADDR_IC_EXEC_READ
+        ADDR_IC_ADDR = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS').real_address
+        ADDR_IC_WRITE_DATA = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.WRITE_DATA').real_address
+        #ADDR_IC_READ_DATA = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.READ_DATA').real_address
+        ADDR_IC_EXEC_WRITE = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE').real_address
+        ADDR_IC_EXEC_READ = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_READ').real_address
 
+def check_lpgbt_ready(ohIdx, gbtIdx):
+    if system!="dryrun":
+        pusmstate = readReg(getNode("LPGBT.RO.PUSM.PUSMSTATE"))
+        if (pusmstate==18):
+            print ("lpGBT status is READY")
+        else:
+            print ("lpGBT is not READY, configure lpGBT first")
+            rw_terminate()
+    if system=="backend":
+        link_ready = rw_reg.parseInt(rw_reg.readReg(getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))) 
+        if (link_ready==1):
+            print ("OH lpGBT links are READY")  
+        else:
+            print ("OH lpGBT links are not READY, check fiber connections")  
+            rw_terminate()
+        
 def lpgbt_efuse(boss, enable):
     fuse_success = 1
     if boss:
@@ -233,6 +275,22 @@ def mpeek(address):
         else:
             print("ERROR: Problem in reading register: " + str(hex(address)))
             rw_terminate()
+    elif system=="backend":
+        #rw_reg.writeReg(getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
+        #output = rw_reg.wReg(ADDR_IC_ADDR, address)
+        #if output<0:
+        #    print ("ERROR: Bus Error")
+        #    rw_terminate()
+        #output = rw_reg.wReg(ADDR_IC_EXEC_READ, 1)
+        #if output<0:
+        #    print ("ERROR: Bus Error")
+        #    rw_terminate()
+        #data = rw_reg.rReg(ADDR_IC_READ_DATA)
+        #if rw_reg.parseInt(data) == 0xdeaddead:
+        #    print ("ERROR: Bus Error")
+        #    rw_terminate()
+        #return data
+        return reg_list_dryrun[address]
     #elif system=="dongle":
     #    return gbt_dongle.gbtx_read_register(address)
     elif system=="dryrun":
@@ -246,6 +304,20 @@ def mpoke(address, value):
         success = gbt_rpi_chc.lpgbt_write_register(address, value)
         if not success:
             print("ERROR: Problem in writing register: " + str(hex(address)))
+            rw_terminate()
+    elif system=="backend":
+        rw_reg.writeReg(getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
+        output = rw_reg.wReg(ADDR_IC_ADDR, address)
+        if output<0:
+            print ("ERROR: Bus Error")
+            rw_terminate()
+        output = rw_reg.wReg(ADDR_IC_WRITE_DATA, value)
+        if output<0:
+            print ("ERROR: Bus Error")
+            rw_terminate()
+        output = rw_reg.wReg(ADDR_IC_EXEC_WRITE, 1)
+        if output<0:
+            print ("ERROR: Bus Error")
             rw_terminate()
     #elif system=="dongle":
     #    gbt_dongle.gbtx_write_register(address,value)

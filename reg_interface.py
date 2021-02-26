@@ -1,6 +1,6 @@
 from cmd import Cmd
 import sys, os, subprocess
-from rw_reg_dongle import *
+from rw_reg_lpgbt import *
 
 class Prompt(Cmd):
 
