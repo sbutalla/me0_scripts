@@ -10,6 +10,13 @@ slave (ASIAGO schematics) == sub (in software)
 
 ## Installation
 
+```
+git clone https://github.com/andrewpeck/me0_scripts.git
+cd me0_scripts
+git checkout cheesecake_integration
+cd ..
+```
+
 The scripts depend on the cython-hidapi library (https://github.com/trezor/cython-hidapi)
 
 It can be built from source with:
