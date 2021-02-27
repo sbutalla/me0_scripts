@@ -26,6 +26,19 @@ or alternatively it can be installed by Pip
 
 ## Using Backend
 
+Comment out the following lines in lpgbt_rpi_chc.py:
+```
+import RPi.GPIO as GPIO
+import smbus
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+self.bus = smbus.SMBus(device_bus)
+self.lpgbt_address = 0x70
+def __del__(self):
+    self.bus.close()
+    GPIO.cleanup()
+```
+
 ### Configuration
 
 Configure thr master/boss lpgbt:
@@ -41,6 +54,11 @@ Enable TX2 for VTRX+ if required:
 ```python lpgbt_vtrx.py -s backend -l boss -o <OH_LINK> -g <GBT_LINK> -t name -c TX2 -e 1```
 
 ## Using CHeeseCake
+
+Comment out the following line in rw_reg_lpgbt.py:
+```
+import rw_reg
+```
 
 ### Configuration
 
