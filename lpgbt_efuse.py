@@ -327,11 +327,11 @@ if __name__ == '__main__':
         print ("Using Rpi CHeeseCake for fusing")
     elif args.system == "backend":
         #print ("Using Backend for fusing")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        print ("Only chc (Rpi Cheesecake) or dryrun allowed for fusing")
         sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for fusing")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        print ("Only chc (Rpi Cheesecake) or dryrun allowed for fusing")
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually fusing lpGBT")

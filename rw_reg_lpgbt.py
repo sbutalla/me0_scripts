@@ -12,11 +12,6 @@ reg_list_dryrun = {}
 for i in range(462):
     reg_list_dryrun[i] = 0x00
 n_rw_reg = (0x13C+1) # number of registers in LPGBT rwf + rw block
-ADDR_IC_ADDR = None
-ADDR_IC_WRITE_DATA = None
-ADDR_IC_READ_DATA = None
-ADDR_IC_EXEC_WRITE = None
-ADDR_IC_EXEC_READ = None
 
 #gbt_dongle = gbt_vldb.GBTx()
 gbt_rpi_chc = lpgbt_rpi_chc.lpgbt_rpi_chc()
@@ -176,18 +171,14 @@ def rw_initialize(system_val, boss, ohIdx, gbtIdx):
             print ("ERROR: Invalid ohIdx or gbtIdx")
             rw_terminate()
         linkIdx = ohIdx * 3 + gbtIdx
-        rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
-        rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)
-        global ADDR_IC_ADDR
-        global ADDR_IC_WRITE_DATA
-        global ADDR_IC_READ_DATA
-        global ADDR_IC_EXEC_WRITE
-        global ADDR_IC_EXEC_READ
-        ADDR_IC_ADDR = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS').real_address
-        ADDR_IC_WRITE_DATA = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.WRITE_DATA').real_address
-        #ADDR_IC_READ_DATA = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.READ_DATA').real_address
-        ADDR_IC_EXEC_WRITE = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE').real_address
-        ADDR_IC_EXEC_READ = rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_READ').real_address
+        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
+        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
 
 def check_lpgbt_ready(ohIdx, gbtIdx):
     if system!="dryrun":
@@ -277,18 +268,19 @@ def mpeek(address):
             rw_terminate()
     elif system=="backend":
         #rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
-        #output = rw_reg.wReg(ADDR_IC_ADDR, address)
-        #if output<0:
+        #output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS'), address)
+        #if output=="Bus Error":
         #    print ("ERROR: Bus Error")
         #    rw_terminate()
-        #output = rw_reg.wReg(ADDR_IC_EXEC_READ, 1)
-        #if output<0:
+        #output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_READ'), 1)
+        #if output=="Bus Error":
         #    print ("ERROR: Bus Error")
         #    rw_terminate()
-        #data = rw_reg.rReg(ADDR_IC_READ_DATA)
-        #if parseInt(data) == 0xdeaddead:
+        #output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.READ_DATA'))
+        #if output=="Bus Error":
         #    print ("ERROR: Bus Error")
         #    rw_terminate()
+        #data = int(output, 16)
         #return data
         return reg_list_dryrun[address]
     #elif system=="dongle":
@@ -307,17 +299,20 @@ def mpoke(address, value):
             print("ERROR: Problem in writing register: " + str(hex(address)))
             rw_terminate()
     elif system=="backend":
-        rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
-        output = rw_reg.wReg(ADDR_IC_ADDR, address)
-        if output<0:
+        output = rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
+        if output=="Bus Error":
             print ("ERROR: Bus Error")
             rw_terminate()
-        output = rw_reg.wReg(ADDR_IC_WRITE_DATA, value)
-        if output<0:
+        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS'), address)
+        if output=="Bus Error":
             print ("ERROR: Bus Error")
             rw_terminate()
-        output = rw_reg.wReg(ADDR_IC_EXEC_WRITE, 1)
-        if output<0:
+        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.WRITE_DATA'), value)
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
+        output = rw_reg.writReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE'), 1)
+        if output=="Bus Error":
             print ("ERROR: Bus Error")
             rw_terminate()
         reg_list_dryrun[address] = value
