@@ -5,6 +5,8 @@ import argparse
 
 config_boss_filename = "config_boss.txt"
 config_sub_filename = "config_sub.txt"
+config_boss = {}
+config_sub = {}
 
 # VFAT number: boss/sub, ohid, gbtid, elink 
 # For GE2/1 GEB + Pizza
@@ -50,17 +52,6 @@ def getConfig (filename):
     f.close()
     return reg_map
 
-if not os.path.isfile(config_boss_filename):
-    print ("Missing config file for boss: config_boss.txt")
-    sys.exit()
-    
-if not os.path.isfile(config_sub_filename):
-    print ("Missing config file for sub: sub_boss.txt")
-    sys.exit()
-
-config_boss = getConfig(config_boss_filename)
-config_sub  = getConfig(config_sub_filename)
-
 class Colors:
     WHITE   = '\033[97m'
     CYAN    = '\033[96m'
@@ -89,18 +80,19 @@ def check_rom_readback():
 def lpgbt_communication_test(system, vfat_list, depth):
     print ("LPGBT VFAT Communication Check depth=%s transactions" % (str(depth)))
     
-    if system!="dryrun":
-        vfat_oh_link_reset()
+    vfat_oh_link_reset()
     cfg_run = 12*[0]
     for vfat in vfat_list:
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-        
-        if system!="dryrun":
-            check_lpgbt_link_ready(oh_select, gbt_select)
-            node = rw_reg.getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
-            for iread in range(depth):
-                vfat_cfg_run = read_backend_reg(node)
-                cfg_run[vfat] += (vfat_cfg_run != 0)
+           
+        check_lpgbt_link_ready(oh_select, gbt_select)
+        if system=="backend":
+            cfg_node = rw_reg.getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
+        else:
+            cfg_node = ""
+        for iread in range(depth):
+            vfat_cfg_run = read_backend_reg(cfg_node)
+            cfg_run[vfat] += (vfat_cfg_run != 0)
         print ("VFAT#%02d: reads=%d, errs=%d" % (vfat, depth, cfg_run[vfat]))
 
 def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
@@ -121,22 +113,29 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         sleep(0.01)
 
         # reset the link, give some time to lock and accumulate any sync errors and then check VFAT comms
-        if system!="dryrun":
-            vfat_oh_link_reset()
+        vfat_oh_link_reset()
 
         # read cfg_run some number of times, check link good status and sync errors
         for vfat in vfat_list:
             lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
             
-            if system!="dryrun":
-                check_lpgbt_link_ready(oh_select, gbt_select)             
-                node = rw_reg.getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
-                for iread in range(depth):
-                    vfat_cfg_run = read_backend_reg(node)
-                    cfg_run[vfat][phase] += (vfat_cfg_run != 0)
+            check_lpgbt_link_ready(oh_select, gbt_select)   
+            if system=="backend":        
+                cfg_node = rw_reg.getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
+            else: 
+                cfg_node = ""
+            for iread in range(depth):
+                vfat_cfg_run = read_backend_reg(cfg_node)
+                cfg_run[vfat][phase] += (vfat_cfg_run != 0)
             
-                link_good[vfat][phase]    = read_backend_reg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select)))
-                sync_err_cnt[vfat][phase] = read_backend_reg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select)))
+            if system=="backend":
+                link_node = rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
+                sync_node = rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
+            else:
+                link_node = ""
+                sync_node = ""
+            link_good[vfat][phase]    = read_backend_reg(link_node)
+            sync_err_cnt[vfat][phase] = read_backend_reg(sync_node)
 
             print("\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%02d, cfg_run_errs=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase]))
 
@@ -229,15 +228,13 @@ def setVfatRxPhase(system, vfat, phase):
     addr = GBT_ELINK_SAMPLE_PHASE_BASE_REG + elink
     value = (config[addr] & 0x0f) | (phase << 4)
     
-    if system!="dryrun":
-        check_lpgbt_link_ready(oh_select, gbt_select)
-        select_ic_link(oh_select, gbt_select)
+    check_lpgbt_link_ready(oh_select, gbt_select)
+    select_ic_link(oh_select, gbt_select)
     if system!= "dryrun" and system!= "backend":
         check_rom_readback()
     mpoke(addr, value)
 
-    if system!="dryrun":
-        vfat_oh_link_reset()
+    vfat_oh_link_reset()
 
 def test_find_phase_center():
     def check_finder(center, width, errs):
@@ -326,6 +323,19 @@ if __name__ == '__main__':
     for vfat in range(0,12):
         if (0x1 & (vfatmask_int>>vfat)):
             vfat_list.append(vfat)
+    
+    if not os.path.isfile(config_boss_filename):
+        print ("Missing config file for boss: config_boss.txt")
+        sys.exit()
+    
+    if not os.path.isfile(config_sub_filename):
+        print ("Missing config file for sub: sub_boss.txt")
+        sys.exit()
+
+    global config_boss
+    global config_sub
+    config_boss = getConfig(config_boss_filename)
+    config_sub  = getConfig(config_sub_filename)
     
     # Running Phase Scan
     try:

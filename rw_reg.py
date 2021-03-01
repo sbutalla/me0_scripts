@@ -5,7 +5,7 @@ from config import *
 import imp
 
 print ('Loading shared library: librwreg.so')
-lib_DEFAULT = CDLL("./lib/librwreg_backup.so")
+lib_DEFAULT = "./lib/librwreg_backup.so"
 lib_file = os.environ.get('ME0_LIBRWREG_SO')
 if lib_file is None:
     lib_file = lib_DEFAULT

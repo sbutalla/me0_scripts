@@ -170,32 +170,34 @@ def rw_initialize(system_val, boss=None, ohIdx=None, gbtIdx=None):
             select_ic_link(ohIdx, gbtIdx)
             
 def select_ic_link(ohIdx, gbtIdx):
-    ohIdx = int(ohIdx)
-    gbtIdx = int(gbtIdx)
-    if ohIdx not in range(0,8) or gbtIdx not in [0,1]:
-        print ("ERROR: Invalid ohIdx or gbtIdx")
-        rw_terminate()
-    linkIdx = ohIdx * 3 + gbtIdx
-    output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
-    if output=="Bus Error":
-        print ("ERROR: Bus Error")
-        rw_terminate()
-    output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)
-    if output=="Bus Error":
-        print ("ERROR: Bus Error")
-        rw_terminate()
+    if system=="backend":
+        ohIdx = int(ohIdx)
+        gbtIdx = int(gbtIdx)
+        if ohIdx not in range(0,8) or gbtIdx not in [0,1]:
+            print ("ERROR: Invalid ohIdx or gbtIdx")
+            rw_terminate()
+        linkIdx = ohIdx * 3 + gbtIdx
+        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
+        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
 
 def check_lpgbt_link_ready(ohIdx, gbtIdx):
-    output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))
-    if output=="Bus Error":
-        print ("ERROR: Bus Error")
-        rw_terminate()
-    link_ready = int(output, 16)
-    if (link_ready==1):
-        print ("OH lpGBT links are READY")  
-    else:
-        print ("OH lpGBT links are not READY, check fiber connections")  
-        rw_terminate()
+    if system=="backend":
+        output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
+        link_ready = int(output, 16)
+        if (link_ready==1):
+            print ("OH lpGBT links are READY")  
+        else:
+            print ("OH lpGBT links are not READY, check fiber connections")  
+            rw_terminate()
 
 def check_lpgbt_ready(ohIdx=None, gbtIdx=None):
     if system!="dryrun":
@@ -258,18 +260,28 @@ def rw_terminate():
     sys.exit()
 
 def vfat_oh_link_reset():
-    output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 0x1)
-    if output=="Bus Error":
-        print ("ERROR: Bus Error")
-        rw_terminate()
+    if system=="backend":
+        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 0x1)
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
 
 def read_backend_reg(node):
-    output = rw_reg.readReg(node)
-    if output=="Bus Error":
-        print ("ERROR: Bus Error")
-        rw_terminate()
+    output = "0x00"
+    if system=="backend":
+        output = rw_reg.readReg(node)
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
     return int(output,16)
-
+    
+def write_backend_reg(node, data):
+    if system=="backend":
+        output = rw_reg.writeReg(node, data)
+        if output=="Bus Error":
+            print ("ERROR: Bus Error")
+            rw_terminate()
+    
 def readAddress(address):
     try:
         output = subprocess.check_output("mpeek (" + str(address) + ")" + stderr==subprocess.STDOUT , shell=True)
