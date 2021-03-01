@@ -210,47 +210,47 @@ if __name__ == '__main__':
         #sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for checking configuration")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually running on lpGBT")
     else:
-        print ("Only valid options: chc, backend, dongle, dryrun")
+        print (Colors.YELLOW + "Only valid options: chc, backend, dongle, dryrun" + Colors.ENDC)
         sys.exit()
 
     boss = None
     if args.lpgbt is None:
-        print ("Please select boss")
+        print (Colors.YELLOW + "Please select boss" + Colors.ENDC)
         sys.exit()
     elif (args.lpgbt=="boss"):
         print ("VTRX+ control for boss")
         boss=1
     elif (args.lpgbt=="sub"):
-        print ("VTRX+ control only for boss since I2C master of boss connected to VTRX+")
+        print (Colors.YELLOW + "VTRX+ control only for boss since I2C master of boss connected to VTRX+" + Colors.ENDC)
         boss=0
         sys.exit()
     else:
-        print ("Please select boss")
+        print (Colors.YELLOW + "Please select boss" + Colors.ENDC)
         sys.exit()
     if boss is None:
         sys.exit()
 
     if args.system == "backend":
         if args.ohid is None:
-            print ("Need OHID for backend")
+            print (Colors.YELLOW + "Need OHID for backend" + Colors.ENDC)
             sys.exit()
         if args.gbtid is None:
-            print ("Need GBTID for backend")
+            print (Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
             sys.exit()
         if int(args.ohid)>7:
-            print ("Only OHID 0-7 allowed")
+            print (Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
             sys.exit()
         if int(args.gbtid)>1:
-            print ("Only GBTID 0 and 1 allowed")
+            print (Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
             sys.exit() 
     else:
         if args.ohid is not None or args.gbtid is not None:
-            print ("OHID and GBTID only needed for backend")
+            print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
             sys.exit()
 
     reg_list = []
@@ -260,54 +260,54 @@ if __name__ == '__main__':
         sys.exit()
     elif args.type == "reg":
         if args.channel is not None or args.name is not None:
-            print ("For type reg only register values can be given")
+            print (Colors.YELLOW + "For type reg only register values can be given" + Colors.ENDC)
             sys.exit()
         if args.enable is not None:
-            print ("Enable option not available for type: reg")
+            print (Colors.YELLOW + "Enable option not available for type: reg" + Colors.ENDC)
             sys.exit()
         if args.reg == None:
-            print ("Enter registers to read/write")
+            print (Colors.YELLOW + "Enter registers to read/write" + Colors.ENDC)
             sys.exit()
         for reg in args.reg:
             if int(reg,16) > 255:
-                print ("Register address can only be 8 bit")
+                print (Colors.YELLOW + "Register address can only be 8 bit" + Colors.ENDC)
                 sys.exit()
             reg_list.append(int(reg,16))
     elif args.type == "name":
         if args.reg is not None:
-            print ("For type name only channel, enable or name can be given")
+            print (Colors.YELLOW + "For type name only channel, enable or name can be given" + Colors.ENDC)
             sys.exit()
         if args.channel == None:
-            print ("Enter channel")
+            print (Colors.YELLOW + "Enter channel" + Colors.ENDC)
             sys.exit()          
         if args.enable is not None:
             if args.enable not in ["0", "1"]:
-                print ("Enter valid value for enable: 0 or 1")
+                print (Colors.YELLOW + "Enter valid value for enable: 0 or 1" + Colors.ENDC)
                 sys.exit()
         if args.enable is None and args.name == None:
-            print ("Enter enable option or register name")
+            print (Colors.YELLOW + "Enter enable option or register name" + Colors.ENDC)
             sys.exit() 
         if args.channel not in ["TX1", "TX2", "TX3", "TX4"]:
-            print ("Only allowed channels: TX1, TX2, TX3, TX4")
+            print (Colors.YELLOW + "Only allowed channels: TX1, TX2, TX3, TX4" + Colors.ENDC)
             sys.exit()
         if args.name is not None:
             for name in args.name:
                 if name not in ["biascur_reg", "modcur_reg", "empamp_reg"]:
-                    print ("Invalid register name")
+                    print (Colors.YELLOW + "Invalid register name" + Colors.ENDC)
                     sys.exit()
                 reg_list.append(TX_reg[args.channel][name])
     else:
-        print ("Only allowed type: reg, name")
+        print (Colors.YELLOW + "Only allowed type: reg, name")
         sys.exit()
 
 
     if args.data is not None:
         if len(reg_list) != len(args.data):
-            print ("Number of registers and data values do not match")
+            print (Colors.YELLOW + "Number of registers and data values do not match" + Colors.ENDC)
             sys.exit()
         for data in args.data:
             if int(data,16) > 255:
-                print ("Data value can only be 8 bit")
+                print (Colors.YELLOW + "Data value can only be 8 bit" + Colors.ENDC)
                 sys.exit()
             data_list.append(int(data,16))
             
@@ -331,10 +331,10 @@ if __name__ == '__main__':
     try:
         main(args.system, boss, args.channel, args.enable, reg_list, data_list)
     except KeyboardInterrupt:
-        print ("\nKeyboard Interrupt encountered")
+        print (Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
     except EOFError:
-        print ("\nEOF Error")
+        print (Colors.RED + "\nEOF Error" + Colors.ENDC)
         rw_terminate()
 
     # Termination

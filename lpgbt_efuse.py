@@ -327,21 +327,21 @@ if __name__ == '__main__':
         print ("Using Rpi CHeeseCake for fusing")
     elif args.system == "backend":
         #print ("Using Backend for fusing")
-        print ("Only chc (Rpi Cheesecake) or dryrun allowed for fusing")
+        print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun allowed for fusing" + Colors.ENDC)
         sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for fusing")
-        print ("Only chc (Rpi Cheesecake) or dryrun allowed for fusing")
+        print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun allowed for fusing" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually fusing lpGBT")
     else:
-        print ("Only valid options: chc, backend, dongle, dryrun")
+        print (Colors.YELLOW + "Only valid options: chc, backend, dongle, dryrun" + Colors.ENDC)
         sys.exit()
 
     boss = None
     if args.lpgbt is None:
-        print ("Please select boss or sub")
+        print (Colors.YELLOW + "Please select boss or sub" + Colors.ENDC)
         sys.exit()
     elif (args.lpgbt=="boss"):
         print ("Fusing boss LPGBT")
@@ -350,81 +350,81 @@ if __name__ == '__main__':
         print ("Fusing sub LPGBT")
         boss=0
     else:
-        print ("Please select boss or sub")
+        print (Colors.YELLOW + "Please select boss or sub" + Colors.ENDC)
         sys.exit()
     if boss is None:
         sys.exit()
 
     args.vtrx = int(args.vtrx)
     if args.vtrx not in [0,1]:
-        print ("Invalid value for vtrx option, only 0 or 1 allowed")
+        print (Colors.YELLOW + "Invalid value for vtrx option, only 0 or 1 allowed" + Colors.ENDC)
         sys.exit()
     if args.complete not in ["0", "1"]:
-        print ("Invalid valuefor complete option, only 0 or 1 allowed")
+        print (Colors.YELLOW + "Invalid valuefor complete option, only 0 or 1 allowed" + Colors.ENDC)
         sys.exit()
         
     if args.fusing == "input_file":
         if args.register is not None:
-            print ("Register not needed")
+            print (Colors.YELLOW + "Register not needed" + Colors.ENDC)
             sys.exit()
         if args.data is not None:
-            print ("Data not needed")
+            print (Colors.YELLOW + "Data not needed" + Colors.ENDC)
             sys.exit()
         if args.user_id is not None:
-            print ("Do not enter USER ID")
+            print (Colors.YELLOW + "Do not enter USER ID" + Colors.ENDC)
             sys.exit()
         if args.input_config_file is None:
-            print ("Need input file for fusing")
+            print (Colors.YELLOW + "Need input file for fusing" + Colors.ENDC)
             sys.exit()
         if args.vtrx and not boss:
-            print ("Can fuse settings for VTRX+ only for boss")
+            print (Colors.YELLOW + "Can fuse settings for VTRX+ only for boss" + Colors.ENDC)
             sys.exit()
         print ("Fusing from Input File: " + args.input_config_file)
     elif args.fusing == "register":
         if args.user_id is not None:
-            print ("Do not enter USER ID")
+            print (Colors.YELLOW + "Do not enter USER ID" + Colors.ENDC)
             sys.exit()
         if args.input_config_file is not None:
-            print ("Input file not needed")
+            print (Colors.YELLOW + "Input file not needed" + Colors.ENDC)
             sys.exit()
         if not args.vtrx:
-            print ("Fusing settings for VTRX+ only allowed when fusing from input file")
+            print (Colors.YELLOW + "Fusing settings for VTRX+ only allowed when fusing from input file" + Colors.ENDC)
             sys.exit()
         if args.register is None:
-            print ("Provide register to be fused")
+            print (Colors.YELLOW + "Provide register to be fused" + Colors.ENDC)
             sys.exit()
         if args.data is None:
-            priint ("Provide data for register to be fused")
+            print (Colors.YELLOW + "Provide data for register to be fused" + Colors.ENDC)
             sys.exit()
         if int(args.register,16) > (2**16-1):
-            print ("Register address can be maximum 16 bits")
+            print (Colors.YELLOW + "Register address can be maximum 16 bits" + Colors.ENDC)
             sys.exit()
         if int(args.data,16) > (2**8-1):
-            print ("Register data can be maximum 8 bits")
+            print (Colors.YELLOW + "Register data can be maximum 8 bits" + Colors.ENDC)
             sys.exit()
         print ("Fusing for Register: " + args.register + " , Data: " + args.data)
     elif args.fusing == "user_id":
         if args.register is not None:
-            print ("Register not needed")
+            print (Colors.YELLOW + "Register not needed" + Colors.ENDC)
             sys.exit()
         if args.data is not None:
-            print ("Data not needed")
+            print (Colors.YELLOW + "Data not needed" + Colors.ENDC)
             sys.exit()
         if args.input_config_file is not None:
-            print ("Input file not needed")
+            print (Colors.YELLOW + "Input file not needed" + Colors.ENDC)
             sys.exit()
         if not args.vtrx:
-            print ("Fusing settings for VTRX+ only allowed when fusing from input file")
+            print (Colors.YELLOW + "Fusing settings for VTRX+ only allowed when fusing from input file" + Colors.ENDC)
             sys.exit()
         if args.user_id is None:
-            print ("Enter the USER ID to be fused")
+            print (Colors.YELLOW + "Enter the USER ID to be fused" + Colors.ENDC)
             sys.exit()
-        if int(args.user_id,16) > (2**32-1):
-            print ("USER ID can be maximum 32 bits")
+        if int(Colors.YELLOW + args.user_id,16) > (2**32-1):
+            print (Colors.YELLOW + "USER ID can be maximum 32 bits" + Colors.ENDC)
             sys.exit()
         print ("Fusing USER_ID as :" + args.user_id)
     else:
-        print ("Invalid option for fusing")
+        print (Colors.YELLOW + "Invalid option for fusing" + Colors.ENDC)
         sys.exit()
 
     # Parsing Registers XML File
@@ -444,10 +444,10 @@ if __name__ == '__main__':
     try:
         main(args.system, boss, args.fusing, args.input_config_file, args.vtrx, args.register, args.data, args.user_id, int(args.complete))
     except KeyboardInterrupt:
-        print ("\nKeyboard Interrupt encountered")
+        print (Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
     except EOFError:
-        print ("\nEOF Error")
+        print (Colors.RED + "\nEOF Error" + Colors.ENDC)
         rw_terminate()
 
     # Termination

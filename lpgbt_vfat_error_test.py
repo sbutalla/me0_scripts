@@ -45,16 +45,6 @@ vfat_registers = {
         "HW_CHIP_ID": "r"
 }
 
-class Colors:
-    WHITE   = '\033[97m'
-    CYAN    = '\033[96m'
-    MAGENTA = '\033[95m'
-    BLUE    = '\033[94m'
-    YELLOW  = '\033[93m'
-    GREEN   = '\033[92m'
-    RED     = '\033[91m'
-    ENDC    = '\033[0m'
-
 def vfat_to_oh_gbt_elink(vfat):
     lpgbt = VFAT_TO_ELINK[vfat][0]
     ohid  = VFAT_TO_ELINK[vfat][1]
@@ -135,7 +125,14 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
         if vfat_registers[reg] == "rw":     
             print ("Error fractions for register: " + reg)
             for vfat in vfat_list:
-                print ("VFAT#: %02d, fraction of errors: %s" %(vfat, "{:.4f}".format(error_rates[reg][vfat])))
+                result_string = ""
+                if error_rates[reg][vfat]==0:
+                    result_string += Colors.GREEN
+                else:
+                    result_string += Colors.YELLOW
+                result_string += "VFAT#: %02d, fraction of errors: %s" %(vfat, "{:.4f}".format(error_rates[reg][vfat]))
+                result_string += Colors.ENDC
+                print (result_string)
             print ("") 
 
 if __name__ == '__main__':
@@ -154,7 +151,7 @@ if __name__ == '__main__':
 
     if args.system == "chc":
         #print ("Using Rpi CHeeseCake for configuration")
-        print ("Only Backend or dryrun supported")
+        print (Colors.YELLOW + "Only Backend or dryrun supported" + Colors.ENDC)
         sys.exit()
     elif args.system == "backend":
         print ("Using Backend for configuration")
@@ -162,27 +159,27 @@ if __name__ == '__main__':
         #sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for configuration")
-        print ("Only Backend or dryrun supported")
+        print (Colors.YELLOW + "Only Backend or dryrun supported" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually running vfat bert")
     else:
-        print ("Only valid options: backend, dryrun")
+        print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
     
     vfatmask_int = 0
     if args.vfatmask is None:
-        print ("Enter a mask for the 12 VFATs")
+        print (Colors.YELLOW + "Enter a mask for the 12 VFATs" + Colors.ENDC)
         sys.exit()
     elif "0b" in args.vfatmask:
         vfatmask_int = int(args.vfatmask,2)
     elif "0x" in args.vfatmask:
         vfatmask_int = int(args.vfatmask,16)
     else:
-        print ("Enter a mask in binary (0b) or hex (0x) format")
+        print (Colors.YELLOW + "Enter a mask in binary (0b) or hex (0x) format" + Colors.ENDC)
         sys.exit()
     if vfatmask_int>(2**12 - 1):
-        print ("VFAT mask can be maximum 12 bits (for 12 VFATS on 1 ME0 GEB)")
+        print (Colors.YELLOW + "VFAT mask can be maximum 12 bits (for 12 VFATS on 1 ME0 GEB)" + Colors.ENDC)
         sys.exit()
     
     if args.reg is None:
@@ -191,7 +188,7 @@ if __name__ == '__main__':
     else:
         for r in args.reg:
             if r not in vfat_registers:
-                print ("Only valid options: HW_ID (read), HW_ID_VER (read), TEST_REG (read/write), HW_CHIP_ID (read)")  
+                print (Colors.YELLOW + "Only valid options: HW_ID (read), HW_ID_VER (read), TEST_REG (read/write), HW_CHIP_ID (read)" + Colors.ENDC)  
                 sys.exit()  
        
     # Parsing Registers XML File
@@ -213,10 +210,10 @@ if __name__ == '__main__':
     try:
         lpgbt_vfat_bert(args.system, vfat_list, args.reg, int(args.niter), args.verbose)
     except KeyboardInterrupt:
-        print ("Keyboard Interrupt encountered")
+        print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
     except EOFError:
-        print ("\nEOF Error")
+        print (Colors.RED + "\nEOF Error" + Colors.ENDC)
         rw_terminate()
 
     # Termination

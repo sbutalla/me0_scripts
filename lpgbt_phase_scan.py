@@ -52,16 +52,6 @@ def getConfig (filename):
     f.close()
     return reg_map
 
-class Colors:
-    WHITE   = '\033[97m'
-    CYAN    = '\033[96m'
-    MAGENTA = '\033[95m'
-    BLUE    = '\033[94m'
-    YELLOW  = '\033[93m'
-    GREEN   = '\033[92m'
-    RED     = '\033[91m'
-    ENDC    = '\033[0m'
-
 def vfat_to_oh_gbt_elink(vfat):
     lpgbt = VFAT_TO_ELINK[vfat][0]
     ohid  = VFAT_TO_ELINK[vfat][1]
@@ -266,7 +256,7 @@ if __name__ == '__main__':
 
     if args.system == "chc":
         #print ("Using Rpi CHeeseCake for configuration")
-        print ("Only Backend or dryrun supported")
+        print (Colors.YELLOW + "Only Backend or dryrun supported" + Colors.ENDC)
         sys.exit()
     elif args.system == "backend":
         print ("Using Backend for configuration")
@@ -274,39 +264,39 @@ if __name__ == '__main__':
         #sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for configuration")
-        print ("Only Backend or dryrun supported")
+        print (Colors.YELLOW + "Only Backend or dryrun supported" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually running phase scan")
     else:
-        print ("Only valid options: backend, dryrun")
+        print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
     
     vfatmask_int = 0
     if args.vfatmask is None:
-        print ("Enter a mask for the 12 VFATs")
+        print (Colors.YELLOW + "Enter a mask for the 12 VFATs" + Colors.ENDC)
         sys.exit()
     elif "0b" in args.vfatmask:
         vfatmask_int = int(args.vfatmask,2)
     elif "0x" in args.vfatmask:
         vfatmask_int = int(args.vfatmask,16)
     else:
-        print ("Enter a mask in binary (0b) or hex (0x) format")
+        print (Colors.YELLOW + "Enter a mask in binary (0b) or hex (0x) format" + Colors.ENDC)
         sys.exit()
     if vfatmask_int>(2**12 - 1):
-        print ("VFAT mask can be maximum 12 bits (for 12 VFATS on 1 ME0 GEB)")
+        print (Colors.YELLOW + "VFAT mask can be maximum 12 bits (for 12 VFATS on 1 ME0 GEB)" + Colors.ENDC)
         sys.exit()
     
     if args.test not in ["0", "1"]:
-        print ("Test option can only be 0 or 1")
+        print (Colors.YELLOW + "Test option can only be 0 or 1" + Colors.ENDC)
         sys.exit()
         
     if "0x" not in args.bestphase:
-        print ("Enter best phase in hex format")
+        print (Colors.YELLOW + "Enter best phase in hex format" + Colors.ENDC)
         sys.exit()
     best_phase = int(args.bestphase, 16)
     if best_phase>16:
-        print ("Phase can only be 4 bits")
+        print (Colors.YELLOW + "Phase can only be 4 bits" + Colors.ENDC)
         sys.exit()
     
     # Parsing Registers XML File
@@ -325,11 +315,11 @@ if __name__ == '__main__':
             vfat_list.append(vfat)
     
     if not os.path.isfile(config_boss_filename):
-        print ("Missing config file for boss: config_boss.txt")
+        print (Colors.YELLOW + "Missing config file for boss: config_boss.txt" + Colors.ENDC)
         sys.exit()
     
     if not os.path.isfile(config_sub_filename):
-        print ("Missing config file for sub: sub_boss.txt")
+        print (Colors.YELLOW + "Missing config file for sub: sub_boss.txt" + Colors.ENDC)
         sys.exit()
 
     global config_boss
@@ -344,10 +334,10 @@ if __name__ == '__main__':
         else:
             lpgbt_phase_scan(args.system, vfat_list, int(args.depth), best_phase)
     except KeyboardInterrupt:
-        print ("Keyboard Interrupt encountered")
+        print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
     except EOFError:
-        print ("\nEOF Error")
+        print (Colors.RED + "\nEOF Error" + Colors.ENDC)
         rw_terminate()
 
     # Termination

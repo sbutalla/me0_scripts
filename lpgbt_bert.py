@@ -194,21 +194,21 @@ if __name__ == '__main__':
         print ("Using Rpi CHeeseCake for checking configuration")
     elif args.system == "backend":
         #print ("Using Backend for checking configuration")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for checking configuration")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually running on lpGBT")
     else:
-        print ("Only valid options: chc, backend, dongle, dryrun")
+        print (Colors.YELLOW + "Only valid options: chc, backend, dongle, dryrun" + Colors.ENDC)
         sys.exit()
 
     boss = None
     if args.lpgbt is None:
-        print ("Please select boss")
+        print (Colors.YELLOW + "Please select boss" + Colors.ENDC)
         sys.exit()
     elif (args.lpgbt=="boss"):
         print ("BER for boss LPGBT")
@@ -217,40 +217,40 @@ if __name__ == '__main__':
         print ("Only boss LPGBT allowed for BER")
         boss=0
     else:
-        print ("Please select boss")
+        print (Colors.YELLOW + "Please select boss" + Colors.ENDC)
         sys.exit()
     if boss is None:
         sys.exit()
 
     if args.bert_source is None:
-        print ("Need a BERT source")
+        print (Colors.YELLOW + "Need a BERT source" + Colors.ENDC)
         sys.exit()
         
     if args.system == "backend":
         if args.ohid is None:
-            print ("Need OHID for backend")
+            print (Colors.YELLOW + "Need OHID for backend" + Colors.ENDC)
             sys.exit()
         if args.gbtid is None:
-            print ("Need GBTID for backend")
+            print (Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
             sys.exit()
         if int(args.ohid)>7:
-            print ("Only OHID 0-7 allowed")
+            print (Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
             sys.exit()
         if int(args.gbtid)>1:
-            print ("Only GBTID 0 and 1 allowed")
+            print (Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
             sys.exit() 
     else:
         if args.ohid is not None or args.gbtid is not None:
-            print ("OHID and GBTID only needed for backend")
+            print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
             sys.exit()
 
     for bert in args.bert_source:
         if bert not in BERT_source_coarse:
-            print ("Invalid course BERT source : " + bert + " (See lpGBT manual Table 14.4 for options)")
+            print (Colors.YELLOW + "Invalid course BERT source : " + bert + " (See lpGBT manual Table 14.4 for options)" + Colors.ENDC)
             sys.exit()
 
     if args.time not in BERT_measure_time:
-        print ("Invalid BERT measurement time (See lpGBT manual Table 14.5 for options)")
+        print (Colors.YELLOW + "Invalid BERT measurement time (See lpGBT manual Table 14.5 for options)" + Colors.ENDC)
         sys.exit()
 
     # Parsing Registers XML File
@@ -272,10 +272,10 @@ if __name__ == '__main__':
     try:
         main(args.system, args.bert_source, args.time, boss)
     except KeyboardInterrupt:
-        print ("\nKeyboard Interrupt encountered")
+        print (Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
     except EOFError:
-        print ("\nEOF Error")
+        print (Colors.RED + "\nEOF Error" + Colors.ENDC)
         rw_terminate()
 
     # Termination

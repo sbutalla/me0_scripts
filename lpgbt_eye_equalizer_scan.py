@@ -175,81 +175,81 @@ if __name__ == '__main__':
         print ("Using Rpi CHeeseCake for checking configuration")
     elif args.system == "backend":
         #print ("Using Backend for checking configuration")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for checking configuration")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually running on lpGBT")
     else:
-        print ("Only valid options: chc, backend, dongle, dryrun")
+        print (Colors.YELLOW + "Only valid options: chc, backend, dongle, dryrun" + Colors.ENDC)
         sys.exit()
 
     boss = None
     if args.lpgbt is None:
-        print ("Please select boss")
+        print (Colors.YELLOW + "Please select boss" + Colors.ENDC)
         sys.exit()
     elif (args.lpgbt=="boss"):
         print ("EYE for boss LPGBT")
         boss=1
     elif (args.lpgbt=="sub"):
         #print ("EYE for sub LPGBT")
-        print ("EYE only for boss since sub is only TX mode")
+        print (Colors.YELLOW + "EYE only for boss since sub is only TX mode" + Colors.ENDC)
         boss=0
         sys.exit()
     else:
-        print ("Please select boss")
+        print (Colors.YELLOW + "Please select boss" + Colors.ENDC)
         sys.exit()
     if boss is None:
         sys.exit()
         
     if args.system == "backend":
         if args.ohid is None:
-            print ("Need OHID for backend")
+            print (Colors.YELLOW + "Need OHID for backend" + Colors.ENDC)
             sys.exit()
         if args.gbtid is None:
-            print ("Need GBTID for backend")
+            print (Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
             sys.exit()
         if int(args.ohid)>7:
-            print ("Only OHID 0-7 allowed")
+            print (Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
             sys.exit()
         if int(args.gbtid)>1:
-            print ("Only GBTID 0 and 1 allowed")
+            print (Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
             sys.exit() 
     else:
         if args.ohid is not None or args.gbtid is not None:
-            print ("OHID and GBTID only needed for backend")
+            print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
             sys.exit()
 
     if int(args.count,16) > 15:
-        print ("EOMendOfCountSel[3:0] can be max 4 bits")
+        print (Colors.YELLOW + "EOMendOfCountSel[3:0] can be max 4 bits" + Colors.ENDC)
         sys.exit()
 
     for e in args.eq_attn:
         if int(e,16) > 3:
-            print ("Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3")
+            print (Colors.YELLOW + "Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3" + Colors.ENDC)
             sys.exit()
     for e in args.eq_cap:
         if int(e,16) > 3:
-            print ("Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3")
+            print (Colors.YELLOW + "Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3" + Colors.ENDC)
             sys.exit()
     for e in args.eq_res3:
         if int(e,16) > 3:
-            print ("Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3")
+            print (Colors.YELLOW + "Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3" + Colors.ENDC)
             sys.exit()
     for e in args.eq_res2:
         if int(e,16) > 3:
-            print ("Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3")
+            print (Colors.YELLOW + "Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3" + Colors.ENDC)
             sys.exit()
     for e in args.eq_res1:
         if int(e,16) > 3:
-            print ("Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3")
+            print (Colors.YELLOW + "Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3" + Colors.ENDC)
             sys.exit()
     for e in args.eq_res0:
         if int(e,16) > 3:
-            print ("Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3")
+            print (Colors.YELLOW + "Setting can be max 2 bits, therefore: 0x0, 0x1, 0x2, 0x3" + Colors.ENDC)
             sys.exit()
 
     # Parsing Registers XML File
@@ -271,10 +271,10 @@ if __name__ == '__main__':
     try:
         main(args.system, int(args.count,16), args.eq_attn, args.eq_cap, args.eq_res3, args.eq_res2, args.eq_res1, args.eq_res0, boss)
     except KeyboardInterrupt:
-        print ("\nKeyboard Interrupt encountered")
+        print (Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
     except EOFError:
-        print ("\nEOF Error")
+        print (Colors.RED + "\nEOF Error" + Colors.ENDC)
         rw_terminate()
 
     # Termination

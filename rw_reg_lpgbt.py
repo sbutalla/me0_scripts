@@ -48,6 +48,16 @@ class Node:
         print ('Module:',self.isModule)
         print ('Parent:',self.parent.name)
 
+class Colors:
+    WHITE   = '\033[97m'
+    CYAN    = '\033[96m'
+    MAGENTA = '\033[95m'
+    BLUE    = '\033[94m'
+    YELLOW  = '\033[93m'
+    GREEN   = '\033[92m'
+    RED     = '\033[91m'
+    ENDC    = '\033[0m'
+
 def main():
     parseXML()
     print ('Example:')
@@ -162,7 +172,7 @@ def rw_initialize(system_val, boss=None, ohIdx=None, gbtIdx=None):
             if initialize_success:
                 initialize_success *= gbt_rpi_chc.i2c_channel_sel(boss)
             if not initialize_success:
-                print("ERROR: Problem in initialization")
+                print(Colors.RED + "ERROR: Problem in initialization" + Colors.ENDC)
                 rw_terminate()
     elif system=="backend":
         rw_reg.parseXML()
@@ -174,29 +184,29 @@ def select_ic_link(ohIdx, gbtIdx):
         ohIdx = int(ohIdx)
         gbtIdx = int(gbtIdx)
         if ohIdx not in range(0,8) or gbtIdx not in [0,1]:
-            print ("ERROR: Invalid ohIdx or gbtIdx")
+            print (Colors.RED + "ERROR: Invalid ohIdx or gbtIdx" + Colors.ENDC)
             rw_terminate()
         linkIdx = ohIdx * 3 + gbtIdx
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
 
 def check_lpgbt_link_ready(ohIdx, gbtIdx):
     if system=="backend":
         output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
         link_ready = int(output, 16)
         if (link_ready==1):
             print ("OH lpGBT links are READY")  
         else:
-            print ("OH lpGBT links are not READY, check fiber connections")  
+            print (Colors.RED + "ERROR: OH lpGBT links are not READY, check fiber connections" + Colors.ENDC)  
             rw_terminate()
 
 def check_lpgbt_ready(ohIdx=None, gbtIdx=None):
@@ -205,7 +215,7 @@ def check_lpgbt_ready(ohIdx=None, gbtIdx=None):
         if (pusmstate==18):
             print ("lpGBT status is READY")
         else:
-            print ("lpGBT is not READY, configure lpGBT first")
+            print (Colors.RED + "ERROR: lpGBT is not READY, configure lpGBT first" + Colors.ENDC)
             rw_terminate()
     if system=="backend":
         if ohIdx is not None and gbtIdx is not None:
@@ -220,11 +230,11 @@ def lpgbt_efuse(boss, enable):
     if system=="chc":
         fuse_success = gbt_rpi_chc.fuse_arm_disarm(boss, enable)
         if not fuse_success:
-            print("ERROR: Problem in fusing for: " + lpgbt_type)
+            print(Colors.RED + "ERROR: Problem in fusing for: " + lpgbt_type + Colors.ENDC)
             fuse_off = gbt_rpi_chc.fuse_arm_disarm(boss, 0)
             if not fuse_off:
-                print ("ERROR: EFUSE Power cannot be turned OFF for: " + lpgbt_type)
-                print ("Turn OFF 2.5V fusing Power Supply or Switch Immediately for: " + lpgbt_type)
+                print (Colors.RED + "ERROR: EFUSE Power cannot be turned OFF for: " + lpgbt_type + Colors.ENDC)
+                print (Colors.YELLOW + "Turn OFF 2.5V fusing Power Supply or Switch Immediately for: " + lpgbt_type + Colors.ENDC)
             rw_terminate()
 
 def chc_terminate():
@@ -233,25 +243,25 @@ def chc_terminate():
     efuse_success_sub, efuse_status_sub = gbt_rpi_chc.fuse_status(0) # sub
     if efuse_success_boss and efuse_success_sub:
         if (efuse_status_boss):
-            print ("EFUSE for Boss was ARMED for Boss")
+            print (Colors.YELLOW + "EFUSE for Boss was ARMED for Boss" + Colors.ENDC)
             fuse_off = gbt_rpi_chc.fuse_arm_disarm(1, 0) # boss
             if not fuse_off:
-                print ("ERROR: EFUSE Power cannot be turned OFF for Boss")
-                print ("Turn OFF 2.5V fusing Power Supply or Switch Immediately for Boss")
+                print (Colors.RED + "ERROR: EFUSE Power cannot be turned OFF for Boss" + Colors.ENDC)
+                print (Colors.YELLOW + "Turn OFF 2.5V fusing Power Supply or Switch Immediately for Boss" + Colors.ENDC)
         if (efuse_status_sub):
-            print ("EFUSE for Sub was ARMED for Sub")
+            print (Colors.YELLOW + "EFUSE for Sub was ARMED for Sub" + Colors.ENDC)
             fuse_off = gbt_rpi_chc.fuse_arm_disarm(0, 0) # sub
             if not fuse_off:
-                print ("ERROR: EFUSE Power cannot be turned OFF for Sub")
-                print ("Turn OFF 2.5V fusing Power Supply or Switch Immediately for Sub")
+                print (Colors.RED + "ERROR: EFUSE Power cannot be turned OFF for Sub" + Colors.ENDC)
+                print (Colors.YELLOW + "Turn OFF 2.5V fusing Power Supply or Switch Immediately for Sub" + Colors.ENDC)
     else:
-        print ("ERROR: Problem in reading EFUSE status")
-        print ("Turn OFF 2.5V fusing Power Supply or Switch Immediately (if they were ON) for both Boss and Sub")
+        print (Colors.RED + "ERROR: Problem in reading EFUSE status" + Colors.ENDC)
+        print Colors.YELLOW + ("Turn OFF 2.5V fusing Power Supply or Switch Immediately (if they were ON) for both Boss and Sub" + Colors.ENDC)
 
     # Terminating RPi
     terminate_success = gbt_rpi_chc.terminate()
     if not terminate_success:
-        print("ERROR: Problem in RPi_CHC termination")
+        print(Colors.RED + "ERROR: Problem in RPi_CHC termination" + Colors.ENDC)
         sys.exit()
 
 def rw_terminate():
@@ -263,7 +273,7 @@ def vfat_oh_link_reset():
     if system=="backend":
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 0x1)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
 
 def read_backend_reg(node):
@@ -271,7 +281,7 @@ def read_backend_reg(node):
     if system=="backend":
         output = rw_reg.readReg(node)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
     return int(output,16)
     
@@ -279,7 +289,7 @@ def write_backend_reg(node, data):
     if system=="backend":
         output = rw_reg.writeReg(node, data)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
     
 def readAddress(address):
@@ -302,21 +312,21 @@ def mpeek(address):
         if success:
             return data
         else:
-            print("ERROR: Problem in reading register: " + str(hex(address)))
+            print(Colors.RED + "ERROR: Problem in reading register: " + str(hex(address)) + Colors.ENDC)
             rw_terminate()
     elif system=="backend":
         #rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
         #output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS'), address)
         #if output=="Bus Error":
-        #    print ("ERROR: Bus Error")
+        #    print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
         #    rw_terminate()
         #output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_READ'), 1)
         #if output=="Bus Error":
-        #    print ("ERROR: Bus Error")
+        #    print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
         #    rw_terminate()
         #output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.READ_DATA'))
         #if output=="Bus Error":
-        #    print ("ERROR: Bus Error")
+        #    print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
         #    rw_terminate()
         #data = int(output, 16)
         #return data
@@ -326,7 +336,7 @@ def mpeek(address):
     elif system=="dryrun":
         return reg_list_dryrun[address]
     else:
-        print("ERROR: Incorrect system")
+        print(Colors.RED + "ERROR: Incorrect system" + Colors.ENDC)
         rw_terminate()
 
 def mpoke(address, value):
@@ -334,24 +344,24 @@ def mpoke(address, value):
     if system=="chc":
         success = gbt_rpi_chc.lpgbt_write_register(address, value)
         if not success:
-            print("ERROR: Problem in writing register: " + str(hex(address)))
+            print(Colors.RED + "ERROR: Problem in writing register: " + str(hex(address)) + Colors.ENDC)
             rw_terminate()
     elif system=="backend":
         output = rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS'), address)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.WRITE_DATA'), value)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
         output = rw_reg.writReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE'), 1)
         if output=="Bus Error":
-            print ("ERROR: Bus Error")
+            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
         reg_list_dryrun[address] = value
     #elif system=="dongle":
@@ -359,7 +369,7 @@ def mpoke(address, value):
     elif system=="dryrun":
         reg_list_dryrun[address] = value
     else:
-        print("ERROR: Incorrect system")
+        print(Colors.RED + "ERROR: Incorrect system" + Colors.ENDC)
         rw_terminate()
 
 def readRegStr(reg):
@@ -413,7 +423,7 @@ def writeReg(reg, value, readback):
 
     if (readback):
         if (value!=readReg(reg)):
-            print ("ERROR: Failed to read back register %s. Expect=0x%x Read=0x%x" % (reg.name, value, readReg(reg)))
+            print (Colors.RED + "ERROR: Failed to read back register %s. Expect=0x%x Read=0x%x" % (reg.name, value, readReg(reg)) + Colors.ENDC)
     else:
         # Apply Mask if applicable
         if (reg.mask != 0):

@@ -99,17 +99,17 @@ if __name__ == '__main__':
         #sys.exit()
     elif args.system == "dongle":
         #print ("Using USB Dongle for LED Show'")
-        print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
         print ("Dry Run - not actually doing the LED Show'")
     else:
-        print ("Only valid options: chc, backend, dongle, dryrun")
+        print (Colors.YELLOW + "Only valid options: chc, backend, dongle, dryrun" + Colors.ENDC)
         sys.exit()
 
     boss = None
     if args.lpgbt is None:
-        print ("Please select boss or sub")
+        print (Colors.YELLOW + "Please select boss or sub" + Colors.ENDC)
         sys.exit()
     elif (args.lpgbt=="boss"):
         print ("Configuring LPGBT as boss")
@@ -118,27 +118,27 @@ if __name__ == '__main__':
         print ("Configuring LPGBT as sub")
         boss=0
     else:
-        print ("Please select boss or sub")
+        print (Colors.YELLOW + "Please select boss or sub" + Colors.ENDC)
         sys.exit()
     if boss is None:
         sys.exit()
         
     if args.system == "backend":
         if args.ohid is None:
-            print ("Need OHID for backend")
+            print (Colors.YELLOW + "Need OHID for backend" + Colors.ENDC)
             sys.exit()
         if args.gbtid is None:
-            print ("Need GBTID for backend")
+            print (Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
             sys.exit()
         if int(args.ohid)>7:
-            print ("Only OHID 0-7 allowed")
+            print (Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
             sys.exit()
         if int(args.gbtid)>1:
-            print ("Only GBTID 0 and 1 allowed")
+            print (Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
             sys.exit() 
     else:
         if args.ohid is not None or args.gbtid is not None:
-            print ("OHID and GBTID only needed for backend")
+            print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
             sys.exit()
 
     # Parsing Registers XML File
@@ -162,10 +162,10 @@ if __name__ == '__main__':
     try:
         main(args.system, boss)
     except KeyboardInterrupt:
-        print ("Keyboard Interrupt encountered")
+        print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
     except EOFError:
-        print ("\nEOF Error")
+        print (Colors.RED + "\nEOF Error" + Colors.ENDC)
         rw_terminate()
 
     # Termination
