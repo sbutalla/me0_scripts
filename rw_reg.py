@@ -5,8 +5,11 @@ from config import *
 import imp
 
 print ('Loading shared library: librwreg.so')
-#lib = CDLL("./lib/librwreg.so")
-lib = CDLL(os.environ.get('ME0_LIBRWREG_SO'))
+lib_DEFAULT = CDLL("./lib/librwreg_backup.so")
+lib_file = os.environ.get('ME0_LIBRWREG_SO')
+if lib_file is None:
+    lib_file = lib_DEFAULT
+lib = CDLL(lib_file)
 rReg = lib.getReg
 rReg.restype = c_uint
 rReg.argtypes=[c_uint]
@@ -17,8 +20,7 @@ regInit = lib.rwreg_init
 regInit.argtypes=[c_char_p]
 
 DEBUG = True
-#ADDRESS_TABLE_DEFAULT = './address_table/gem_amc.xml'
-ADDRESS_TABLE_DEFAULT = ''
+ADDRESS_TABLE_DEFAULT = './address_table/gem_amc_backup.xml'
 nodes = []
 
 DEVICE = CONFIG_RWREG['DEVICE']

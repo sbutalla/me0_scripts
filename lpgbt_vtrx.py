@@ -324,9 +324,9 @@ if __name__ == '__main__':
     if args.system!="dryrun" and args.system!="backend":
         check_rom_readback()
 
-    # Check if lpGBT is READY if running through backend
+    # Check if lpGBT link is READY if running through backend
     if args.system=="backend":
-        check_lpgbt_ready(args.ohid, args.gbtid)
+        check_lpgbt_link_ready(args.ohid, args.gbtid)
 
     try:
         main(args.system, boss, args.channel, args.enable, reg_list, data_list)

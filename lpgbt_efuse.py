@@ -312,7 +312,7 @@ if __name__ == '__main__':
 
     # Parsing arguments
     parser = argparse.ArgumentParser(description='LpGBT Fusing for ME0 Optohybrid')
-    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
+    parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-f", "--fusing", action="store", dest="fusing", help="fusing = input_file, register, user_id")
     parser.add_argument("-i", "--input", action="store", dest="input_config_file", help="input_config_file = .txt file")
@@ -433,7 +433,7 @@ if __name__ == '__main__':
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)
-    rw_initialize(args.system, boss, None, None)
+    rw_initialize(args.system, boss)
     print("Initialization Done\n")
     
     # Readback rom register to make sure communication is OK

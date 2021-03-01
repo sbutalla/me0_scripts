@@ -1173,7 +1173,7 @@
                         mask="0x4" />
 
                     <node id="EPRX${RX_CHN_IDX}TERM" address="0x0" permission="rw"
-                        description="Enables the 1${RX_CHN_IDX} Ohm termination for ${RX_CHN_IDX}."
+                        description="Enables the 100 Ohm termination for ${RX_CHN_IDX}."
                         mask="0x2" />
 
                     <node id="EPRX${RX_CHN_IDX}EQ1" address="0x0" permission="rw"

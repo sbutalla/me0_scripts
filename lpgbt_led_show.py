@@ -144,6 +144,7 @@ if __name__ == '__main__':
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
+    rw_reg.parseXML()
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)

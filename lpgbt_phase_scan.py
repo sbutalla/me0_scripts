@@ -1,38 +1,65 @@
-#!/usr/bin/env python
-
-from rw_reg import *
-
-import time
+from rw_reg_lpgbt import *
+from time import sleep, time
 import sys
+import argparse
 
-ADDR_IC_ADDR             = None
-ADDR_IC_WRITE_DATA       = None
-ADDR_IC_EXEC_WRITE       = None
-ADDR_IC_EXEC_READ        = None
-ADDR_IC_GBTX_I2C_ADDR    = None
-ADDR_IC_GBTX_LINK_SELECT = None
-ADDR_LINK_RESET          = None
+config_boss_filename = "config_boss.txt"
+config_sub_filename = "config_sub.txt"
 
-def checkGbtReady(ohIdx, gbtIdx):
-    #print ('Checking GEM_AMC.OH_LINKS.OH%d.GBT%d_READY' % (ohIdx, gbtIdx))
-    return parseInt(readReg(getNode('GEM_AMC.OH_LINKS.OH%d.GBT%d_READY' % (ohIdx, gbtIdx))))
+# VFAT number: boss/sub, ohid, gbtid, elink 
+# For GE2/1 GEB + Pizza
+VFAT_TO_ELINK = {
+        0  : ("sub"  , 1, 1, 6),
+        1  : ("sub"  , 1, 1, 24),
+        2  : ("sub"  , 1, 1, 27),
+        3  : ("boss" , 1, 0, 6),
+        4  : ("boss" , 1, 0, 27),
+        5  : ("boss" , 1, 0, 25),
+        6  : ("boss" , 0, 0, 6),
+        7  : ("boss" , 0, 0, 25),
+        8  : ("sub"  , 0, 1, 24),
+        9  : ("boss" , 0, 0, 27),
+        10 : ("sub"  , 0, 1, 6),
+        11 : ("sub"  , 0, 1, 27)
+}
+
+# For ME0 GEB
+#VFAT_TO_ELINK = {
+#        0  : ("boss" , 0, 0, 6),
+#        1  : ("sub"  , 0, 1, 24),
+#        2  : ("boss" , 0, 0, 27),
+#        3  : ("boss" , 0, 0, 6),
+#        4  : ("sub"  , 0, 1, 27),
+#        5  : ("sub"  , 0, 1, 25),
+#        6  : ("boss" , 0, 0, 6),
+#        7  : ("sub"  , 0, 1, 24),
+#        8  : ("boss" , 0, 0, 27),
+#        9  : ("boss" , 0, 0, 6),
+#        10 : ("sub"  , 0, 1, 27),
+#        11 : ("sub"  , 0, 1, 25),
+#}
+
 
 def getConfig (filename):
-
     f = open(filename, 'r')
-    ret = []
-    lines = 0
-    addr = 0
-    for line in f:
-        value = int(line, 16)
-        addr += 1
-        ret.append(value)
+    reg_map = {}
+    for line in f.readlines():
+        reg = int(line.split()[0], 16)
+        data = int(line.split()[1], 16)
+        reg_map[reg] = data
     f.close()
+    return reg_map
 
-    return ret
+if not os.path.isfile(config_boss_filename):
+    print ("Missing config file for boss: config_boss.txt")
+    sys.exit()
+    
+if not os.path.isfile(config_sub_filename):
+    print ("Missing config file for sub: sub_boss.txt")
+    sys.exit()
 
-config_master = getConfig("config_master.txt")
-config_slave  = getConfig("config_slave.txt")
+config_boss = getConfig(config_boss_filename)
+config_sub  = getConfig(config_sub_filename)
 
 class Colors:
     WHITE   = '\033[97m'
@@ -44,55 +71,40 @@ class Colors:
     RED     = '\033[91m'
     ENDC    = '\033[0m'
 
-VFAT_TO_ELINK = {
-        0  : ("slave"  , "classic" , 6),
-        1  : ("slave"  , "classic" , 24),
-        2  : ("slave"  , "classic" , 27),
-        3  : ("master" , "classic" , 6),
-        4  : ("master" , "classic" , 27),
-        5  : ("master" , "classic" , 25),
-        6  : ("master" , "spicy"   , 6),
-        7  : ("master" , "spicy"   , 25),
-        8  : ("slave"  , "spicy"   , 24),
-        9  : ("master" , "spicy"   , 27),
-        10 : ("slave"  , "spicy"   , 6),
-        11 : ("slave"  , "spicy"   , 27)
-        }
-
-def vfat_to_oh_gbt_elink (vfat):
-
+def vfat_to_oh_gbt_elink(vfat):
     lpgbt = VFAT_TO_ELINK[vfat][0]
-    slot  = VFAT_TO_ELINK[vfat][1]
-    elink = VFAT_TO_ELINK[vfat][2]
+    ohid  = VFAT_TO_ELINK[vfat][1]
+    gbtid = VFAT_TO_ELINK[vfat][1]
+    elink = VFAT_TO_ELINK[vfat][3]
+    return lpgbt, ohid, gbtid, elink
 
-    slave_select = (lpgbt=="slave")
-    spicy_select = (slot=="spicy")
-
-    oh_select = pizza_select * 2 + spicy_select
-    gbt_select = slave_select
-    return (oh_select, gbt_select, elink)
-
-def lpgbt_communication_test (pizza_select, vfat_list, depth):
-
-    wReg(ADDR_LINK_RESET, 1)
-
+def check_rom_readback():
+    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
+    if (romreg != 0xA5):
+        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
+        rw_terminate()
+    else:
+        print ("Successfully read from ROM. I2C communication OK")
+        
+def lpgbt_communication_test(system, vfat_list, depth):
+    print ("LPGBT VFAT Communication Check depth=%s transactions" % (str(depth)))
+    
+    if system!="dryrun":
+        vfat_oh_link_reset()
     cfg_run = 12*[0]
-
-    depth = 1000
-
     for vfat in vfat_list:
-
-        (oh_select, gbt_select, elink) = vfat_to_oh_gbt_elink (vfat)
-        node = getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select)).real_address
-        for iread in range(depth):
-            cfg_run[vfat] += (rReg(node) != 0)
-
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        
+        if system!="dryrun":
+            check_lpgbt_link_ready(oh_select, gbt_select)
+            node = rw_reg.getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
+            for iread in range(depth):
+                vfat_cfg_run = read_backend_reg(node)
+                cfg_run[vfat] += (vfat_cfg_run != 0)
         print ("VFAT#%02d: reads=%d, errs=%d" % (vfat, depth, cfg_run[vfat]))
 
-
-def lpgbt_phase_scan (pizza_select, vfat_list, depth):
-
-    print ("LPGBT Phase Scan depth=%s transactions" % (vfat_mask, str(depth)))
+def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
+    print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
 
     link_good    = [[0 for phase in range(16)] for vfat in range(12)]
     sync_err_cnt = [[0 for phase in range(16)] for vfat in range(12)]
@@ -100,55 +112,48 @@ def lpgbt_phase_scan (pizza_select, vfat_list, depth):
     errs         = [[0 for phase in range(16)] for vfat in range(12)]
 
     for phase in range(0, 16):
-
         print('Scanning phase %d' % phase)
 
         # set phases for all vfats under test
         for vfat in vfat_list:
-            setVfatRxPhase(vfat, phase)
+            setVfatRxPhase(system, vfat, phase)
 
-        time.sleep(0.01)
+        sleep(0.01)
 
         # reset the link, give some time to lock and accumulate any sync errors and then check VFAT comms
-        wReg(ADDR_LINK_RESET, 1)
+        if system!="dryrun":
+            vfat_oh_link_reset()
 
-        # read cfg_run some number of times
+        # read cfg_run some number of times, check link good status and sync errors
         for vfat in vfat_list:
-
-            (oh_select, gbt_select, elink) = vfat_to_oh_gbt_elink (vfat)
-            if (checkGbtReady(oh_select, gbt_select) == 0):
-                break
-
-            node = getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select)).real_address
-            for iread in range(depth):
-                cfg_run[vfat][phase] += (parseInt(rReg(node))!=0)
-
-        # set phases
-        for vfat in vfat_list:
-            (oh_select, gbt_select, elink) = vfat_to_oh_gbt_elink (vfat)
-            if (checkGbtReady(oh_select, gbt_select) == 0):
-                break
-
-            #print "reading GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select)
-            link_good[vfat][phase]    = parseInt(readReg(getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))))
-            sync_err_cnt[vfat][phase] = parseInt(readReg(getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))))
+            lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+            
+            if system!="dryrun":
+                check_lpgbt_link_ready(oh_select, gbt_select)             
+                node = rw_reg.getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
+                for iread in range(depth):
+                    vfat_cfg_run = read_backend_reg(node)
+                    cfg_run[vfat][phase] += (vfat_cfg_run != 0)
+            
+                link_good[vfat][phase]    = read_backend_reg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select)))
+                sync_err_cnt[vfat][phase] = read_backend_reg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select)))
 
             print("\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%02d, cfg_run_errs=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase]))
 
-    centers = 16*[0]
-    widths  = 16*[0]
+    centers = 12*[0]
+    widths  = 12*[0]
 
     for vfat in vfat_list:
         for phase in range(0, 16):
             errs[vfat][phase] = (not 1==link_good[vfat][phase]) + sync_err_cnt[vfat][phase] + cfg_run[vfat][phase]
-        (centers[vfat], width[vfat]) = find_phase_center (errs[vfat])
+        centers[vfat], widths[vfat] = find_phase_center(errs[vfat])
 
     print ("phase : 0123456789ABCDEF")
     for vfat in vfat_list:
         sys.stdout.write("VFAT%02d: " % (vfat))
         for phase in range(0, 16):
 
-            if (width[vfat]>0 and phase==center[vfat]):
+            if (widths[vfat]>0 and phase==center[vfat]):
                 char=Colors.GREEN + "+" + Colors.ENDC
             elif (errs[vfat][phase]):
                 char=Colors.GREEN + "-" + Colors.ENDC
@@ -157,19 +162,16 @@ def lpgbt_phase_scan (pizza_select, vfat_list, depth):
 
             sys.stdout.write("%s" % char)
             sys.stdout.flush()
-        sys.stdout.write(" (center=%d, width=%d)\n" % (centers[vfat], width[vfat]))
+        sys.stdout.write(" (center=%d, width=%d)\n" % (centers[vfat], widths[vfat]))
         sys.stdout.flush()
 
-
     # set phases for all vfats under test
-    best_phase = 0x9
+    print ("Setting all VFAT phases to: " + str(hex(best_phase)))
     for vfat in vfat_list:
-        setVfatRxPhase(vfat,best_phase)
+        setVfatRxPhase(system, vfat, best_phase)
 
-def find_phase_center (err_list):
-
+def find_phase_center(err_list):
     # find the centers
-
     ngood        = 0
     ngood_max    = 0
     ngood_edge   = 0
@@ -177,11 +179,9 @@ def find_phase_center (err_list):
 
     # duplicate the err_list to handle the wraparound
     err_list_doubled = err_list + err_list
-
     phase_max = len(err_list)-1
 
     for phase in range(0,len(err_list_doubled)):
-
         if (err_list_doubled[phase] == 0):
             ngood+=1
         else: # hit an edge
@@ -190,15 +190,13 @@ def find_phase_center (err_list):
                 ngood_edge = phase
             ngood=0
 
-    # cover the case when there are no edges... just pick the center
+    # cover the case when there are no edges, just pick the center
     if (ngood==len(err_list_doubled)):
-        ngood_max  = ngood / 2
+        ngood_max  = ngood/2
         ngood_edge =len(err_list_doubled)-1
 
     if (ngood_max>0):
-
         ngood_width = ngood_max
-
         # even windows
         if (ngood_max % 2 == 0):
             ngood_center=ngood_edge-(ngood_max/2)-1;
@@ -206,7 +204,6 @@ def find_phase_center (err_list):
                 ngood_center=ngood_center
             else:
                 ngood_center=ngood_center+1
-
         # oddwindows
         else:
             ngood_center=ngood_edge-(ngood_max/2)-1;
@@ -216,65 +213,38 @@ def find_phase_center (err_list):
     if (ngood_max==0):
         ngood_center=0
 
-    return (ngood_center, ngood_max)
+    return ngood_center, ngood_max
 
-def setVfatRxPhase(vfat, phase):
+def setVfatRxPhase(system, vfat, phase):
 
-    (oh_select, gbt_select, elink) = vfat_to_oh_gbt_elink (vfat)
+    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink (vfat)
 
-    config = config_master
-    if (gbt_select % 2 != 0):
-        config = config_slave
-
+    if lpgbt == "boss":
+        config = config_boss
+    elif lpgbt == "sub":
+        config = config_sub
+    
     # set phase
-    GBT_ELIKN_SAMPLE_PHASE_BASE_REG = 0x0CC
-    addr = GBT_ELIKN_SAMPLE_PHASE_BASE_REG + elink
+    GBT_ELINK_SAMPLE_PHASE_BASE_REG = 0x0CC
+    addr = GBT_ELINK_SAMPLE_PHASE_BASE_REG + elink
     value = (config[addr] & 0x0f) | (phase << 4)
+    
+    if system!="dryrun":
+        check_lpgbt_link_ready(oh_select, gbt_select)
+        select_ic_link(oh_select, gbt_select)
+    if system!= "dryrun" and system!= "backend":
+        check_rom_readback()
+    mpoke(addr, value)
 
-    if (gbt_select % 2 ==0):
-        name="master"
-    else:
-        name="slave"
+    if system!="dryrun":
+        vfat_oh_link_reset()
 
-    #print ("writing %02X to adr=%04X for %s elink %d" % (value, addr, name, elink))
-
-    link_select = oh_select*2 + gbt_select;
-    writeReg(getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), link_select)
-
-    wReg(ADDR_IC_ADDR,             addr)
-    wReg(ADDR_IC_WRITE_DATA,       value)
-    wReg(ADDR_IC_GBTX_I2C_ADDR,    0x70)
-    wReg(ADDR_IC_GBTX_LINK_SELECT, link_select)
-    wReg(ADDR_IC_EXEC_WRITE,       1)
-
-    writeReg(getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 1)
-
-def initGbtRegAddrs():
-
-    global ADDR_IC_ADDR
-    global ADDR_IC_WRITE_DATA
-    global ADDR_IC_EXEC_WRITE
-    global ADDR_IC_EXEC_READ
-    global ADDR_IC_GBTX_I2C_ADDR
-    global ADDR_IC_GBTX_LINK_SELECT
-    global ADDR_LINK_RESET
-
-    ADDR_IC_WRITE_DATA       = getNode('GEM_AMC.SLOW_CONTROL.IC.WRITE_DATA').real_address
-    ADDR_IC_EXEC_WRITE       = getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE').real_address
-    ADDR_IC_EXEC_READ        = getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_READ').real_address
-    ADDR_IC_GBTX_I2C_ADDR    = getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR').real_address
-    ADDR_IC_GBTX_LINK_SELECT = getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT').real_address
-    ADDR_LINK_RESET          = getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET').real_address
-    ADDR_IC_ADDR             = getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS').real_address
-
-def test_find_phase_center ():
-
-    def check_finder (center, width, errs):
-        if (center,width) == find_phase_center (errs):
+def test_find_phase_center():
+    def check_finder(center, width, errs):
+        if (center,width) == find_phase_center(errs):
             print "OK"
         else:
             print "FAIL"
-
     check_finder (5, 5,  [1,1,1,0,0,0,0,0,1,1,0,0,1,1,1,1]) # normal window
     check_finder (3, 4,  [1,0,0,0,0,1,1,1,1,1,0,0,0,1,1,1]) # symmetric goes to higher number (arbitrary)
     check_finder (0, 5,  [0,0,0,1,1,1,1,0,0,0,0,1,1,1,0,0]) # wraparound
@@ -285,26 +255,94 @@ def test_find_phase_center ():
 
 if __name__ == '__main__':
 
-    if len(sys.argv) < 3:
-        print('Usage: lpgbt_phase_scan.py <pizza_num> <vfat_mask> <depth>')
+    # Parsing arguments
+    parser = argparse.ArgumentParser(description='LpGBT Phase Scan')
+    parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
+    #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    parser.add_argument("-v", "--vfatmask", action="store", dest="vfatmask", help="vfatmask = in binary (0b) or hex (0x) format for 12 VFATs (on 1 ME0 GEB)")
+    #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
+    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
+    parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", default="0x9", help="bestphase = Best value of the elinkRX phase (in hex)")
+    parser.add_argument("-t", "--test", action="store", dest="test", default="0", help="test = enter 1 for only testing vfat communication, default is 0")
+    args = parser.parse_args()
+
+    if args.system == "chc":
+        #print ("Using Rpi CHeeseCake for configuration")
+        print ("Only Backend or dryrun supported")
         sys.exit()
+    elif args.system == "backend":
+        print ("Using Backend for configuration")
+        #print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        #sys.exit()
+    elif args.system == "dongle":
+        #print ("Using USB Dongle for configuration")
+        print ("Only Backend or dryrun supported")
+        sys.exit()
+    elif args.system == "dryrun":
+        print ("Dry Run - not actually running phase scan")
+    else:
+        print ("Only valid options: backend, dryrun")
+        sys.exit()
+    
+    vfatmask_int = 0
+    if args.vfatmask is None:
+        print ("Enter a mask for the 12 VFATs")
+        sys.exit()
+    elif "0b" in args.vfatmask:
+        vfatmask_int = int(args.vfatmask,2)
+    elif "0x" in args.vfatmask:
+        vfatmask_int = int(args.vfatmask,16)
+    else:
+        print ("Enter a mask in binary (0b) or hex (0x) format")
+        sys.exit()
+    if vfatmask_int>(2**12 - 1):
+        print ("VFAT mask can be maximum 12 bits (for 12 VFATS on 1 ME0 GEB)")
+        sys.exit()
+    
+    if args.test not in ["0", "1"]:
+        print ("Test option can only be 0 or 1")
+        sys.exit()
+        
+    if "0x" not in args.bestphase:
+        print ("Enter best phase in hex format")
+        sys.exit()
+    best_phase = int(args.bestphase, 16)
+    if best_phase>16:
+        print ("Phase can only be 4 bits")
+        sys.exit()
+    
+    # Parsing Registers XML File
+    print("Parsing xml file...")
+    parseXML()
+    print("Parsing complete...")
 
-    pizza_select = int(sys.argv[1],0)
-    vfat_mask    = int(sys.argv[2],0)
-    depth        = int (sys.argv[3])
-
-    # construct a list of vfats to be scanned based on the mask
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(args.system)
+    print("Initialization Done\n")
+    
+    # Construct a list of vfats to be scanned based on the mask
     vfat_list = []
     for vfat in range(0,12):
-        if (0x1 & (vfat_mask>>vfat)):
+        if (0x1 & (vfatmask_int>>vfat)):
             vfat_list.append(vfat)
+    
+    # Running Phase Scan
+    try:
+        if args.test == "1":
+            lpgbt_communication_test(args.system, vfat_list, int(args.depth))
+        else:
+            lpgbt_phase_scan(args.system, vfat_list, int(args.depth), best_phase)
+    except KeyboardInterrupt:
+        print ("Keyboard Interrupt encountered")
+        rw_terminate()
+    except EOFError:
+        print ("\nEOF Error")
+        rw_terminate()
 
-    parseXML()
-    initGbtRegAddrs()
+    # Termination
+    rw_terminate()
 
-    if (len(sys.argv)>4 and sys.argv[4]=="test"):
-        lpgbt_communication_test (pizza_select, vfat_list, depth)
-    else:
-        import cProfile
-        #cProfile.run('lpgbt_phase_scan (pizza_select, vfat_list, depth)')
-        lpgbt_phase_scan (pizza_select, vfat_list, depth )
+
+
+
