@@ -94,7 +94,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
                     continue
                 
                 # Writing to the register
-                data_write = random.randint(0, 255) # random number to write (8 bit)
+                data_write = random.randint(0, (2**32 - 1) # random number to write (32 bit)
                 write_backend_reg(node, data_write)
                 if verbose:
                     print ("Register value written: " + hex(data_write))
