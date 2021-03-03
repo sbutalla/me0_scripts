@@ -58,14 +58,6 @@ def vfat_to_oh_gbt_elink(vfat):
     gbtid = VFAT_TO_ELINK[vfat][1]
     elink = VFAT_TO_ELINK[vfat][3]
     return lpgbt, ohid, gbtid, elink
-
-def check_rom_readback():
-    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
-    if (romreg != 0xA5):
-        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
-        rw_terminate()
-    else:
-        print ("Successfully read from ROM. I2C communication OK")
         
 def lpgbt_communication_test(system, vfat_list, depth):
     print ("LPGBT VFAT Communication Check depth=%s transactions" % (str(depth)))

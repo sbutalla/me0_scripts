@@ -417,16 +417,6 @@ def reset_lpgbt(readback):
     writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    0, readback)
     writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    0, readback)
 
-
-def check_rom_readback():
-    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
-    if (romreg != 0xA5):
-        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
-        rw_terminate()
-    else:
-        print ("Successfully read from ROM. I2C communication OK")
-
-
 def configure_eport_dlls(readback):
     print ("Configuring eport dlls...")
     #2.2.2. Uplink: ePort Inputs DLL's

@@ -198,14 +198,6 @@ def main(system, boss):
         read = read_adc(i, system)
         print ("\tch %X: 0x%03X = %f (%s)" % (i, read, read/1024., name))
 
-def check_rom_readback():
-    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
-    if (romreg != 0xA5):
-        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
-        rw_terminate()
-    else:
-        print ("Successfully read from ROM. I2C communication OK")
-
 def init_adc():
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0) # enable ADC
     writeReg(getNode("LPGBT.RW.ADC.TEMPSensReset"), 0x1, 0) # resets temp sensor

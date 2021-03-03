@@ -114,14 +114,6 @@ def main(system, count, boss):
         else:
             f.write("]\n")
 
-def check_rom_readback():
-    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
-    if (romreg != 0xA5):
-        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
-        rw_terminate()
-    else:
-        print ("Successfully read from ROM. I2C communication OK")
-
 if __name__ == '__main__':
     # Parsing arguments
     parser = argparse.ArgumentParser(description='LPGBT EYE')

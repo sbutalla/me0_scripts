@@ -30,14 +30,6 @@ def main(system, boss, fusing, input_config_file, input_vtrx, input_register, in
     else:
         lpgbt_write_fuse_file("fuse_sub.txt")
 
-def check_rom_readback():
-    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
-    if (romreg != 0xA5):
-        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
-        rw_terminate()
-    else:
-        print ("Successfully read from ROM. I2C communication OK")
-
 def fuse_from_file(system, boss, filename, vtrx):
     f = open(filename, 'r')
     config = {}
@@ -134,7 +126,7 @@ def write_fuse_block_data(system, adr, data, fullblock=False):
             ok &= writeandcheckReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA3"), data)
 
     if (not ok):
-        print ("ERROR: Failed to correctly read back fuse data block")
+        print (Colors.RED + "ERROR: Failed to correctly read back fuse data block" + Colors.ENDC)
         write_fuse_magic(0)
         rw_terminate()
     return ok
@@ -179,8 +171,8 @@ def blow_fuse(system, boss):
             # Write 0 to Fuseblow
             writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x0, 0)
             TOTAL_EFUSE_ON_TIME_MS += int(round((time() - t0_efusepower) * 1000 ))
-            print ("ERROR: Fusing operation took longer than %d ms and was terminated due to a timeout" % FUSE_TIMEOUT_MS)
-            print ("Total efuse power on time: %d ms" % TOTAL_EFUSE_ON_TIME_MS)
+            print (Colors.RED + "ERROR: Fusing operation took longer than %d ms and was terminated due to a timeout" % FUSE_TIMEOUT_MS + Colors.ENDC)
+            print (Colors.YELLOW + "Total efuse power on time: %d ms" % TOTAL_EFUSE_ON_TIME_MS + Colors.RED)
             write_fuse_magic(0)
             rw_terminate()
 
@@ -195,7 +187,7 @@ def blow_fuse(system, boss):
     writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x0, 0) # deassert fuse blow
 
     if err:
-        print ("ERROR: \tFuse blown, err=%d" % err)
+        print (Colors.RED + "ERROR: \tFuse blown, err=%d" % err + Colors.RED)
         write_fuse_magic(0)
         rw_terminate()
 
@@ -248,7 +240,7 @@ def check_fuse_block_data(system, adr, data, fullblock=False):
 
     print ("Checking FUSE Address = 0X%03X, Block = 0X%03X Sub = %d, Valid = %d, Data_Expect = 0X%X, Data_read = 0X%X\n" % (adr, fuse_block_adr, fuse_block_subadr, valid, data, read_dword))
     if (system!="dryrun" and data!=read_dword):
-        print ("ERROR: Mismatch in expected and read data from EFUSE")
+        print (Colors.RED + "ERROR: Mismatch in expected and read data from EFUSE" + Colors.ENDC)
         write_fuse_magic(0)
         rw_terminate()
 

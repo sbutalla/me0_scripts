@@ -147,14 +147,6 @@ def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, bos
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES2"), 0x0, 0)
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES3"), 0x0, 0)
 
-def check_rom_readback():
-    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
-    if (romreg != 0xA5):
-        print ("ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5))
-        rw_terminate()
-    else:
-        print ("Successfully read from ROM. I2C communication OK")
-
 if __name__ == '__main__':
     # Parsing arguments
     parser = argparse.ArgumentParser(description='LPGBT EYE')

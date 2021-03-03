@@ -269,6 +269,14 @@ def rw_terminate():
         chc_terminate()
     sys.exit()
 
+def check_rom_readback():
+    romreg=readReg(getNode("LPGBT.RO.ROMREG"))
+    if (romreg != 0xA5):
+        print (Colors.RED + "ERROR: no communication with LPGBT. ROMREG=0x%x, EXPECT=0x%x" % (romreg, 0xA5) + Colors.ENDC)
+        rw_terminate()
+    else:
+        print ("Successfully read from ROM. I2C communication OK")
+
 def vfat_oh_link_reset():
     if system=="backend":
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 0x1)
