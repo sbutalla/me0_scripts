@@ -154,9 +154,10 @@ if __name__ == '__main__':
     # Readback rom register to make sure communication is OK
     if args.system!="dryrun" and args.system!="backend":
         check_rom_readback()
-        
-    # Check if lpGBT is READY
-    check_lpgbt_ready(args.ohid, args.gbtid)
+
+    # Check if lpGBT is READY if running through backend
+    if args.system=="backend":
+        check_lpgbt_link_ready(args.ohid, args.gbtid)
 
     # LPGBT LED Show
     try:

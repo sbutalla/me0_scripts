@@ -340,12 +340,12 @@ if __name__ == '__main__':
     print("Initialization Done\n")
     
     # Readback rom register to make sure communication is OK
-    if args.system!="dryrun":
+    if args.system!="dryrun" and args.system!="backend":
         check_rom_readback()
 
     # Check if lpGBT is READY if running through backend
     if args.system=="backend":
-        check_lpgbt_ready(args.ohid, args.gbtid)
+        check_lpgbt_link_ready(args.ohid, args.gbtid)
 
     try:
         main(args.system, boss)
