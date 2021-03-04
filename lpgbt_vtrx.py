@@ -139,7 +139,10 @@ def main(system, boss, channel, enable, reg_list, data_list):
 
     # Enabling TX Channel
     if channel is not None and enable is not None:
-        enable_status = i2cmaster_read(system, enable_reg)
+        if system!="backend":
+            enable_status = i2cmaster_read(system, enable_reg)
+        else:
+            enable_status = 0x00
         for c in channel:
             en = 0
             if int(enable):
@@ -152,7 +155,10 @@ def main(system, boss, channel, enable, reg_list, data_list):
             enable_data = (enable_status & (~enable_mask)) | (en << enable_channel_bit)    
             enable_status = enable_data         
         i2cmaster_write(system, enable_reg, enable_data)
-        enable_status = i2cmaster_read(system, enable_reg)
+        if system!="backend":
+            enable_status = i2cmaster_read(system, enable_reg)
+        else:
+            enable_status = 0x00
         print ("")
  
     if len(reg_list) == 0:
