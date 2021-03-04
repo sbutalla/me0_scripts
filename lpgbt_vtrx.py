@@ -139,16 +139,18 @@ def main(system, boss, channel, enable, reg_list, data_list):
 
     # Enabling TX Channel
     if channel is not None and enable is not None:
-        en = 0
-        if int(enable):
-            print ("Enabling channel: "+channel)
-            en = 1
-        else:
-            print ("Disabling channel: "+channel)
         enable_status = i2cmaster_read(system, enable_reg)
-        enable_channel_bit = TX_enable_bit[channel]
-        enable_mask = 1 << enable_channel_bit
-        enable_data = (enable_status & (~enable_mask)) | (en << enable_channel_bit)     
+        for c in channel:
+            en = 0
+            if int(enable):
+                print ("Enabling channel: "+c)
+                en = 1
+            else:
+                print ("Disabling channel: "+c)
+            enable_channel_bit = TX_enable_bit[c]  
+            enable_mask = (1 << enable_channel_bit)                           
+            enable_data = (enable_status & (~enable_mask)) | (en << enable_channel_bit)    
+            enable_status = enable_data         
         i2cmaster_write(system, enable_reg, enable_data)
         enable_status = i2cmaster_read(system, enable_reg)
         print ("")
@@ -187,7 +189,7 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-t", "--type", action="store", dest="type", help="type = reg or name")
     parser.add_argument("-r", "--reg", action="store", nargs='+', dest="reg", help="reg = list of registers to read/write; only use with type: reg")
-    parser.add_argument("-c", "--channel", action="store", dest="channel", help="channel = TX1, TX2, TX3, TX4; only use with type: name")
+    parser.add_argument("-c", "--channel", action="store", dest="channel", nargs='+', help="channel = TX1, TX2, TX3, TX4; only use with type: name")
     parser.add_argument("-e", "--enable", action="store", dest="enable", help="enable = 0 or 1; only use with type: name")
     parser.add_argument("-n", "--name", action="store", dest="name", nargs='+', help="name = biascur_reg, modcur_reg, empamp_reg; only use with type: name")
     parser.add_argument("-d", "--data", action="store", nargs='+', dest="data", help="data = list of data values to write")
@@ -275,32 +277,33 @@ if __name__ == '__main__':
             if args.enable not in ["0", "1"]:
                 print (Colors.YELLOW + "Enter valid value for enable: 0 or 1" + Colors.ENDC)
                 sys.exit()
-        if args.enable is None and args.name == None:
+        if args.enable is None and args.name is None:
             print (Colors.YELLOW + "Enter enable option or register name" + Colors.ENDC)
             sys.exit() 
-        if args.channel not in ["TX1", "TX2", "TX3", "TX4"]:
-            print (Colors.YELLOW + "Only allowed channels: TX1, TX2, TX3, TX4" + Colors.ENDC)
-            sys.exit()
-        if args.name is not None:
-            for name in args.name:
-                if name not in ["biascur_reg", "modcur_reg", "empamp_reg"]:
-                    print (Colors.YELLOW + "Invalid register name" + Colors.ENDC)
-                    sys.exit()
-                reg_list.append(TX_reg[args.channel][name])
+        for c in args.channel:
+            if c not in ["TX1", "TX2", "TX3", "TX4"]:
+                print (Colors.YELLOW + "Only allowed channels: TX1, TX2, TX3, TX4" + Colors.ENDC)
+                sys.exit()
+            if args.name is not None:
+                for name in args.name:
+                    if name not in ["biascur_reg", "modcur_reg", "empamp_reg"]:
+                        print (Colors.YELLOW + "Invalid register name" + Colors.ENDC)
+                        sys.exit()
+                    reg_list.append(TX_reg[c][name])
     else:
         print (Colors.YELLOW + "Only allowed type: reg, name")
         sys.exit()
 
-
     if args.data is not None:
-        if len(reg_list) != len(args.data):
+        if len(reg_list) != len(args.channel) * len(args.data):
             print (Colors.YELLOW + "Number of registers and data values do not match" + Colors.ENDC)
             sys.exit()
-        for data in args.data:
-            if int(data,16) > 255:
-                print (Colors.YELLOW + "Data value can only be 8 bit" + Colors.ENDC)
-                sys.exit()
-            data_list.append(int(data,16))
+        for c in args.channel:
+            for data in args.data:
+                if int(data,16) > 255:
+                    print (Colors.YELLOW + "Data value can only be 8 bit" + Colors.ENDC)
+                    sys.exit()
+                data_list.append(int(data,16))
             
     # Parsing Registers XML File
     print("Parsing xml file...")
