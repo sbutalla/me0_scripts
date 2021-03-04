@@ -37,6 +37,8 @@ or alternatively it can be installed by Pip
 
 ## Using Backend
 
+Login as root
+
 Set some environment variables (after compiling the 0xbefe repo):
 
 ```

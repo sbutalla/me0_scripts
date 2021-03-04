@@ -367,7 +367,7 @@ def mpoke(address, value):
         if output=="Bus Error":
             print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
-        output = rw_reg.writReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE'), 1)
+        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE'), 1)
         if output=="Bus Error":
             print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()

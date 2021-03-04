@@ -411,10 +411,10 @@ if __name__ == '__main__':
         if args.func == "all":
             print (Colors.YELLOW + "For downlink, all operations not yet supported from one system" + Colors.ENDC)
             sys.exit()
-        if args.system == "chc" and args.func is not "check":
+        if args.system == "chc" and args.func != "check":
             print (Colors.YELLOW + "For downlink, only PRBS pattern checking supported for CHeeseCake" + Colors.ENDC)
             sys.exit()
-        if args.system == "backend" and args.func not in ["generate", "check"]:
+        if args.system == "backend" and args.func not in ["generate", "stop"]:
             print (Colors.YELLOW + "For downlink, only PRBS generation or stopping supported for Backend" + Colors.ENDC)
             sys.exit()
     elif args.path == "loopback":
@@ -439,7 +439,7 @@ if __name__ == '__main__':
                 if bert not in BERT_source_coarse:
                     print (Colors.YELLOW + "Invalid course BERT source : " + bert + " (See lpGBT manual Table 14.4 for options)" + Colors.ENDC)
                     sys.exit()
-                if bert is not "DLFRAME":
+                if bert != "DLFRAME":
                     print (Colors.YELLOW + "Only DLFRAME supported yet for downlink PRBS pattern checking" + Colors.ENDC)
                     sys.exit()
         else:

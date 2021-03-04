@@ -314,8 +314,6 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Missing config file for sub: sub_boss.txt" + Colors.ENDC)
         sys.exit()
 
-    global config_boss
-    global config_sub
     config_boss = getConfig(config_boss_filename)
     config_sub  = getConfig(config_sub_filename)
     
