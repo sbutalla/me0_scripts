@@ -130,9 +130,17 @@ def prbs_generate(system, boss, path, ohid, gbtid):
         writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["PRBS7"], 0)
        
     elif path == "downlink" or path == "loopback": # generate PRBS from backend
+        mgt_channel = fiber_MGT_mapping[int(ohid) * 2 + int(gbtid)]
+        
+        # Reset the TX and RX channels
+        if system=="backend":
+            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
+        else:
+            node = ""
+        write_backend_reg(node, 0x001)
+    
         # PRBS7 for the entire data frame
         if system=="backend":
-            mgt_channel = fiber_MGT_mapping[int(ohid) * 4 + int(gbtid)]
             node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
         else:
             node = ""
@@ -153,9 +161,17 @@ def prbs_stop(system, boss, path, ohid, gbtid):
         writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DATA"], 0)
         
     elif path == "downlink" or path == "loopback": # stop PRBS from backend
+        mgt_channel = fiber_MGT_mapping[int(ohid) * 2 + int(gbtid)]
+        
+        # Reset the TX and RX channels
+        if system=="backend":
+            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
+        else:
+            node = ""
+        write_backend_reg(node, 0x001)
+        
         # Stopping PRBS7 for the entire data frame
         if system=="backend":
-            mgt_channel = fiber_MGT_mapping[int(ohid) * 4 + int(gbtid)]
             node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
         else:
             node = ""
@@ -172,9 +188,17 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
     print ("Measuring PRBS errors for: " + path)
 
     if path == "uplink" or path == "loopback": # checking PRBS on backend 
+        mgt_channel = fiber_MGT_mapping[int(ohid) * 2 + int(gbtid)]
+        
+        # Reset the TX and RX channels
+        if system=="backend":
+            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
+        else:
+            node = ""
+        write_backend_reg(node, 0x001)
+        
         # Reading PRBS7
         if system=="backend":
-            mgt_channel = fiber_MGT_mapping[int(ohid) * 4 + int(gbtid)]
             rx_select_node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.RX_PRBS_SEL' % (mgt_channel))
         else:
             rx_select_node = ""
