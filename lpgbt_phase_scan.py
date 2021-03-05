@@ -150,12 +150,14 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         centers[vfat], widths[vfat] = find_phase_center(errs[vfat])
 
     print ("phase : 0123456789ABCDEF")
+    bestphase_vfat = 12*[0]
     for vfat in vfat_list:
         sys.stdout.write("VFAT%02d: " % (vfat))
         for phase in range(0, 16):
 
             if (widths[vfat]>0 and phase==centers[vfat]):
                 char=Colors.GREEN + "+" + Colors.ENDC
+                bestphase_vfat[vfat] = phase
             elif (errs[vfat][phase]):
                 char=Colors.RED + "-" + Colors.ENDC
             else:
@@ -167,9 +169,15 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         sys.stdout.flush()
 
     # set phases for all vfats under test
-    print ("Setting all VFAT phases to: " + str(hex(best_phase)))
+    print ("Setting all VFAT phases to best phases: ")
     for vfat in vfat_list:
-        setVfatRxPhase(system, vfat, best_phase)
+        set_bestphase = 0
+        if best_phase is None:
+            set_bestphase = bestphase_vfat[vfat]
+        else:
+            set_bestphase = int(best_phase,16)
+        setVfatRxPhase(system, vfat, set_bestphase)
+        print ("Phase set for VFAT#%02d to: %s" % (vfat, hex(set_bestphase)))
     sleep(0.1)
     vfat_oh_link_reset()
 
@@ -264,7 +272,7 @@ if __name__ == '__main__':
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
-    parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", default="0x8", help="bestphase = Best value of the elinkRX phase (in hex)")
+    parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", help="bestphase = Best value of the elinkRX phase (in hex), calculated from phase scan by default")
     parser.add_argument("-t", "--test", action="store", dest="test", default="0", help="test = enter 1 for only testing vfat communication, default is 0")
     args = parser.parse_args()
 
@@ -304,14 +312,14 @@ if __name__ == '__main__':
     if args.test not in ["0", "1"]:
         print (Colors.YELLOW + "Test option can only be 0 or 1" + Colors.ENDC)
         sys.exit()
-        
-    if "0x" not in args.bestphase:
-        print (Colors.YELLOW + "Enter best phase in hex format" + Colors.ENDC)
-        sys.exit()
-    best_phase = int(args.bestphase, 16)
-    if best_phase>16:
-        print (Colors.YELLOW + "Phase can only be 4 bits" + Colors.ENDC)
-        sys.exit()
+
+    if args.bestphase is not None:
+        if "0x" not in args.bestphase:
+            print (Colors.YELLOW + "Enter best phase in hex format" + Colors.ENDC)
+            sys.exit()
+        if int(args.bestphase, 16)>16:
+            print (Colors.YELLOW + "Phase can only be 4 bits" + Colors.ENDC)
+            sys.exit()
     
     # Parsing Registers XML File
     print("Parsing xml file...")
@@ -344,7 +352,7 @@ if __name__ == '__main__':
         if args.test == "1":
             lpgbt_communication_test(args.system, vfat_list, int(args.depth))
         else:
-            lpgbt_phase_scan(args.system, vfat_list, int(args.depth), best_phase)
+            lpgbt_phase_scan(args.system, vfat_list, int(args.depth), args.bestphase)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
