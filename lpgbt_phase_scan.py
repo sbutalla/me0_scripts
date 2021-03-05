@@ -111,7 +111,11 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
                 #vfat_cfg_run = read_backend_reg(cfg_node)
                 vfat_cfg_run = 0x00
                 if system=="backend":
-                    vfat_cfg_run = rw_reg.readReg(cfg_node)
+                    output_cfg = rw_reg.readReg(cfg_node)
+                if output_cfg != "Bus Error":
+                    vfat_cfg_run = int(output_cfg,16)
+                else:
+                    vfat_cfg_run = 9999
                 cfg_run[vfat][phase] += (vfat_cfg_run != 0 and vfat_cfg_run != 1)
             
             if system=="backend":
