@@ -102,13 +102,13 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
                 # Reading the register after writing
                 data_read_after = read_backend_reg(node)
                 if verbose:
-                    print ("Register value after writing: " + hex(data_read_after))
+                    print ("Register value after writing: " + hex(data_read_after) + "\n")
                     
                 if data_read_after!=data_write:
                     errors[reg][vfat] += 1
                     
-                # Print % completed every 1 minute
-                if (time()-t0)>60: 
+                # Print % completed every 10 seconds
+                if (time()-t0)>10: 
                     per_completed = "{:.2f}".format(100 * float(n)/float(niter))
                     print ("\nIteration completed: " + per_completed + "% \n")
                     t0 = time()

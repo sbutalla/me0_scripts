@@ -73,7 +73,7 @@ def lpgbt_communication_test(system, vfat_list, depth):
             cfg_node = ""
         for iread in range(depth):
             vfat_cfg_run = read_backend_reg(cfg_node)
-            cfg_run[vfat] += (vfat_cfg_run != 0)
+            cfg_run[vfat] += (vfat_cfg_run != 0 and vfat_cfg_run != 1)
         print ("\nVFAT#%02d: reads=%d, errs=%d" % (vfat, depth, cfg_run[vfat]))
     print ("")
 
@@ -108,8 +108,11 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
             else: 
                 cfg_node = ""
             for iread in range(depth):
-                vfat_cfg_run = read_backend_reg(cfg_node)
-                cfg_run[vfat][phase] += (vfat_cfg_run != 0)
+                #vfat_cfg_run = read_backend_reg(cfg_node)
+                vfat_cfg_run = 0x00
+                if system=="backend":
+                    vfat_cfg_run = rw_reg.readReg(node)
+                cfg_run[vfat][phase] += (vfat_cfg_run != 0 and vfat_cfg_run != 1)
             
             if system=="backend":
                 link_node = rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
@@ -117,9 +120,21 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
             else:
                 link_node = ""
                 sync_node = ""
-            link_good[vfat][phase]    = read_backend_reg(link_node)
-            sync_err_cnt[vfat][phase] = read_backend_reg(sync_node)
-
+            #link_good[vfat][phase]    = read_backend_reg(link_node)
+            #sync_err_cnt[vfat][phase] = read_backend_reg(sync_node)
+            link_good[vfat][phase] = 0x00
+            sync_err_cnt[vfat][phase] = 0x00
+            if system=="backend":
+                output_link_node = rw_reg.readReg(link_node)
+                if output_link_node != "Bus Error":
+                    link_good[vfat][phase] = int(output_link_node,16)
+                else:
+                    link_good[vfat][phase] = 0x00
+                output_sync_node = rw_reg.readReg(sync_node)
+                if output_sync_node != "Bus Error":
+                    sync_err_cnt[vfat][phase] = int(output_sync_node,16)
+                else:
+                    sync_err_cnt[vfat][phase] = 9999
             print("\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%02d, cfg_run_errs=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase]))
 
     centers = 12*[0]
@@ -138,9 +153,9 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
             if (widths[vfat]>0 and phase==centers[vfat]):
                 char=Colors.GREEN + "+" + Colors.ENDC
             elif (errs[vfat][phase]):
-                char=Colors.GREEN + "-" + Colors.ENDC
+                char=Colors.RED + "-" + Colors.ENDC
             else:
-                char = Colors.RED + "x" + Colors.ENDC
+                char = Colors.YELLOW + "x" + Colors.ENDC
 
             sys.stdout.write("%s" % char)
             sys.stdout.flush()
@@ -201,7 +216,7 @@ def find_phase_center(err_list):
 
 def setVfatRxPhase(system, vfat, phase):
 
-    print ("Setting RX phase %d for VFAT%d" %(phase, vfat))
+    print ("Setting RX phase %s for VFAT%d" %(hex(phase), vfat))
     lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
 
     if lpgbt == "boss":
@@ -245,7 +260,7 @@ if __name__ == '__main__':
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
-    parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", default="0x9", help="bestphase = Best value of the elinkRX phase (in hex)")
+    parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", default="0x7", help="bestphase = Best value of the elinkRX phase (in hex)")
     parser.add_argument("-t", "--test", action="store", dest="test", default="0", help="test = enter 1 for only testing vfat communication, default is 0")
     args = parser.parse_args()
 
