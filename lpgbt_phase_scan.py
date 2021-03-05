@@ -74,7 +74,8 @@ def lpgbt_communication_test(system, vfat_list, depth):
         for iread in range(depth):
             vfat_cfg_run = read_backend_reg(cfg_node)
             cfg_run[vfat] += (vfat_cfg_run != 0)
-        print ("VFAT#%02d: reads=%d, errs=%d" % (vfat, depth, cfg_run[vfat]))
+        print ("\nVFAT#%02d: reads=%d, errs=%d" % (vfat, depth, cfg_run[vfat]))
+    print ("")
 
 def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
     print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
@@ -97,6 +98,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         sleep(0.001)
 
         # read cfg_run some number of times, check link good status and sync errors
+        print ("Checking errors: ")
         for vfat in vfat_list:
             lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
             
@@ -133,7 +135,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         sys.stdout.write("VFAT%02d: " % (vfat))
         for phase in range(0, 16):
 
-            if (widths[vfat]>0 and phase==center[vfat]):
+            if (widths[vfat]>0 and phase==centers[vfat]):
                 char=Colors.GREEN + "+" + Colors.ENDC
             elif (errs[vfat][phase]):
                 char=Colors.GREEN + "-" + Colors.ENDC
@@ -199,6 +201,7 @@ def find_phase_center(err_list):
 
 def setVfatRxPhase(system, vfat, phase):
 
+    print ("Setting RX phase %d for VFAT%d" %(phase, vfat))
     lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
 
     if lpgbt == "boss":
