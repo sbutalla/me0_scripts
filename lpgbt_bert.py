@@ -102,25 +102,6 @@ BERT_source_fine["DLFRAME_PRBS23"] = 0x4 # PRBS23 (no header)
 BERT_source_fine["DLFRAME_PRBS31"] = 0x5 # PRBS31 (no header)
 BERT_source_fine["DLFRAME_FIXED"] = 0x7 # Check the data against constant pattern
 
-fiber_MGT_mapping = {
-    0  : 12,
-    1  : 13,
-    2  : 14,
-    3  : 15,
-    4  : 8,
-    5  : 9,
-    6  : 10,
-    7  : 11,
-    8  : 4,
-    9  : 5,
-    10 : 6,
-    11 : 7,
-    12 : 0,
-    13 : 1,
-    14 : 2,
-    15 : 3
-}
-
 def prbs_generate(system, boss, path, ohid, gbtid):
 
     print ("Generating PRBS signal for: " + path)
@@ -130,7 +111,7 @@ def prbs_generate(system, boss, path, ohid, gbtid):
         writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["PRBS7"], 0)
        
     elif path == "downlink" or path == "loopback": # generate PRBS from backend
-        mgt_channel = fiber_MGT_mapping[int(ohid) * 2 + int(gbtid)]
+        mgt_channel = int(ohid) * 2 + int(gbtid)
         
         # Reset the TX and RX channels
         if system=="backend":
@@ -161,7 +142,7 @@ def prbs_stop(system, boss, path, ohid, gbtid):
         writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DATA"], 0)
         
     elif path == "downlink" or path == "loopback": # stop PRBS from backend
-        mgt_channel = fiber_MGT_mapping[int(ohid) * 2 + int(gbtid)]
+        mgt_channel = int(ohid) * 2 + int(gbtid)
         
         # Reset the TX and RX channels
         if system=="backend":
@@ -188,7 +169,7 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
     print ("Measuring PRBS errors for: " + path)
 
     if path == "uplink" or path == "loopback": # checking PRBS on backend 
-        mgt_channel = fiber_MGT_mapping[int(ohid) * 2 + int(gbtid)]
+        mgt_channel = int(ohid) * 2 + int(gbtid)
         
         # Reset the TX and RX channels
         if system=="backend":

@@ -13,34 +13,33 @@ config_sub = {}
 VFAT_TO_ELINK = {
         0  : ("sub"  , 0, 1, 6),
         1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 27),
-        3  : ("boss" , 0, 0, 6),
+        2  : ("sub"  , 0, 1, 11),
+        3  : ("boss" , 0, 0, 3),
         4  : ("boss" , 0, 0, 27),
         5  : ("boss" , 0, 0, 25),
-        6  : ("boss" , 1, 0, 6),
-        7  : ("boss" , 1, 0, 25),
-        8  : ("sub"  , 1, 1, 24),
-        9  : ("boss" , 1, 0, 27),
-        10 : ("sub"  , 1, 1, 6),
-        11 : ("sub"  , 1, 1, 27)
+        6  : ("boss" , 1, 0, 6), # 3
+        7  : ("boss" , 1, 0, 25), # 25
+        8  : ("sub"  , 1, 1, 24), # 24
+        9  : ("boss" , 1, 0, 27), # 27
+        10 : ("sub"  , 1, 1, 6), # 6
+        11 : ("sub"  , 1, 1, 27) # 11
 }
 
 # For ME0 GEB
 #VFAT_TO_ELINK = {
 #        0  : ("boss" , 0, 0, 6),
 #        1  : ("sub"  , 0, 1, 24),
-#        2  : ("boss" , 0, 0, 27),
-#        3  : ("boss" , 0, 0, 6),
+#        2  : ("boss" , 0, 0, 11),
+#        3  : ("boss" , 0, 0, 3),
 #        4  : ("sub"  , 0, 1, 27),
 #        5  : ("sub"  , 0, 1, 25),
-#        6  : ("boss" , 1, 0, 6),
-#        7  : ("sub"  , 1, 1, 24),
-#        8  : ("boss" , 1, 0, 27),
-#        9  : ("boss" , 1, 0, 6),
-#        10 : ("sub"  , 1, 1, 27),
-#        11 : ("sub"  , 1, 1, 25),
+#        6  : ("boss" , 1, 0, 6), # 3
+#        7  : ("sub"  , 1, 1, 24), # 25
+#        8  : ("boss" , 1, 0, 27), # 24
+#        9  : ("boss" , 1, 0, 6), # 27
+#        10 : ("sub"  , 1, 1, 27), # 6
+#        11 : ("sub"  , 1, 1, 25), # 11
 #}
-
 
 def getConfig (filename):
     f = open(filename, 'r')
@@ -92,10 +91,10 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         for vfat in vfat_list:
             setVfatRxPhase(system, vfat, phase)
 
-        sleep(0.01)
-
-        # reset the link, give some time to lock and accumulate any sync errors and then check VFAT comms
+        # Reset the link, give some time to accumulate any sync errors and then check VFAT comms
+        sleep(0.1)
         vfat_oh_link_reset()
+        sleep(0.001)
 
         # read cfg_run some number of times, check link good status and sync errors
         for vfat in vfat_list:
@@ -150,6 +149,8 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
     print ("Setting all VFAT phases to: " + str(hex(best_phase)))
     for vfat in vfat_list:
         setVfatRxPhase(system, vfat, best_phase)
+    sleep(0.1)
+    vfat_oh_link_reset()
 
 def find_phase_center(err_list):
     # find the centers
@@ -198,7 +199,7 @@ def find_phase_center(err_list):
 
 def setVfatRxPhase(system, vfat, phase):
 
-    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink (vfat)
+    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
 
     if lpgbt == "boss":
         config = config_boss
@@ -215,9 +216,8 @@ def setVfatRxPhase(system, vfat, phase):
     if system!= "dryrun" and system!= "backend":
         check_rom_readback()
     mpoke(addr, value)
-
-    vfat_oh_link_reset()
-
+    sleep(0.000001) # writing too fast for CVP13
+    
 def test_find_phase_center():
     def check_finder(center, width, errs):
         if (center,width) == find_phase_center(errs):
