@@ -111,7 +111,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
                 #vfat_cfg_run = read_backend_reg(cfg_node)
                 vfat_cfg_run = 0x00
                 if system=="backend":
-                    vfat_cfg_run = rw_reg.readReg(node)
+                    vfat_cfg_run = rw_reg.readReg(cfg_node)
                 cfg_run[vfat][phase] += (vfat_cfg_run != 0 and vfat_cfg_run != 1)
             
             if system=="backend":
@@ -260,7 +260,7 @@ if __name__ == '__main__':
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
-    parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", default="0x7", help="bestphase = Best value of the elinkRX phase (in hex)")
+    parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", default="0x8", help="bestphase = Best value of the elinkRX phase (in hex)")
     parser.add_argument("-t", "--test", action="store", dest="test", default="0", help="test = enter 1 for only testing vfat communication, default is 0")
     args = parser.parse_args()
 
