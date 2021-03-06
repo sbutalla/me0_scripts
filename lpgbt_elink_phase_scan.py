@@ -57,11 +57,12 @@ def vfat_to_oh_gbt(vfat):
     gbtid = VFAT_TO_ELINK[vfat][1]
     return lpgbt, ohid, gbtid
 
-def lpgbt_elink_phase_scan(system, vfat_list, depth, best_phase):
+def lpgbt_elink_phase_scan(system, vfat_list, depth):
     print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
+    centers = [[0 elink in range(28)] for vfat is range(12)]
+    widths = [[0 elink in range(28)] for vfat is range(12)]
 
     for vfat in vfat_list: # Loop over all vfats
-        print ("")
         for elink in range(0,28): # Loop for all 28 RX elinks
             link_good = 16*[0]
             sync_err_cnt = 16*[0]
@@ -124,8 +125,16 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth, best_phase):
 
             for phase in range(0, 16):
                 errs[phase] = (not 1==link_good[phase]) + sync_err_cnt[phase] + cfg_run[phase]
-            center, width = find_phase_center(errs)
+            center[vfat][elink], width[vfat][elink] = find_phase_center(errs)
 
+            setVfatRxPhase(system, vfat, 0, elink)
+
+    sleep(0.1)
+    vfat_oh_link_reset()
+
+    for vfat in range(0,12):
+        print ("")
+        for elink in range(0,28):
             sys.stdout.write("VFAT%02d , ELINK %02d:" % (vfat, elink))
             for phase in range(0, 16):
 
@@ -140,11 +149,6 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth, best_phase):
                 sys.stdout.flush()
             sys.stdout.write(" (center=%d, width=%d)\n" % (center, width))
             sys.stdout.flush()
-
-            setVfatRxPhase(system, vfat, 0, elink)
-
-    sleep(0.1)
-    vfat_oh_link_reset()
 
 def find_phase_center(err_list):
     # find the centers
@@ -222,6 +226,7 @@ if __name__ == '__main__':
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
+    args = parser.parse_args()
 
     if args.system == "chc":
         #print ("Using Rpi CHeeseCake for configuration")
