@@ -203,9 +203,7 @@ def check_lpgbt_link_ready(ohIdx, gbtIdx):
             print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
         link_ready = int(output, 16)
-        if (link_ready==1):
-            print ("OH lpGBT links are READY")  
-        else:
+        if (link_ready!=1):
             print (Colors.RED + "ERROR: OH lpGBT links are not READY, check fiber connections" + Colors.ENDC)  
             rw_terminate()
 
