@@ -61,7 +61,7 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth):
     print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
     centers = [[0 for elink in range(28)] for vfat in range(12)]
     widths = [[0 for elink in range(28)] for vfat in range(12)]
-    errs_list = [[0 for phase in range(16)] for elink in range(28)] for vfat in range(12)]
+    errs_list = [[[0 for phase in range(16)] for elink in range(28)] for vfat in range(12)]
 
     for vfat in vfat_list: # Loop over all vfats
         for elink in range(0,28): # Loop for all 28 RX elinks
