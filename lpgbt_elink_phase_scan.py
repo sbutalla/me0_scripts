@@ -59,8 +59,9 @@ def vfat_to_oh_gbt(vfat):
 
 def lpgbt_elink_phase_scan(system, vfat_list, depth):
     print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
-    centers = [[0 elink in range(28)] for vfat is range(12)]
-    widths = [[0 elink in range(28)] for vfat is range(12)]
+    centers = [[0 for elink in range(28)] for vfat is range(12)]
+    widths = [[0 for elink in range(28)] for vfat is range(12)]
+    errs_list = [[0 for phase in range(16)] for elink in range(28)] for vfat is range(12)]
 
     for vfat in vfat_list: # Loop over all vfats
         for elink in range(0,28): # Loop for all 28 RX elinks
@@ -119,13 +120,10 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth):
                     else:
                         sync_err_cnt[phase] = 9999
 
-
-            center = 0
-            width  = 0
-
             for phase in range(0, 16):
                 errs[phase] = (not 1==link_good[phase]) + sync_err_cnt[phase] + cfg_run[phase]
-            center[vfat][elink], width[vfat][elink] = find_phase_center(errs)
+                errs_list[vfat][elink][phase] = errs[phase]
+            centers[vfat][elink], widths[vfat][elink] = find_phase_center(errs)
 
             setVfatRxPhase(system, vfat, 0, elink)
 
@@ -138,16 +136,16 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth):
             sys.stdout.write("VFAT%02d , ELINK %02d:" % (vfat, elink))
             for phase in range(0, 16):
 
-                if (width>0 and phase==center):
+                if (widths[vfat][elink]>0 and phase==centers[vfat][elink]):
                     char=Colors.GREEN + "+" + Colors.ENDC
-                elif (errs[phase]):
+                elif (errs_list[vfat][elink][phase]):
                     char=Colors.RED + "-" + Colors.ENDC
                 else:
                     char = Colors.YELLOW + "x" + Colors.ENDC
 
                 sys.stdout.write("%s" % char)
                 sys.stdout.flush()
-            sys.stdout.write(" (center=%d, width=%d)\n" % (center, width))
+            sys.stdout.write(" (center=%d, width=%d)\n" % (centers[vfat][elink], widths[vfat][elink]))
             sys.stdout.flush()
 
 def find_phase_center(err_list):
