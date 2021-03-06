@@ -15,14 +15,15 @@ def main(system, boss, fusing, input_config_file, input_vtrx, input_register, in
     # Fusing of registers
     if fusing == "input_file":
         fuse_from_file(system, boss, input_config_file, input_vtrx)
-        if complete==1:
-            print ("\nFusing Complete Configuration: 0xEF (dllConfigDone, pllConfigDone, updateEnable)")
-            fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1
     elif fusing == "register":
         fuse_register(system, boss, input_register, input_data)
     elif fusing == "user_id":
         fuse_user_id(system, boss, user_id)
     print ("")
+    
+    if complete==1:
+        print (Colors.YELLOW + "\nFusing Complete Configuration: 0xEF (dllConfigDone, pllConfigDone, updateEnable)" + Colors.ENDC)
+        fuse_register(system, boss, "0xEF", "0x07") #dllConfigDone=1, pllConfigDone=1, updateEnable=1
 
     # Write the fuse values of registers in text file
     if boss:
@@ -47,13 +48,15 @@ def fuse_from_file(system, boss, filename, vtrx):
         
     data = 0x00
 
-    print("Fusing from file \"%s\"" % filename)
+    print(Colors.YELLOW + "Fusing from file \"%s\"" % filename)
+    print(Colors.ENDC)
     en = "no"
-    en = raw_input("Please type \"yes\" to continue: ")
+    en = raw_input(Colors.YELLOW + "Please type \"yes\" to continue: " + Colors.ENDC)
     if (en != "yes"):
-        print ("Fusing not done, exiting")
+        print (Colors.YELLOW + "Fusing not done, exiting" + Colors.ENDC)
         rw_terminate()
 
+    print ("")
     write_fuse_magic(1)
 
     for reg_addr in range(0, len(config)):
@@ -238,7 +241,15 @@ def check_fuse_block_data(system, adr, data, fullblock=False):
         else:
             fuse_list[adr] = data
 
-    print ("Checking FUSE Address = 0X%03X, Block = 0X%03X Sub = %d, Valid = %d, Data_Expect = 0X%X, Data_read = 0X%X\n" % (adr, fuse_block_adr, fuse_block_subadr, valid, data, read_dword))
+    print_result_string = ""
+    if data==read_dword:
+        print_result_string += Colors.GREEN
+    else:
+        print_result_string += Colors.RED
+    print_result_string += "Checking FUSE Address = 0X%03X, Block = 0X%03X Sub = %d, Valid = %d, Data_Expect = 0X%X, Data_read = 0X%X\n" % (adr, fuse_block_adr, fuse_block_subadr, valid, data, read_dword)
+    print_result_string += Colors.ENDC
+    print (print_result_string)
+    
     if (system!="dryrun" and data!=read_dword):
         print (Colors.RED + "ERROR: Mismatch in expected and read data from EFUSE" + Colors.ENDC)
         write_fuse_magic(0)
@@ -248,16 +259,17 @@ def fuse_register(system, boss, input_register, input_data):
     input_register = int(input_register,16)
     input_data = int(input_data,16)
     if boss:
-        print ("Fusing Boss lpGBT, register: " + str(hex(input_register)) + ", data: " + str(hex(input_data)))
+        print (Colors.YELLOW + "Fusing Boss lpGBT, register: " + str(hex(input_register)) + ", data: " + str(hex(input_data)) + Colors.ENDC)
     else:
-        print ("Fusing Sub lpGBT, register: " + str(hex(input_register)) + ", data: " + str(hex(input_data)))
+        print (Colors.YELLOW + "Fusing Sub lpGBT, register: " + str(hex(input_register)) + ", data: " + str(hex(input_data)) + Colors.ENDC)
 
     en = "no"
-    en = raw_input("Please type \"yes\" to continue: ")
+    en = raw_input(Colors.YELLOW + "Please type \"yes\" to continue: " + Colors.ENDC)
     if (en != "yes"):
-        print ("Fusing not done, exiting")
+        print (Colors.YELLOW + "Fusing not done, exiting" + Colors.ENDC)
         rw_terminate()
 
+    print ("")
     write_fuse_magic(1)
     write_blow_and_check_fuse(system, input_register, input_data, False)
     write_fuse_magic(0)
@@ -265,16 +277,17 @@ def fuse_register(system, boss, input_register, input_data):
 def fuse_user_id(system, boss, user_id):
     user_id = int(user_id, 16)
     if boss:
-        print ("Fusing Boss lpGBT with USER ID: " + str(hex(user_id)))
+        print (Colors.YELLOW + "Fusing Boss lpGBT with USER ID: " + str(hex(user_id)) + Colors.ENDC)
     else:
-        print ("Fusing Sub lpGBT with USER ID: " + str(hex(user_id)))
+        print (Colors.YELLOW + "Fusing Sub lpGBT with USER ID: " + str(hex(user_id)) + Colors.ENDC)
 
     en = "no"
-    en = raw_input("Please type \"yes\" to continue: ")
+    en = raw_input(Colors.YELLOW + "Please type \"yes\" to continue: " + Colors.ENDC)
     if (en != "yes"):
-        print ("Fusing not done, exiting")
+        print (Colors.YELLOW + "Fusing not done, exiting" + Colors.ENDC)
         rw_terminate()
 
+    print ("")
     write_fuse_magic(1)
 
     write_blow_and_check_fuse(system, 0x007, (user_id >> 0)&0xff, False) #[0x007] USERID3 BITS [7:0]
@@ -354,7 +367,7 @@ if __name__ == '__main__':
     if args.complete not in ["0", "1"]:
         print (Colors.YELLOW + "Invalid valuefor complete option, only 0 or 1 allowed" + Colors.ENDC)
         sys.exit()
-        
+            
     if args.fusing == "input_file":
         if args.register is not None:
             print (Colors.YELLOW + "Register not needed" + Colors.ENDC)
@@ -379,7 +392,7 @@ if __name__ == '__main__':
         if args.input_config_file is not None:
             print (Colors.YELLOW + "Input file not needed" + Colors.ENDC)
             sys.exit()
-        if not args.vtrx:
+        if args.vtrx:
             print (Colors.YELLOW + "Fusing settings for VTRX+ only allowed when fusing from input file" + Colors.ENDC)
             sys.exit()
         if args.register is None:
@@ -405,19 +418,47 @@ if __name__ == '__main__':
         if args.input_config_file is not None:
             print (Colors.YELLOW + "Input file not needed" + Colors.ENDC)
             sys.exit()
-        if not args.vtrx:
+        if args.vtrx:
             print (Colors.YELLOW + "Fusing settings for VTRX+ only allowed when fusing from input file" + Colors.ENDC)
             sys.exit()
         if args.user_id is None:
             print (Colors.YELLOW + "Enter the USER ID to be fused" + Colors.ENDC)
             sys.exit()
-        if int(Colors.YELLOW + args.user_id,16) > (2**32-1):
+        if int(args.user_id,16) > (2**32-1):
             print (Colors.YELLOW + "USER ID can be maximum 32 bits" + Colors.ENDC)
             sys.exit()
         print ("Fusing USER_ID as :" + args.user_id)
+    elif args.fusing is None:
+        if args.complete == "0":
+            print (Colors.YELLOW + "Enter option for fusing or completion" + Colors.ENDC)
+            sys.exit()
+        else:
+            if args.register is not None:
+                print (Colors.YELLOW + "Register not needed" + Colors.ENDC)
+                sys.exit()
+            if args.data is not None:
+                print (Colors.YELLOW + "Data not needed" + Colors.ENDC)
+                sys.exit()
+            if args.user_id is not None:
+                print (Colors.YELLOW + "Do not enter USER ID" + Colors.ENDC)
+                sys.exit() 
+            if args.input_config_file is not None:
+                print (Colors.YELLOW + "Input file not needed" + Colors.ENDC)
+                sys.exit()
+            if args.vtrx:
+                print (Colors.YELLOW + "Fusing settings for VTRX+ only allowed when fusing from input file" + Colors.ENDC)
+                sys.exit()      
     else:
         print (Colors.YELLOW + "Invalid option for fusing" + Colors.ENDC)
         sys.exit()
+
+    if args.complete == "1": 
+        en_complete = "no"
+        print (Colors.YELLOW + "Final fusing, no changes possible after this" + Colors.ENDC)
+        en_complete = raw_input(Colors.YELLOW + "Please type \"yes\" to continue: " + Colors.ENDC)
+        if (en_complete != "yes"):
+            print (Colors.YELLOW + "Fusing not done, exiting" + Colors.ENDC)
+            sys.exit()
 
     # Parsing Registers XML File
     print("Parsing xml file...")
