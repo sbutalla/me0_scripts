@@ -131,7 +131,7 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth):
     sleep(0.1)
     vfat_oh_link_reset()
 
-    for vfat in range(0,12):
+    for vfat in vfat_list:
         print ("")
         for elink in range(0,28):
             sys.stdout.write("VFAT%02d , ELINK %02d:" % (vfat, elink))
