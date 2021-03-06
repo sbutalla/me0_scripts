@@ -34,7 +34,7 @@ VFAT_TO_ELINK = {
 #        8  : ("boss" , 1, 0, 27), # 24
 #        9  : ("boss" , 1, 0, 6), # 27
 #        10 : ("sub"  , 1, 1, 27), # 6
-#        11 : ("sub"  , 1, 1, 25), # 11
+#        11 : ("sub"  , 1, 1, 25) # 11
 #}
 
 # Register to read/write
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LpGBT VFAT Error Rate Test')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfatmask", action="store", dest="vfatmask", help="vfatmask = in binary (0b) or hex (0x) format for 12 VFATs (on 1 ME0 GEB)")
+    parser.add_argument("-v", "--vfats", action="store", dest="vfats", help="vfats = list of VFATs (0-11)")
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-r", "--reg", action="store", dest="reg", nargs='+', help="reg = register names to read/write: HW_ID (read), HW_ID_VER (read), TEST_REG (read/write), HW_CHIP_ID (read)")
@@ -166,22 +166,18 @@ if __name__ == '__main__':
     else:
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
-    
-    vfatmask_int = 0
-    if args.vfatmask is None:
-        print (Colors.YELLOW + "Enter a mask for the 12 VFATs" + Colors.ENDC)
+
+    if args.vfats is None:
+        print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
-    elif "0b" in args.vfatmask:
-        vfatmask_int = int(args.vfatmask,2)
-    elif "0x" in args.vfatmask:
-        vfatmask_int = int(args.vfatmask,16)
-    else:
-        print (Colors.YELLOW + "Enter a mask in binary (0b) or hex (0x) format" + Colors.ENDC)
-        sys.exit()
-    if vfatmask_int>(2**12 - 1):
-        print (Colors.YELLOW + "VFAT mask can be maximum 12 bits (for 12 VFATS on 1 ME0 GEB)" + Colors.ENDC)
-        sys.exit()
-    
+    vfat_list = []
+    for v in args.vfats:
+        v_int = int(v)
+        if v_int not in range(0,12):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+            sys.exit()
+        vfat_list.append(v_int)
+
     if args.reg is None:
         print ("Enter list of registers to read/write on VFAT")
         sys.exit()
@@ -199,12 +195,6 @@ if __name__ == '__main__':
     # Initialization (for CHeeseCake: reset and config_select)
     rw_initialize(args.system)
     print("Initialization Done\n")
-    
-    # Construct a list of vfats to be scanned based on the mask
-    vfat_list = []
-    for vfat in range(0,12):
-        if (0x1 & (vfatmask_int>>vfat)):
-            vfat_list.append(vfat)
     
     # Running Phase Scan
     try:

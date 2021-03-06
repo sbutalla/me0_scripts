@@ -111,15 +111,12 @@ def prbs_generate(system, boss, path, ohid, gbtid):
         writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["PRBS7"], 0)
        
     elif path == "downlink" or path == "loopback": # generate PRBS from backend
+        if path == "loopback": # additionally loopback prbs signal in lpGBT
+            # Loopback from downlink to uplink at 10.24 Gbps
+            writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DLFRAME_10G24"], 0)
+
         mgt_channel = int(ohid) * 2 + int(gbtid)
-        
-        # Reset the TX and RX channels
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
-        else:
-            node = ""
-        write_backend_reg(node, 0x001)
-    
+
         # PRBS7 for the entire data frame
         if system=="backend":
             node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
@@ -127,9 +124,12 @@ def prbs_generate(system, boss, path, ohid, gbtid):
             node = ""
         write_backend_reg(node, 0x001)
 
-        if path == "loopback": # additionally loopback prbs signal in lpGBT
-            # Loopback from downlink to uplink at 10.24 Gbps
-            writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DLFRAME_10G24"], 0)
+        # Reset the TX and RX channels
+        if system=="backend":
+            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
+        else:
+            node = ""
+        write_backend_reg(node, 0x001)
     
     print ("Started PRBS signal for: " + path + "\n")
 
@@ -142,14 +142,11 @@ def prbs_stop(system, boss, path, ohid, gbtid):
         writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DATA"], 0)
         
     elif path == "downlink" or path == "loopback": # stop PRBS from backend
+        if path == "loopback": # additionally stop loopback prbs signal in lpGBT
+            # Stop loopback from downlink to uplink
+            writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DATA"], 0)
+            
         mgt_channel = int(ohid) * 2 + int(gbtid)
-        
-        # Reset the TX and RX channels
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
-        else:
-            node = ""
-        write_backend_reg(node, 0x001)
         
         # Stopping PRBS7 for the entire data frame
         if system=="backend":
@@ -158,9 +155,12 @@ def prbs_stop(system, boss, path, ohid, gbtid):
             node = ""
         write_backend_reg(node, 0x000)
 
-        if path == "loopback": # additionally stop loopback prbs signal in lpGBT
-            # Stop loopback from downlink to uplink
-            writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DATA"], 0)
+        # Reset the TX and RX channels
+        if system=="backend":
+            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
+        else:
+            node = ""
+        write_backend_reg(node, 0x001)
 
     print ("Stopped PRBS signal for: " + path + "\n")
 
@@ -170,20 +170,20 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
 
     if path == "uplink" or path == "loopback": # checking PRBS on backend 
         mgt_channel = int(ohid) * 2 + int(gbtid)
-        
-        # Reset the TX and RX channels
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
-        else:
-            node = ""
-        write_backend_reg(node, 0x001)
-        
+
         # Reading PRBS7
         if system=="backend":
             rx_select_node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.RX_PRBS_SEL' % (mgt_channel))
         else:
             rx_select_node = ""
         write_backend_reg(rx_select_node, 0x001)
+
+        # Reset the TX and RX channels
+        if system=="backend":
+            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
+        else:
+            node = ""
+        write_backend_reg(node, 0x001)
            
         # Measurement Time
         bert_time_setting = BERT_measure_time[time]
@@ -225,6 +225,12 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
         
         # Stopping reading PRBS7
         write_backend_reg(rx_select_node, 0x000)
+
+        # Reset the TX and RX channels
+        write_backend_reg(node, 0x001)
+
+        # Reset counter
+        write_backend_reg(reset_node, 0x001)
           
     elif path == "downlink": # checking PRBS on lpGBT
         
