@@ -198,6 +198,13 @@ def main(system, boss):
         read = read_adc(i, system)
         print ("\tch %X: 0x%03X = %f (%s)" % (i, read, read/1024., name))
 
+    # Writing lpGBT configuration to text file
+    if boss:
+        lpgbt_write_config_file("config_boss.txt")
+    else:
+        lpgbt_write_config_file("config_sub.txt")
+
+
 def init_adc():
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0) # enable ADC
     writeReg(getNode("LPGBT.RW.ADC.TEMPSensReset"), 0x1, 0) # resets temp sensor
