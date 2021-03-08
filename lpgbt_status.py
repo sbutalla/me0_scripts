@@ -276,6 +276,9 @@ def read_adc(channel, system):
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
+    writeReg(getNode("LPGBT.RW.ADC.ADCINPSELECT"), 0x0, 0)
+    writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x0, 0)
+
     return val
 
 if __name__ == '__main__':
