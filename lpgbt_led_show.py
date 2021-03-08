@@ -1,7 +1,6 @@
 from rw_reg_lpgbt import *
 import sys
 import argparse
-from rw_reg import *
 from time import *
 import array
 import struct
@@ -144,7 +143,6 @@ if __name__ == '__main__':
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
-    rw_reg.parseXML()
     print("Parsing complete...")
 
     # Initialization (for CHeeseCake: reset and config_select)
@@ -171,27 +169,4 @@ if __name__ == '__main__':
 
     # Termination
     rw_terminate()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    main()
+    
