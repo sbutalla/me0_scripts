@@ -19,6 +19,7 @@ class Colors:
 
 def main(system, boss):
 
+    print ("\Starting LED show\n")
     brightnessStart = 0
     while True: # cycle brightness from on to off and off to on approx once per second (assuming 100kHz update rate)
         brightnessEnd = 100
@@ -43,6 +44,7 @@ def main(system, boss):
         stop = raw_input(Colors.YELLOW + "Please type \"stop\" to stop the show: " + Colors.ENDC)
         if stop=="stop":
             writeReg(getNode("LPGBT.RWF.PIO.PIOOUTH"), 0x80, 0)
+            print ("\nStopping LED show\n")
             break
 
 def check_bit(byteval,idx):
