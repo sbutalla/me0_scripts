@@ -208,7 +208,7 @@ def main(system, boss):
 
 def init_adc():
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0) # enable ADC
-    writeReg(getNode("LPGBT.RW.ADC.TEMPSensReset"), 0x1, 0) # resets temp sensor
+    writeReg(getNode("LPGBT.RW.ADC.TEMPSENSRESET"), 0x1, 0) # resets temp sensor
     writeReg(getNode("LPGBT.RW.ADC.VDDMONENA"), 0x1, 0) # enable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDTXMONENA"), 0x1, 0) # enable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDRXMONENA"), 0x1, 0) # enable dividers
@@ -219,7 +219,7 @@ def init_adc():
 
 def powerdown_adc():
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x0, 0) # disable ADC
-    writeReg(getNode("LPGBT.RW.ADC.TEMPSensReset"), 0x0, 0) # disable temp sensor
+    writeReg(getNode("LPGBT.RW.ADC.TEMPSENSRESET"), 0x0, 0) # disable temp sensor
     writeReg(getNode("LPGBT.RW.ADC.VDDMONENA"), 0x0, 0) # disable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDTXMONENA"), 0x0, 0) # disable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDRXMONENA"), 0x0, 0) # disable dividers
