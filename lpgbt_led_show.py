@@ -40,6 +40,11 @@ def main(system, boss):
                         on = 0x00
                     writeReg(getNode("LPGBT.RWF.PIO.PIOOUTH"), on, 0)
 
+        stop = raw_input(Colors.YELLOW + "Please type \"stop\" to stop the show: " + Colors.ENDC)
+        if stop=="stop":
+            writeReg(getNode("LPGBT.RWF.PIO.PIOOUTH"), 0x80, 0)
+            break
+
 def check_bit(byteval,idx):
     return ((byteval&(1<<idx))!=0);
 
@@ -169,4 +174,4 @@ if __name__ == '__main__':
 
     # Termination
     rw_terminate()
-    
+
