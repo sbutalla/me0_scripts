@@ -749,7 +749,7 @@
                     description="Data rate for ePortTx group 0. 0=disabled, 1=80Mbps, 2=160Mbps, 3=320Mbps"
                     mask="0x03" />
 
-                <!-- 0x0a8] EPTXControl -->
+                <!-- [0x0a8] EPTXControl -->
                 <!-- EportTx configuration register. -->
 
                 <node id="EPTXECPREEMPHASISWIDTH" address="0x1" permission="rw"
