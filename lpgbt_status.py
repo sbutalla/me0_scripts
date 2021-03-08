@@ -197,7 +197,8 @@ def main(system, boss):
 
         read = read_adc(i, system)
         print ("\tch %X: 0x%03X = %f (%s)" % (i, read, read/1024., name))
-
+    powerdown_adc()
+    
     # Writing lpGBT configuration to text file
     if boss:
         lpgbt_write_config_file("status_boss.txt")
