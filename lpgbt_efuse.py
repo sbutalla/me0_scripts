@@ -304,6 +304,8 @@ def write_fuse_magic(fuse_enable):
     # [0x110] FuseMagic [7:0]
     writeReg(getNode("LPGBT.RW.EFUSES.FUSEMAGICNUMBER"), value, 0)
     print ("Magic Number Set for Fusing: " + str(hex(value)))
+    magic_number = readReg("LPGBT.RW.EFUSES.FUSEMAGICNUMBER")
+    print ("Reading Magic Number: " + str(hex(magic_number)))
 
 def lpgbt_write_fuse_file(fuse_file = 'fuse.txt'):
     f = open(fuse_file, "w+")
