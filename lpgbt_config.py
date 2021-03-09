@@ -7,7 +7,7 @@ from lpgbt_vtrx import i2cmaster_write, i2cmaster_read
 def main(system, boss, input_config_file, reset_before_config, minimal, readback=0):
 
     # Set the PLLCONFIGDONE and DLLCONFIGDONE first to 0 is re-configuring using I2C
-    if system=="chc":
+    if system=="chc" and not readback:
         writeReg(getNode("LPGBT.RWF.POWERUP.DLLCONFIGDONE"), 0x0, readback)
         writeReg(getNode("LPGBT.RWF.POWERUP.PLLCONFIGDONE"), 0x0, readback)
 
