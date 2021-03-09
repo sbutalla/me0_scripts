@@ -86,6 +86,11 @@ def write_blow_and_check_fuse(system, adr, data, fullblock=False):
       check_fuse_block_data(system, adr, data, fullblock)
 
 def write_fuse_block_data(system, adr, data, fullblock=False):
+    # Set EFUSE Settings
+    # [0x109] FUSEControl
+    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWPULSELENGTH"), 0xC, 0)
+    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x0, 0)
+
     fuse_block_adr = adr & 0xfffc
     fuse_block_subadr = adr % 4
 
@@ -147,11 +152,6 @@ def blow_fuse(system, boss):
     rd |= readReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWDATA3")) << 24
     print ("\nBlowing Fuse with BLOCK ADDRESS = 0X%03X, BLOCK DATA = 0X%08X" % (adr, rd))
 
-    # Set EFUSE Settings
-    # [0x109] FUSEControl
-    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWPULSELENGTH"), 0xC, 0)
-    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOW"), 0x0, 0)
-
     # Start 2.5V
     t0_efusepower = time()
     lpgbt_efuse(boss, 1)
@@ -198,12 +198,8 @@ def check_fuse_block_data(system, adr, data, fullblock=False):
     fuse_block_adr    = adr & 0xfffc
     fuse_block_subadr = adr % 4
 
-    # Write address
-    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWADDRESS1"), 0xff&(fuse_block_adr>>8), 0) # [0x10e] FUSEBlowAddH
-    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWADDRESS0"), 0xff&(fuse_block_adr>>0), 0) # [0x10f] FUSEBlowAddL
-
     # Write fuseread on
-    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWPULSELENGTH"), 0xC, 0)
+    #writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWPULSELENGTH"), 0xC, 0)
     writeReg(getNode("LPGBT.RW.EFUSES.FUSEREAD"), 0x1, 0)
 
     valid = 0
@@ -212,6 +208,11 @@ def check_fuse_block_data(system, adr, data, fullblock=False):
             valid = readReg(getNode("LPGBT.RO.FUSE_READ.FUSEDATAVALID"))
         else:
             valid = 1
+
+    # Write address
+    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWADDRESS1"), 0xff&(fuse_block_adr>>8), 0) # [0x10e] FUSEBlowAddH
+    writeReg(getNode("LPGBT.RW.EFUSES.FUSEBLOWADDRESS0"), 0xff&(fuse_block_adr>>0), 0) # [0x10f] FUSEBlowAddL
+
     read=4*[0]
     read[0] = readReg(getNode("LPGBT.RO.FUSE_READ.FUSEVALUESA")) # [0x1a2] FUSEValuesA
     read[1] = readReg(getNode("LPGBT.RO.FUSE_READ.FUSEVALUESB")) # [0x1a3] FUSEValuesB
