@@ -122,10 +122,18 @@ python lpgbt_status.py -s chc -l sub
 
 ### Fusing
 
+Obtain the config .txt files first with a dryrun:
+
+```
+python lpgbt_config.py -s dryrun -l boss
+python lpgbt_config.py -s dryrun -l sub
+
+```
+
 Fuse the master/boss lpgbt with Cheesecake from text file produced by lpgbt_config.py:
 
 ```
-python lpgbt_efuse.py -s chc -l boss -f input_file -i config_boss.txt
+python lpgbt_efuse.py -s chc -l boss -f input_file -i config_boss.txt -v 1 -c 1
 ```
 
 Fuse the slave/sub lpgbt with Cheesecake from text file produced by lpgbt_config.py:
