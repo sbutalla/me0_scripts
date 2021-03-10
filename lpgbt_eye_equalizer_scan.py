@@ -257,9 +257,12 @@ if __name__ == '__main__':
     if args.system!="dryrun" and args.system!="backend":
         check_rom_readback()
 
-    # Check if lpGBT is READY if running through backend
-    if args.system=="backend":
-        check_lpgbt_link_ready(args.ohid, args.gbtid)
+    # Check if lpGBT is READY
+    if args.system!="dryrun":
+        if args.system=="backend":
+            check_lpgbt_link_ready(args.ohid, args.gbtid)
+        else:
+            check_lpgbt_ready()
 
     try:
         main(args.system, int(args.count,16), args.eq_attn, args.eq_cap, args.eq_res3, args.eq_res2, args.eq_res1, args.eq_res0, boss)

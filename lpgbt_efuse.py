@@ -291,10 +291,16 @@ def fuse_user_id(system, boss, user_id):
     print ("")
     write_fuse_magic(1)
 
-    write_blow_and_check_fuse(system, 0x007, (user_id >> 0)&0xff, False) #[0x007] USERID3 BITS [7:0]
-    write_blow_and_check_fuse(system, 0x006, (user_id >> 8)&0xff, False) #[0x006] USERID2 BITS [15:8]
-    write_blow_and_check_fuse(system, 0x005, (user_id >> 16)&0xff, False) #[0x005] USERID1 BITS [23:16]
-    write_blow_and_check_fuse(system, 0x004, (user_id >> 24)&0xff, False) #[0x004] USERID0 BITS [31:24]
+    data_userid = {}
+    data_userid[0x004] = (user_id >> 24)&0xff
+    data_userid[0x005] = (user_id >> 16)&0xff
+    data_userid[0x006] = (user_id >> 8)&0xff
+    data_userid[0x007] = (user_id >> 0)&0xff
+    data = 0
+    for r in data_userid:
+        data |= data_userid[r] << (8 * (r % 4))
+     
+    write_blow_and_check_fuse(system, 0x007 & 0xfffc, data, True)
 
     write_fuse_magic(0)
 
@@ -475,6 +481,10 @@ if __name__ == '__main__':
     # Readback rom register to make sure communication is OK
     if args.system!="dryrun":
         check_rom_readback()
+
+    # Check if lpGBT is READY 
+    if args.system!="dryrun" and args.system!="backend": 
+        check_lpgbt_ready()
 
     # Fusing lpGBT
     try:
