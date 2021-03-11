@@ -29,6 +29,8 @@ ADDRESS_TABLE_DEFAULT = './address_table/gem_amc_backup.xml'
 nodes = []
 
 boardType = os.environ.get('BOARD_TYPE')
+if boardType is None:
+    board_type = "cvp13"
 DEVICE = CONFIG_RWREG[boardType]['DEVICE']
 BASE_ADDR = CONFIG_RWREG[boardType]['BASE_ADDR']
 
