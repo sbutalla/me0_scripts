@@ -80,7 +80,8 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
                 node = ""
             
             t0 = time()
-            for n in range(niter):
+            n=0
+            while n < niter:
             
                 # Reading the register first
                 data_read_before = read_backend_reg(node)
@@ -112,6 +113,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
                     per_completed = "{:.2f}".format(100 * float(n)/float(niter))
                     print ("\nIteration completed: " + per_completed + "% \n")
                     t0 = time()
+                n+=1
            
             if write_perm:
                 print ("VFAT#: %02d, number of transactions: %d, number of errors: %d \n" %(vfat, niter, errors[reg][vfat]))
