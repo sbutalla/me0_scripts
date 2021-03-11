@@ -76,8 +76,34 @@ python lpgbt_config.py -s backend -l sub -o <OH_LINK> -g <GBT_LINK>
 Enable TX2 for VTRX+ if required:
 
 ```
-python lpgbt_vtrx.py -s backend -l boss -o <OH_LINK> -g <GBT_LINK> -t name -c TX2 -e 1
+python lpgbt_vtrx.py -s backend -l boss -o <OH_LINK> -g <GBT_LINK> -t name -c TX1 TX2 -e 1
 ```
+
+### Eye Opening Monitor
+
+Take an eye scan:
+
+```
+python lpgbt_eye.py -s backend -l boss -o <OH_LINK> -g <GBT_LINK>
+```
+
+Create an image:
+
+```
+python lpgbt_eye_plot.py -d <DIR NAME for EYE SCAN RESULTS>
+```
+
+### VFAT Communcation
+
+```
+python lpgbt_vfat_error_test.py -s backend -v <LIST of VFATS 0-11> -r <LIIST of REG NAMEs> 
+````
+
+### VFAT Phase Scan
+
+```
+python lpgbt_phase_scan.py -s backend -v <LIST of VFATS 0-11>
+````
 
 ## Using CHeeseCake
 
@@ -100,7 +126,7 @@ Configure the slave/sub lpgbt:
 python lpgbt_config.py -s chc -l sub
 ```
 
-Enable TX2 for VTRX+ if required:
+Enable TX2 for VTRX+ if required (usually VTRX+ enabled during configuration):
 
 ```
 python lpgbt_vtrx.py -s chc -l boss -t name -c TX2 -e 1
@@ -139,7 +165,7 @@ python lpgbt_efuse.py -s chc -l boss -f input_file -i config_boss.txt -v 1 -c 1
 Fuse the slave/sub lpgbt with Cheesecake from text file produced by lpgbt_config.py:
 
 ```
-python lpgbt_efuse.py -s chc -l sub -f input_file -i config_sub.txt`
+python lpgbt_efuse.py -s chc -l sub -f input_file -i config_sub.txt -c 1
 ```
 
 ### Eye Opening Monitor
@@ -155,15 +181,5 @@ Create an image:
 ```
 python lpgbt_eye_plot.py -d <DIR NAME for EYE SCAN RESULTS>
 ```
-
-### BERT
-
-Take a bert scan, for example for DLFRAME (other data sources also possible, check script):
-
-```
-python lpgbt_bert.py -s chc -l boss -b DLFRAME
-```
-
-
 
 
