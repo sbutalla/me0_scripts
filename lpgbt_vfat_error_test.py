@@ -111,7 +111,9 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
                 # Print % completed every 10 seconds
                 if (time()-t0)>10: 
                     per_completed = "{:.4f}".format(100 * float(n)/float(niter))
-                    print ("\nIteration completed: " + per_completed + "% \n")
+                    time_elapsed_min = "{:.2f}".format(float(time()-t0)/60.00) # in minutes
+                    time_elapsed_hr = "{:.4f}".format(float(time()-t0)/3600.00) # in hours
+                    print ("\nIteration completed: " + per_completed + "% , Time elapsed: " + time_elapsed_min + " (min) or " + time_elapsed_hr + " (hr)")
                     t0 = time()
                 n+=1
            
