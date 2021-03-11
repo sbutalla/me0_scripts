@@ -30,7 +30,7 @@ nodes = []
 
 boardType = os.environ.get('BOARD_TYPE')
 if boardType is None:
-    board_type = "cvp13"
+    boardType = "cvp13"
 DEVICE = CONFIG_RWREG[boardType]['DEVICE']
 BASE_ADDR = CONFIG_RWREG[boardType]['BASE_ADDR']
 
