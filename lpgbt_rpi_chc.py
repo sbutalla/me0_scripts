@@ -134,7 +134,7 @@ class lpgbt_rpi_chc:
             try:
                 self.bus.write_i2c_block_data(self.lpgbt_address, reg_add_l, [reg_add_h])
             except IOError:
-                print("Colors.RED + ERROR: I/O error in I2C connection again, check RPi or CHC connection" + Colors.ENDC)
+                print(Colors.RED + "ERROR: I/O error in I2C connection again, check RPi or CHC connection" + Colors.ENDC)
                 success = 0
         except Exception as e:
             print(Colors.RED + "ERROR: " + str(e) + Colors.ENDC)
