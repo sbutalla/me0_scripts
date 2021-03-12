@@ -93,6 +93,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
                         print ("Register value before writing: " + hex(data_read_before))
                 
                 if not write_perm:
+                    n+=1
                     continue
                 
                 # Writing to the register
