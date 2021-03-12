@@ -304,11 +304,11 @@ def configure_ec_channel(boss, readback):
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECPHASESELECT"), 0x0, readback)
     writeReg(getNode("LPGBT.RWF.EPORTRX.EPRXECTRACKMODE"), 0x0, readback) # fixed phase
 
-    if (boss):
+    #if (boss):
         # turn on 80 Mbps EC clock
-        writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28INVERT"), 0x1, readback)
-        writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28FREQ"), 0x2, readback)
-        writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28DRIVESTRENGTH"), 0x3, readback)
+        #writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28INVERT"), 0x1, readback)
+        #writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28FREQ"), 0x2, readback)
+        #writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK28DRIVESTRENGTH"), 0x3, readback)
 
 
 def configure_gpio(boss, readback):
