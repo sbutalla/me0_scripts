@@ -14,26 +14,7 @@ slave (ASIAGO schematics) == sub (in software)
 git clone https://github.com/andrewpeck/me0_scripts.git
 cd me0_scripts
 git checkout cheesecake_integration
-cd ..
 ```
-
-The scripts depend on the cython-hidapi library (https://github.com/trezor/cython-hidapi)
-
-It can be built from source with:
-
-```
-git clone https://github.com/trezor/cython-hidapi.git
-cd cython-hidapi
-git submodule update --init
-python setup.py build
-sudo python setup.py install
-```
-
-```
-cd me0_scripts
-```
-
-or alternatively it can be installed by Pip
 
 ## Using Backend
 
@@ -45,19 +26,6 @@ Set some environment variables (after compiling the 0xbefe repo):
 export ADDRESS_TABLE="<Absolute Path for 0xbefe/address_table/gem/generated/me0_cvp13/gem_amc.xml>"
 export ME0_LIBRWREG_SO="<Absolute Path for 0xbefe/scripts/boards/cvp13/rwreg/librwreg.so>"
 export BOARD_TYPE="cvp13"
-```
-
-Comment out the following lines in lpgbt_rpi_chc.py:
-```
-import RPi.GPIO as GPIO
-import smbus
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-self.bus = smbus.SMBus(device_bus)
-self.lpgbt_address = 0x70
-def __del__(self):
-    self.bus.close()
-    GPIO.cleanup()
 ```
 
 ### Configuration
@@ -98,20 +66,15 @@ python lpgbt_eye_plot.py -d <DIR NAME for EYE SCAN RESULTS>
 
 ```
 python lpgbt_vfat_error_test.py -s backend -v <LIST of VFATS 0-11> -r <LIIST of REG NAMEs> 
-````
+```
 
 ### VFAT Phase Scan
 
 ```
 python lpgbt_phase_scan.py -s backend -v <LIST of VFATS 0-11>
-````
+```
 
 ## Using CHeeseCake
-
-Comment out the following line in rw_reg_lpgbt.py:
-```
-import rw_reg
-```
 
 ### Configuration
 

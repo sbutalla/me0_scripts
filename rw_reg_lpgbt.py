@@ -1,8 +1,6 @@
 import xml.etree.ElementTree as xml
 import sys, os, subprocess
 #import gbt_vldb
-import lpgbt_rpi_chc
-import rw_reg
 
 DEBUG = True
 ADDRESS_TABLE_TOP = './address_table/lpgbt_registers.xml'
@@ -14,7 +12,6 @@ for i in range(462):
 n_rw_reg = (0x13C+1) # number of registers in LPGBT rwf + rw block
 
 #gbt_dongle = gbt_vldb.GBTx()
-gbt_rpi_chc = lpgbt_rpi_chc.lpgbt_rpi_chc()
 TOP_NODE_NAME = "LPGBT"
 
 class Node:
@@ -165,6 +162,9 @@ def rw_initialize(system_val, boss=None, ohIdx=None, gbtIdx=None):
     global system
     system = system_val
     if system=="chc":
+        import lpgbt_rpi_chc
+        global gbt_rpi_chc
+        gbt_rpi_chc = lpgbt_rpi_chc.lpgbt_rpi_chc()
         if boss is not None:
             initialize_success *= gbt_rpi_chc.config_select(boss)
             if initialize_success:
@@ -175,6 +175,7 @@ def rw_initialize(system_val, boss=None, ohIdx=None, gbtIdx=None):
                 print(Colors.RED + "ERROR: Problem in initialization" + Colors.ENDC)
                 rw_terminate()
     elif system=="backend":
+        import rw_reg
         rw_reg.parseXML()
         if ohIdx is not None and gbtIdx is not None:
             select_ic_link(ohIdx, gbtIdx)
