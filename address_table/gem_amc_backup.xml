@@ -1670,7 +1670,7 @@
 
 
 <!-- Optical links module -->
-<node id="OPTICAL_LINKS"  address="0x000000"
+<node id="OPTICAL_LINKS"  address="0xd00000"
       description="This module contains counters and control registers of all the optical links on the board (regardless of link rate or what they connect to)"
       fw_is_module="true"
       fw_module_file="../common/hdl/mgt/mgt_slow_control.vhd"
