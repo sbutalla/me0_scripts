@@ -19,6 +19,7 @@ if __name__ == '__main__':
         print ("Give a valid directory")
         sys.exit()
     eye_data_dir = os.path.join(current_dir, args.dir)
+    os.system("rm -rf " + eye_data_dir + "/*_out.txt")
     for eye_data_filepath in glob.glob(os.path.join(eye_data_dir, "*.txt")):
         print ("File: " + eye_data_filepath.split("/")[-1])
         eye_data_file = open(eye_data_filepath)
