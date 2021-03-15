@@ -185,7 +185,7 @@ def main(system, boss):
         if (i==4 ):  name="ASENSE_0"
         if (i==5 ):  name="1V2_DIV2"
         if (i==6 ):  name="2V5_DIV3"
-        if (i==7 ):  name="N/A"
+        if (i==7 ):  name="RSSI"
         if (i==8 ):  name="EOM DAC (internal signal)"
         if (i==9 ):  name="VDDIO * 0.42 (internal signal)"
         if (i==10):  name="VDDTX * 0.42 (internal signal)"
