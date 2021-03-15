@@ -1,6 +1,5 @@
 import xml.etree.ElementTree as xml
 import sys, os, subprocess
-#import gbt_vldb
 
 DEBUG = True
 ADDRESS_TABLE_TOP = './address_table/lpgbt_registers.xml'
@@ -11,7 +10,6 @@ for i in range(462):
     reg_list_dryrun[i] = 0x00
 n_rw_reg = (0x13C+1) # number of registers in LPGBT rwf + rw block
 
-#gbt_dongle = gbt_vldb.GBTx()
 TOP_NODE_NAME = "LPGBT"
 
 class Node:
@@ -176,6 +174,7 @@ def rw_initialize(system_val, boss=None, ohIdx=None, gbtIdx=None):
                 rw_terminate()
     elif system=="backend":
         import rw_reg
+        global rw_reg
         rw_reg.parseXML()
         if ohIdx is not None and gbtIdx is not None:
             select_ic_link(ohIdx, gbtIdx)
