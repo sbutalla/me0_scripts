@@ -498,7 +498,7 @@ if __name__ == '__main__':
             print (Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
             sys.exit()
         if int(args.gbtid)>1:
-            print Colors.YELLOW + ("Only GBTID 0 and 1 allowed" + Colors.ENDC)
+            print (Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
             sys.exit() 
     else:
         if args.ohid is not None or args.gbtid is not None:

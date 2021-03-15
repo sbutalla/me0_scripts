@@ -84,42 +84,15 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth):
                 lpgbt, oh_select, gbt_select = vfat_to_oh_gbt(vfat)
             
                 check_lpgbt_link_ready(oh_select, gbt_select)
-                if system=="backend":
-                    cfg_node = rw_reg.getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
-                else:
-                    cfg_node = ""
+                cfg_node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
                 for iread in range(depth):
-                    #vfat_cfg_run = read_backend_reg(cfg_node)
-                    vfat_cfg_run = 0x00
-                    if system=="backend":
-                        output_cfg = rw_reg.readReg(cfg_node)
-                    if output_cfg != "Bus Error":
-                        vfat_cfg_run = int(output_cfg,16)
-                    else:
-                        vfat_cfg_run = 9999
+                    vfat_cfg_run = simple_read_backend_reg(cfg_node, 9999)
                     cfg_run[phase] += (vfat_cfg_run != 0 and vfat_cfg_run != 1)
             
-                if system=="backend":
-                    link_node = rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
-                    sync_node = rw_reg.getNode('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
-                else:
-                    link_node = ""
-                    sync_node = ""
-                #link_good[vfat][phase]    = read_backend_reg(link_node)
-                #sync_err_cnt[vfat][phase] = read_backend_reg(sync_node)
-                link_good[phase] = 0x00
-                sync_err_cnt[phase] = 0x00
-                if system=="backend":
-                    output_link_node = rw_reg.readReg(link_node)
-                    if output_link_node != "Bus Error":
-                        link_good[phase] = int(output_link_node,16)
-                    else:
-                        link_good[phase] = 0x00
-                    output_sync_node = rw_reg.readReg(sync_node)
-                    if output_sync_node != "Bus Error":
-                        sync_err_cnt[phase] = int(output_sync_node,16)
-                    else:
-                        sync_err_cnt[phase] = 9999
+                link_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
+                sync_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
+                link_good[phase]    = simple_read_backend_reg(link_node, 0)
+                sync_err_cnt[phase] = simple_read_backend_reg(sync_node, 9999)
 
             for phase in range(0, 16):
                 errs[phase] = (not 1==link_good[phase]) + sync_err_cnt[phase] + cfg_run[phase]

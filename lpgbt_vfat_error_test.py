@@ -74,10 +74,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
             print ("VFAT#: %02d" %(vfat))
             
             check_lpgbt_link_ready(oh_select, gbt_select)
-            if system=="backend":
-                node = rw_reg.getNode('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (oh_select, vfat-6*oh_select, reg))
-            else:
-                node = ""
+            node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (oh_select, vfat-6*oh_select, reg))
 
             t0 = time()
             t00 = t0

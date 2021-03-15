@@ -254,7 +254,7 @@ def chc_terminate():
                 print (Colors.YELLOW + "Turn OFF 2.5V fusing Power Supply or Switch Immediately for Sub" + Colors.ENDC)
     else:
         print (Colors.RED + "ERROR: Problem in reading EFUSE status" + Colors.ENDC)
-        print Colors.YELLOW + ("Turn OFF 2.5V fusing Power Supply or Switch Immediately (if they were ON) for both Boss and Sub" + Colors.ENDC)
+        print (Colors.YELLOW + "Turn OFF 2.5V fusing Power Supply or Switch Immediately (if they were ON) for both Boss and Sub" + Colors.ENDC)
 
     # Terminating RPi
     terminate_success = gbt_rpi_chc.terminate()
@@ -281,6 +281,22 @@ def vfat_oh_link_reset():
         if output=="Bus Error":
             print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
             rw_terminate()
+
+def get_rwreg_node(name):
+    if system=="backend":
+        return rw_reg.getNode(name)
+    else:
+        return ""
+
+def simple_read_backend_reg(node, error_value):
+    output_value = 0
+    if system=="backend":
+        output = rw_reg.readReg(node)
+        if output != "Bus Error":
+            output_value = int(output,16)
+        else:
+            output_value = error_value
+    return output_value
 
 def read_backend_reg(node):
     output = "0x00"
