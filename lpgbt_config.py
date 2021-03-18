@@ -407,7 +407,7 @@ def configure_eprx(readback):
         writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX%dTERM" % i), 1, readback)
 
 
-def reset_lpgbt(system, readback):
+def reset_lpgbt(readback):
     writeReg(getNode("LPGBT.RW.RESET.RSTPLLDIGITAL"), 1, readback)
     writeReg(getNode("LPGBT.RW.RESET.RSTFUSES"),      1, readback)
     #writeReg(getNode("LPGBT.RW.RESET.RSTCONFIG"),     1, readback)
