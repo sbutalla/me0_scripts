@@ -47,14 +47,14 @@ def i2cmaster_write(system, reg_addr, data):
         else:
             status = 0x04
         if (status>>6) & 0x1:
-            print ("ERROR: Last transaction was not acknowledged by the I2C slave")
+            print (Colors.RED + "ERROR: Last transaction was not acknowledged by the I2C slave" + Colors.ENDC)
             rw_terminate()
         elif (status>>3) & 0x1:
-            print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
+            print (Colors.RED + "ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus." + Colors.ENDC)
             rw_terminate()
         success = (status>>2) & 0x1
         if int(round((time() - t0))) > i2c_master_timeout:
-            print ("ERROR: I2C master timeout")
+            print (Colors.RED + "ERROR: I2C master timeout" + Colors.ENDC)
             rw_terminate()
 
     reg_addr_string = "0x%02X" % (reg_addr)
@@ -92,14 +92,14 @@ def i2cmaster_read(system, reg_addr):
         else:
             status = 0x04
         if (status>>6) & 0x1:
-            print ("ERROR: Last transaction was not acknowledged by the I2C slave")
+            print (Colors.RED + "ERROR: Last transaction was not acknowledged by the I2C slave" + Colors.ENDC)
             rw_terminate()
         elif (status>>3) & 0x1:
-            print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
+            print (Colors.RED + "ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus." + Colors.ENDC)
             rw_terminate()
         success = (status>>2) & 0x1
         if int(round((time() - t0))) > i2c_master_timeout:
-            print ("ERROR: I2C master timeout")
+            print (Colors.RED + "ERROR: I2C master timeout" + Colors.ENDC)
             rw_terminate()
 
     # Reading the register value to I2CMaster 2
@@ -120,14 +120,14 @@ def i2cmaster_read(system, reg_addr):
         else:
             status = 0x04
         if (status>>6) & 0x1:
-            print ("ERROR: Last transaction was not acknowledged by the I2C slave")
+            print (Colors.RED + "ERROR: Last transaction was not acknowledged by the I2C slave" + Colors.ENDC)
             rw_terminate()
         elif (status>>3) & 0x1:
-            print ("ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus.")
+            print (Colors.RED + "ERROR: I2C master port finds that the SDA line is pulled low 0 before initiating a transaction. Indicates a problem with the I2C bus." + Colors.ENDC)
             rw_terminate()
         success = (status>>2) & 0x1
         if int(round((time() - t0))) > i2c_master_timeout:
-            print ("ERROR: I2C master timeout")
+            print (Colors.RED + "ERROR: I2C master timeout" + Colors.ENDC)
             rw_terminate()
     
     data = readReg(getNode("LPGBT.RO.I2CREAD.I2CM2READ15"))
@@ -146,7 +146,7 @@ def i2cmaster_read(system, reg_addr):
 def main(system, boss, channel, enable, reg_list, data_list):
 
     if not boss:
-        print ("ERROR: VTRX+ control only for boss since I2C master of boss connected to VTRX+")
+        print (Colors.RED + "ERROR: VTRX+ control only for boss since I2C master of boss connected to VTRX+" + Colors.ENDC)
         return
 
     # Enabling TX Channel

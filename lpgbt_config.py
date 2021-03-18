@@ -411,14 +411,15 @@ def reset_lpgbt(readback):
     writeReg(getNode("LPGBT.RW.RESET.RSTPLLDIGITAL"), 1, readback)
     writeReg(getNode("LPGBT.RW.RESET.RSTFUSES"),      1, readback)
     writeReg(getNode("LPGBT.RW.RESET.RSTCONFIG"),     1, readback)
-    writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    1, readback)
-    writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    1, readback)
+    #writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    1, readback)
+    #writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    1, readback)
 
     writeReg(getNode("LPGBT.RW.RESET.RSTPLLDIGITAL"), 0, readback)
     writeReg(getNode("LPGBT.RW.RESET.RSTFUSES"),      0, readback)
     writeReg(getNode("LPGBT.RW.RESET.RSTCONFIG"),     0, readback)
-    writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    0, readback)
-    writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    0, readback)
+    #writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    0, readback)
+    #writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    0, readback)
+
 
 def configure_eport_dlls(readback):
     print ("Configuring eport dlls...")
