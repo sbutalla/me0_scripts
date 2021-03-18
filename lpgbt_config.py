@@ -13,7 +13,7 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
 
     # Optionally reset LPGBT
     if (reset_before_config and not readback):
-        reset_lpgbt(readback)
+        reset_lpgbt(system, readback)
 
     if input_config_file is not None:
         lpgbt_dump_config(input_config_file)
