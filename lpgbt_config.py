@@ -12,8 +12,8 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
         writeReg(getNode("LPGBT.RWF.POWERUP.PLLCONFIGDONE"), 0x0, readback)
 
     # Optionally reset LPGBT
-    if (reset_before_config and not readback):
-        reset_lpgbt(system, readback)
+    if (reset_before_config and not readback and system!="backend"):
+        reset_lpgbt(readback)
 
     if input_config_file is not None:
         lpgbt_dump_config(input_config_file)
@@ -408,21 +408,17 @@ def configure_eprx(readback):
 
 
 def reset_lpgbt(system, readback):
-    if system=="backend":
-        mpoke(0x12C, 0xD8)
-        mpoke(0x12C, 0x00)
-    else:
-        writeReg(getNode("LPGBT.RW.RESET.RSTPLLDIGITAL"), 1, readback)
-        writeReg(getNode("LPGBT.RW.RESET.RSTFUSES"),      1, readback)
-        #writeReg(getNode("LPGBT.RW.RESET.RSTCONFIG"),     1, readback)
-        writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    1, readback)
-        writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    1, readback)
+    writeReg(getNode("LPGBT.RW.RESET.RSTPLLDIGITAL"), 1, readback)
+    writeReg(getNode("LPGBT.RW.RESET.RSTFUSES"),      1, readback)
+    #writeReg(getNode("LPGBT.RW.RESET.RSTCONFIG"),     1, readback)
+    writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    1, readback)
+    writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    1, readback)
 
-        writeReg(getNode("LPGBT.RW.RESET.RSTPLLDIGITAL"), 0, readback)
-        writeReg(getNode("LPGBT.RW.RESET.RSTFUSES"),      0, readback)
-        #writeReg(getNode("LPGBT.RW.RESET.RSTCONFIG"),     0, readback)
-        writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    0, readback)
-        writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    0, readback)
+    writeReg(getNode("LPGBT.RW.RESET.RSTPLLDIGITAL"), 0, readback)
+    writeReg(getNode("LPGBT.RW.RESET.RSTFUSES"),      0, readback)
+    #writeReg(getNode("LPGBT.RW.RESET.RSTCONFIG"),     0, readback)
+    writeReg(getNode("LPGBT.RW.RESET.RSTRXLOGIC"),    0, readback)
+    writeReg(getNode("LPGBT.RW.RESET.RSTTXLOGIC"),    0, readback)
 
 
 def configure_eport_dlls(readback):
