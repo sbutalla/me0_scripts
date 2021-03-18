@@ -106,7 +106,7 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth, type):
                 setVfatRxPhase(system, vfat, 0, elink)
             elif type=="disable":
                 setVfatRxEnable(system, vfat, 1, elink)
-            print ("")
+        print ("")
 
     sleep(0.1)
     vfat_oh_link_reset()
@@ -206,7 +206,7 @@ def setVfatRxEnable(system, vfat, enable, elink):
 
     # disable/enable channel
     GBT_ELINK_SAMPLE_ENABLE_BASE_REG = 0x0C4
-    addr = GBT_ELINK_SAMPLE_PHASE_BASE_REG + elink/4
+    addr = GBT_ELINK_SAMPLE_ENABLE_BASE_REG + elink/4
     bit = 4 + elink%4
     mask = (1 << bit)
     value = (config[addr] & (~mask)) | (enable << bit)
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_elink_phase_scan(args.system, vfat_list, int(args.depth), type)
+        lpgbt_elink_phase_scan(args.system, vfat_list, int(args.depth), args.type)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
