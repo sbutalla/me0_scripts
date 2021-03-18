@@ -12,7 +12,7 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
         writeReg(getNode("LPGBT.RWF.POWERUP.PLLCONFIGDONE"), 0x0, readback)
 
     # Optionally reset LPGBT
-    if (reset_before_config and not readback and system!="backend"):
+    if (reset_before_config and not readback):
         reset_lpgbt(readback)
 
     if input_config_file is not None:
