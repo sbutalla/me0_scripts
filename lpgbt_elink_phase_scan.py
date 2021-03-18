@@ -57,7 +57,7 @@ def vfat_to_oh_gbt(vfat):
     gbtid = VFAT_TO_ELINK[vfat][1]
     return lpgbt, ohid, gbtid
 
-def lpgbt_elink_phase_scan(system, vfat_list, depth):
+def lpgbt_elink_phase_scan(system, vfat_list, depth, type):
     print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
     centers = [[0 for elink in range(28)] for vfat in range(12)]
     widths = [[0 for elink in range(28)] for vfat in range(12)]
@@ -72,8 +72,11 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth):
             errs = 16*[0]
 
             for phase in range(0, 16):
-                # set phases for the vfat under test
-                setVfatRxPhase(system, vfat, phase, elink)
+                # set phases or disable for the vfat under test
+                if type=="phase":
+                    setVfatRxPhase(system, vfat, phase, elink)
+                elif type=="disable":
+                    setVfatRxEnable(system, vfat, 0, elink)
 
                 # Reset the link, give some time to accumulate any sync errors and then check VFAT comms
                 sleep(0.1)
@@ -99,7 +102,10 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth):
                 errs_list[vfat][elink][phase] = errs[phase]
             centers[vfat][elink], widths[vfat][elink] = find_phase_center(errs)
 
-            setVfatRxPhase(system, vfat, 0, elink)
+            if type=="phase":
+                setVfatRxPhase(system, vfat, 0, elink)
+            elif type=="disable":
+                setVfatRxEnable(system, vfat, 1, elink)
 
     sleep(0.1)
     vfat_oh_link_reset()
@@ -188,6 +194,29 @@ def setVfatRxPhase(system, vfat, phase, elink):
     mpoke(addr, value)
     sleep(0.000001) # writing too fast for CVP13
 
+def setVfatRxEnable(system, vfat, enable, elink):
+
+    lpgbt, oh_select, gbt_select = vfat_to_oh_gbt(vfat)
+
+    if lpgbt == "boss":
+        config = config_boss
+    elif lpgbt == "sub":
+        config = config_sub
+
+    # disable/enable channel
+    GBT_ELINK_SAMPLE_ENABLE_BASE_REG = 0x0C4
+    addr = GBT_ELINK_SAMPLE_PHASE_BASE_REG + elink/4
+    bit = 4 + elink%4
+    mask = (1 << bit)
+    value = (config[addr] & (~mask)) | (enable << bit)
+
+    check_lpgbt_link_ready(oh_select, gbt_select)
+    select_ic_link(oh_select, gbt_select)
+    if system!= "dryrun" and system!= "backend":
+        check_rom_readback()
+    mpoke(addr, value)
+    sleep(0.000001) # writing too fast for CVP13
+
 if __name__ == '__main__':
 
     # Parsing arguments
@@ -198,6 +227,7 @@ if __name__ == '__main__':
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
+    parser.add_argument("-t", "--type", action="store", dest="type", help="type = phase or disable")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -217,7 +247,11 @@ if __name__ == '__main__':
     else:
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
-    
+
+    if args.type not in ["phase", "disable"]:
+        print ("Enter valid type for testing: phase or debug")
+        sys.exit()
+
     if args.vfats is None:
         print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
@@ -251,7 +285,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_elink_phase_scan(args.system, vfat_list, int(args.depth))
+        lpgbt_elink_phase_scan(args.system, vfat_list, int(args.depth), type)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
