@@ -106,6 +106,7 @@ def lpgbt_elink_phase_scan(system, vfat_list, depth, type):
                 setVfatRxPhase(system, vfat, 0, elink)
             elif type=="disable":
                 setVfatRxEnable(system, vfat, 1, elink)
+            print ("")
 
     sleep(0.1)
     vfat_oh_link_reset()
