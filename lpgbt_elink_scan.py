@@ -60,11 +60,11 @@ def vfat_to_oh_gbt(vfat):
 def lpgbt_elink_scan(system, vfat_list):
     print ("LPGBT Elink Scan")
 
+    n_err_vfat_elink = {}
     for vfat in vfat_list: # Loop over all vfats
-        n_err_elink = {}
         for elink in range(0,28): # Loop for all 28 RX elinks
             print ("VFAT%02d , ELINK %02d" % (vfat, elink))
-
+            n_err_vfat_elink[vfat] = {}
             # Disable RX elink under test
             setVfatRxEnable(system, vfat, 0, elink)
 
@@ -79,21 +79,22 @@ def lpgbt_elink_scan(system, vfat_list):
             hwid_node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.HW_ID' % (oh_select, vfat-6*oh_select))
             n_err = 0
             for iread in range(10):
-                hwid = simple_read_backend_reg(hwid_node, 9999)
-                if hwid==9999:
+                hwid = simple_read_backend_reg(hwid_node, -9999)
+                if hwid==-9999:
                     n_err+=1
-            n_err_elink[elink] = n_err
+            n_err_vfat_elink[vfat][elink] = n_err
 
             setVfatRxEnable(system, vfat, 1, elink)
         print ("")
 
-        sleep(0.1)
-        vfat_oh_link_reset()
+    sleep(0.1)
+    vfat_oh_link_reset()
 
-        print ("Elink mapping results: \n")
+    print ("Elink mapping results: \n")
+    for vfat in vfat_list:
         for elink in range(0,28):
             sys.stdout.write("VFAT%02d , ELINK %02d:" % (vfat, elink))
-            if n_err_elink[elink]>5:
+            if n_err_vfat_elink[vfat][elink]>5:
                 char=Colors.GREEN + "+\n" + Colors.ENDC
             else:
                 char=Colors.RED + "-\n" + Colors.ENDC
