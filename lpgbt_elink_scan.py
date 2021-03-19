@@ -87,18 +87,19 @@ def lpgbt_elink_scan(system, vfat_list):
             setVfatRxEnable(system, vfat, 1, elink)
         print ("")
 
-    sleep(0.1)
-    vfat_oh_link_reset()
+        sleep(0.1)
+        vfat_oh_link_reset()
 
-    print ("Elink mapping results: \n")
-    for elink in range(0,28):
-        sys.stdout.write("VFAT%02d , ELINK %02d:" % (vfat, elink))
-        if n_err_elink[elink]>5:
-            char=Colors.GREEN + "+\n" + Colors.ENDC
-        else:
-            char=Colors.RED + "-\n" + Colors.ENDC
-        sys.stdout.write("%s" % char)
-        sys.stdout.flush()
+        print ("Elink mapping results: \n")
+        for elink in range(0,28):
+            sys.stdout.write("VFAT%02d , ELINK %02d:" % (vfat, elink))
+            if n_err_elink[elink]>5:
+                char=Colors.GREEN + "+\n" + Colors.ENDC
+            else:
+                char=Colors.RED + "-\n" + Colors.ENDC
+            sys.stdout.write("%s" % char)
+            sys.stdout.flush()
+        print ("")
 
 def setVfatRxEnable(system, vfat, enable, elink):
     lpgbt, oh_select, gbt_select = vfat_to_oh_gbt(vfat)
