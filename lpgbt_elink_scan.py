@@ -94,9 +94,9 @@ def lpgbt_elink_scan(system, vfat_list):
     for elink in range(0,28):
         sys.stdout.write("VFAT%02d , ELINK %02d:" % (vfat, elink))
         if n_err_elink[elink]>5:
-            char=Colors.GREEN + "+" + Colors.ENDC
+            char=Colors.GREEN + "+\n" + Colors.ENDC
         else:
-            char=Colors.RED + "-" + Colors.ENDC
+            char=Colors.RED + "-\n" + Colors.ENDC
         sys.stdout.write("%s" % char)
         sys.stdout.flush()
 
