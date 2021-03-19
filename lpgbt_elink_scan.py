@@ -98,7 +98,6 @@ def lpgbt_elink_scan(system, vfat_list):
         else:
             char=Colors.RED + "-" + Colors.ENDC
         sys.stdout.write("%s" % char)
-        sys.stdout.write(" (center=%d, width=%d)\n" % (centers[vfat][elink], widths[vfat][elink]))
         sys.stdout.flush()
 
 def setVfatRxEnable(system, vfat, enable, elink):
