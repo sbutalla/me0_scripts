@@ -186,7 +186,7 @@ def select_ic_link(ohIdx, gbtIdx):
         if ohIdx not in range(0,8) or gbtIdx not in [0,1]:
             print (Colors.RED + "ERROR: Invalid ohIdx or gbtIdx" + Colors.ENDC)
             rw_terminate()
-        linkIdx = ohIdx * 3 + gbtIdx
+        linkIdx = ohIdx * 2 + gbtIdx
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
         if output=="Bus Error":
             print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
