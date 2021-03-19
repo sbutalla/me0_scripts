@@ -54,7 +54,7 @@ def getConfig (filename):
 def vfat_to_oh_gbt_elink(vfat):
     lpgbt = VFAT_TO_ELINK[vfat][0]
     ohid  = VFAT_TO_ELINK[vfat][1]
-    gbtid = VFAT_TO_ELINK[vfat][1]
+    gbtid = VFAT_TO_ELINK[vfat][2]
     elink = VFAT_TO_ELINK[vfat][3]
     return lpgbt, ohid, gbtid, elink
         
