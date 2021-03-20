@@ -52,11 +52,50 @@ if __name__ == '__main__':
         file_output.write("Fraction of eye open = " + str(frac_open) + "\n")
         file_output.close()
 
+        eye_center = []
+        size  = 0
+        for y in eye_data:
+            size = len(y)
+            y2 = y + y
+            left = -9999
+            right  = -9999
+            for i in range(0,len(y2)):
+                if y2[i]>=10:
+                    if i!=(len(y2)-1) and y2[i+1]<10:
+                        left = i+1
+                if y2[i]<10:
+                    if left==-9999:
+                        continue
+                    if i!=(len(y2)-1) and y2[i+1]>=10:
+                        right = i
+                        break
+            center = int((left+right)/2)
+            if center>=(len(y)):
+                center = len(y) - center
+            eye_center.append(center)
+        eye_center_avg = 0
+        for center in eye_center:
+            eye_center_avg += center
+        eye_center_avg = int(eye_center_avg/len(eye_center))
+        shift = eye_center_avg - int(size/2)
+
+        eye_data_mod = []
+        for y in eye_data:
+            y_mod = [0 for i in range(len(y))]
+            for i in range(0,len(y_mod)):
+                i_mod = i - shift
+                if i_mod<0:
+                    i_mod = len(y_mod) + i_mod
+                if i_mod>=len(y_mod):
+                    i_mod = i_mod - len(y_mod)
+                y_mod[i_mod] = y[i]
+            eye_data_mod.append(y_mod)
+
         (fig, axs) = plt.subplots(1, 1, figsize=(10, 8))
         print ("fig type = " + str(type(fig)))
         print ("axs type = " + str(type(axs)))
         axs.set_title("LpGBT 2.56 Gbps RX Eye Opening Monitor")
-        plot = axs.imshow(eye_data, alpha=0.9, vmin=0, vmax=100, cmap='jet',interpolation="nearest", aspect="auto",extent=[-384.52/2,384.52/2,-0.6,0.6,])
+        plot = axs.imshow(eye_data_mod, alpha=0.9, vmin=0, vmax=100, cmap='jet',interpolation="nearest", aspect="auto",extent=[-384.52/2,384.52/2,-0.6,0.6,])
         plt.xlabel('ps')
         plt.ylabel('volts')
         fig.colorbar(plot, ax=axs)
