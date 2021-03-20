@@ -9,6 +9,7 @@ if __name__ == '__main__':
     # Parsing arguments
     parser = argparse.ArgumentParser(description='Plotting LPGBT EYE')
     parser.add_argument("-d", "--dir", action="store", dest="dir", help="dir = DIRECTORY for EYE SCAN RESULTS")
+    parser.add_argument("-s", "--shift", action="store_true", dest="shift", help="if you want to shift the axis to put the eye opening in the center")
     args = parser.parse_args()
 
     current_dir = os.path.abspath(os.getcwd())
@@ -91,11 +92,15 @@ if __name__ == '__main__':
                 y_mod[i_mod] = y[i]
             eye_data_mod.append(y_mod)
 
+        eye_data_plot = eye_data
+        if args.shift:
+            eye_data_plot = eye_data_mod
+
         (fig, axs) = plt.subplots(1, 1, figsize=(10, 8))
         print ("fig type = " + str(type(fig)))
         print ("axs type = " + str(type(axs)))
         axs.set_title("LpGBT 2.56 Gbps RX Eye Opening Monitor")
-        plot = axs.imshow(eye_data_mod, alpha=0.9, vmin=0, vmax=100, cmap='jet',interpolation="nearest", aspect="auto",extent=[-384.52/2,384.52/2,-0.6,0.6,])
+        plot = axs.imshow(eye_data_plot, alpha=0.9, vmin=0, vmax=100, cmap='jet',interpolation="nearest", aspect="auto",extent=[-384.52/2,384.52/2,-0.6,0.6,])
         plt.xlabel('ps')
         plt.ylabel('volts')
         fig.colorbar(plot, ax=axs)
