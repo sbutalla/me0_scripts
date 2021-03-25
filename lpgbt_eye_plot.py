@@ -71,15 +71,15 @@ if __name__ == '__main__':
                         right = i
                         break
             center = int((left+right)/2)
-            if center>=(len(y)):
-                center = len(y) - center
             eye_center.append(center)
         eye_center_avg = 0
         for center in eye_center:
             eye_center_avg += center
         eye_center_avg = int(eye_center_avg/len(eye_center))
+        if eye_center_avg>=len(y):
+            eye_center_avg = eye_center_avg - len(y)
         shift = eye_center_avg - int(size/2)
-
+        
         eye_data_mod = []
         for y in eye_data:
             y_mod = [0 for i in range(len(y))]
