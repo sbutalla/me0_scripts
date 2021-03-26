@@ -5,6 +5,11 @@ import argparse
 
 def main(system, boss, action):
     print ("")
+    if boss:
+        print ("Performing action for boss lpGBT\n")
+    else:
+        print ("Performing action for sub lpGBT\n")
+
     if action=="enable":
         #if boss:
         #    print ("Enabling EC channel\n")
