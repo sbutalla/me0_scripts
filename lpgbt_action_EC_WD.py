@@ -8,14 +8,14 @@ def main(system, boss, action):
     if action=="enable":
         if boss:
             print ("Enabling EC channel\n")
-            mpoke(0x0A8, 0x1F)
+            mpoke(0xA8, 0x1F)
         
         print ("Enabling WatchDog\n")
         mpoke(0xED, 0x03)
     elif action=="disable":
         if boss:
             print ("Disabling EC channel\n")
-            mpoke(0x0A8, 0x0F)
+            mpoke(0xA8, 0x0F)
         
         print ("Disabling WatchDog\n")
         mpoke(0xED, 0x63)
