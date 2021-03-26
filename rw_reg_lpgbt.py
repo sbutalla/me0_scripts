@@ -189,19 +189,28 @@ def select_ic_link(ohIdx, gbtIdx):
         linkIdx = ohIdx * 2 + gbtIdx
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_I2C_ADDR'), 0x70)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
 
 def check_lpgbt_link_ready(ohIdx, gbtIdx):
     if system=="backend":
         output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.OH_LINKS.OH%s.GBT%s_READY' % (ohIdx, gbtIdx)))
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
         link_ready = int(output, 16)
         if (link_ready!=1):
             print (Colors.RED + "ERROR: OH lpGBT links are not READY, check fiber connections" + Colors.ENDC)  
@@ -279,8 +288,11 @@ def vfat_oh_link_reset():
     if system=="backend":
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 0x1)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 0x1)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
 
 def get_rwreg_node(name):
     if system=="backend":
@@ -295,7 +307,11 @@ def simple_read_backend_reg(node, error_value):
         if output != "Bus Error":
             output_value = int(output,16)
         else:
-            output_value = error_value
+            output = rw_reg.readReg(node)
+            if output != "Bus Error":
+                output_value = int(output,16)
+            else:
+                output_value = error_value
     return output_value
 
 def read_backend_reg(node):
@@ -303,16 +319,22 @@ def read_backend_reg(node):
     if system=="backend":
         output = rw_reg.readReg(node)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.readReg(node)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
     return int(output,16)
     
 def write_backend_reg(node, data):
     if system=="backend":
         output = rw_reg.writeReg(node, data)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(node, data)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
     
 def readAddress(address):
     try:
@@ -340,16 +362,25 @@ def mpeek(address):
         #rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
         #output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS'), address)
         #if output=="Bus Error":
-        #    print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-        #    rw_terminate()
+        #    print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+        #    output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS'), address)
+        #    if output=="Bus Error":
+        #        print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+        #        rw_terminate()
         #output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_READ'), 1)
         #if output=="Bus Error":
-        #    print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-        #    rw_terminate()
+        #    print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+        #    output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_READ'), 1)
+        #    if output=="Bus Error":
+        #        print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+        #        rw_terminate()
         #output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.READ_DATA'))
         #if output=="Bus Error":
-        #    print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-        #    rw_terminate()
+        #    print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+        #    output = rw_reg.readReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.READ_DATA'))
+        #    if output=="Bus Error":
+        #        print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+        #        rw_terminate()
         #data = int(output, 16)
         #return data
         return reg_list_dryrun[address]
@@ -371,20 +402,32 @@ def mpoke(address, value):
     elif system=="backend":
         output = rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(rw_reg.getNode("GEM_AMC.SLOW_CONTROL.IC.READ_WRITE_LENGTH"), 1)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS'), address)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.ADDRESS'), address)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.WRITE_DATA'), value)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.WRITE_DATA'), value)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE'), 1)
         if output=="Bus Error":
-            print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
-            rw_terminate()
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.EXECUTE_WRITE'), 1)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
         reg_list_dryrun[address] = value
     #elif system=="dongle":
     #    gbt_dongle.gbtx_write_register(address,value)
