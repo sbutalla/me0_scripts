@@ -6,16 +6,16 @@ import argparse
 def main(system, boss, action):
     print ("")
     if action=="enable":
-        if boss:
-            print ("Enabling EC channel\n")
-            mpoke(0xA8, 0x1F)
+        #if boss:
+        #    print ("Enabling EC channel\n")
+        #    mpoke(0xA8, 0x1F)
         
         print ("Enabling WatchDog\n")
         mpoke(0xED, 0x03)
     elif action=="disable":
-        if boss:
-            print ("Disabling EC channel\n")
-            mpoke(0xA8, 0x0F)
+        #if boss:
+        #    print ("Disabling EC channel\n")
+        #    mpoke(0xA8, 0x0F)
         
         print ("Disabling WatchDog\n")
         mpoke(0xED, 0x63)
@@ -23,7 +23,7 @@ def main(system, boss, action):
 if __name__ == '__main__':
 
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='LpGBT Disable/Enable EC and Watchdog')
+    parser = argparse.ArgumentParser(description='LpGBT Disable/Enable Watchdog')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
