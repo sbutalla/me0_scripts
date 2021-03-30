@@ -10,7 +10,11 @@ def main(system, boss, action):
     else:
         print ("Performing action for sub lpGBT\n")
 
-    if action=="enable":
+    if action=="reset":
+        print ("Reset lpGBT\n")
+        mpoke(0x12C, 0x80)
+
+    elif action=="enable":
         #if boss:
         #    print ("Enabling EC channel\n")
         #    mpoke(0xA8, 0x1F)
@@ -28,12 +32,12 @@ def main(system, boss, action):
 if __name__ == '__main__':
 
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='LpGBT Disable/Enable Watchdog')
+    parser = argparse.ArgumentParser(description='LpGBT Reset, Disable/Enable Watchdog')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
-    parser.add_argument("-a", "--action", action="store", dest="action", help="action = enable, disable")
+    parser.add_argument("-a", "--action", action="store", dest="action", help="action = reset, enable, disable")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -86,13 +90,15 @@ if __name__ == '__main__':
             print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
             sys.exit()
     
-    if args.action not in ["enable", "disable"]:
-        print (Colors.YELLOW + "Valid option only enable or disable" + Colors.ENDC)
+    if args.action not in ["reset", "enable", "disable"]:
+        print (Colors.YELLOW + "Valid option only reset, enable or disable" + Colors.ENDC)
         sys.exit()
+    elif args.action == "reset":
+        print ("Reset lpGBT")
     elif args.action == "disable":
-        print ("Disabling EC and Watchdog")
-    else:
-        print ("Enabling EC and Watchdog")
+        print ("Disabling Watchdog")
+    elif args.action == "enable":
+        print ("Enabling Watchdog")
 
     # Parsing Registers XML File
     print("Parsing xml file...")
