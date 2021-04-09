@@ -13,7 +13,7 @@ def check_fec_errors(system, boss, path, ohid, gbtid, runtime, verbose):
         node = get_rwreg_node('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET')
         write_backend_reg(node, 0x001)
         
-        fec_node = get_rwreg_node('GEM_AMC.OH%d.GBT%d_FEC_ERR_CNT' % (ohid, gbtid))
+        fec_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.GBT%d_FEC_ERR_CNT' % (ohid, gbtid))
         
         # start error counting loop
         start_fec_errors = read_backend_reg(fec_node)
