@@ -23,9 +23,9 @@ def check_fec_errors(system, boss, path, ohid, gbtid, runtime, verbose):
         time_prev = t0
         
         while ((time()-t0)/60.0) < runtime:
+            curr_fec_errors = read_backend_reg(fec_node)
             time_passed = (time()-time_prev)/60.0
             if time_passed >= 1:
-                curr_fec_errors = read_backend_reg(fec_node)
                 if verbose:
                     print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, curr_fec_errors))
                 time_prev = time()
