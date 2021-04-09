@@ -10,16 +10,10 @@ def check_fec_errors(system, boss, path, ohid, gbtid, runtime, verbose):
 
     if path == "uplink": # check FEC errors on backend
         # Reset the error counters
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET')
-        else:
-            node = ""
+        node = get_rwreg_node('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET')
         write_backend_reg(node, 0x001)
         
-        if system=="backend":
-            fec_node = rw_reg.getNode('GEM_AMC.OH%d.GBT%_FEC_ERR_CNT' % (ohid, gbtid))
-        else:
-            fec_node = ""
+        fec_node = get_rwreg_node('GEM_AMC.OH%d.GBT%_FEC_ERR_CNT' % (ohid, gbtid))
         
         # start error counting loop
         start_fec_errors = read_backend_reg(fec_node)

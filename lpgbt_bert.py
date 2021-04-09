@@ -118,17 +118,11 @@ def prbs_generate(system, boss, path, ohid, gbtid):
         mgt_channel = int(ohid) * 2 + int(gbtid)
 
         # PRBS7 for the entire data frame
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
-        else:
-            node = ""
+        node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
         write_backend_reg(node, 0x001)
 
         # Reset the TX and RX channels
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
-        else:
-            node = ""
+        node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
         write_backend_reg(node, 0x001)
     
     print ("Started PRBS signal for: " + path + "\n")
@@ -149,17 +143,11 @@ def prbs_stop(system, boss, path, ohid, gbtid):
         mgt_channel = int(ohid) * 2 + int(gbtid)
         
         # Stopping PRBS7 for the entire data frame
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
-        else:
-            node = ""
+        node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
         write_backend_reg(node, 0x000)
 
         # Reset the TX and RX channels
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
-        else:
-            node = ""
+        node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
         write_backend_reg(node, 0x001)
 
     print ("Stopped PRBS signal for: " + path + "\n")
@@ -172,17 +160,11 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
         mgt_channel = int(ohid) * 2 + int(gbtid)
 
         # Reading PRBS7
-        if system=="backend":
-            rx_select_node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.RX_PRBS_SEL' % (mgt_channel))
-        else:
-            rx_select_node = ""
+        rx_select_node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.RX_PRBS_SEL' % (mgt_channel))
         write_backend_reg(rx_select_node, 0x001)
 
         # Reset the TX and RX channels
-        if system=="backend":
-            node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
-        else:
-            node = ""
+        node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.RESET' % (mgt_channel))
         write_backend_reg(node, 0x001)
            
         # Measurement Time
@@ -195,20 +177,14 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
         n_transactions = n_clocks
         
         # Reset counter
-        if system=="backend":
-            reset_node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.RX_PRBS_CNT_RESET' % (mgt_channel))
-        else:
-            reset_node = ""
+        reset_node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.RX_PRBS_CNT_RESET' % (mgt_channel))
         write_backend_reg(reset_node, 0x001)
         
         # Sleep for measurement time
         sleep(measure_time)
         
         # Read the error counter
-        if system=="backend":
-            error_node = rw_reg.getNode('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.STATUS.PRBS_ERROR_CNT' % (mgt_channel))
-        else:
-            error_node = ""
+        error_node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.STATUS.PRBS_ERROR_CNT' % (mgt_channel))
         prbs_errors = read_backend_reg(error_node)
         ber = prbs_errors
         #ber = float(prbs_errors)/float(n_transactions) # if prbs errors count error in each transaction
