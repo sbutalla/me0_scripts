@@ -16,7 +16,7 @@ class Colors:
     RED     = '\033[91m'
     ENDC    = '\033[0m'
     
-class lpgbt_rpi_chc:
+class rpi_chc:
     # Raspberry CHeeseCake interface for I2C
     def __init__(self):
         # Setting the pin numbering scheme

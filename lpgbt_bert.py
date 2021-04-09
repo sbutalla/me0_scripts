@@ -358,9 +358,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.system == "chc":
-        print ("Using Rpi CHeeseCake for checking configuration")
+        print ("Using Rpi CHeeseCake for BERT")
     elif args.system == "backend":
-        print ("Using Backend for checking configuration")
+        print ("Using Backend for BERT")
         #print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         #sys.exit()
     elif args.system == "dongle":
@@ -378,10 +378,10 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Please select boss/sub" + Colors.ENDC)
         sys.exit()
     elif (args.lpgbt=="boss"):
-        print ("BER for boss LPGBT")
+        print ("BERT for boss LPGBT")
         boss=1
     elif (args.lpgbt=="sub"):
-        print ("BER for sub LPGBT")
+        print ("BERT for sub LPGBT")
         boss=0
     else:
         print (Colors.YELLOW + "Please select boss/sub" + Colors.ENDC)

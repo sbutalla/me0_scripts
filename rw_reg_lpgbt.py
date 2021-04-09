@@ -160,9 +160,9 @@ def rw_initialize(system_val, boss=None, ohIdx=None, gbtIdx=None):
     global system
     system = system_val
     if system=="chc":
-        import lpgbt_rpi_chc
+        import rpi_chc
         global gbt_rpi_chc
-        gbt_rpi_chc = lpgbt_rpi_chc.lpgbt_rpi_chc()
+        gbt_rpi_chc = rpi_chc.rpi_chc()
         if boss is not None:
             initialize_success *= gbt_rpi_chc.config_select(boss)
             if initialize_success:
