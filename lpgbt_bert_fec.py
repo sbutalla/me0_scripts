@@ -46,9 +46,9 @@ def check_fec_errors(system, boss, path, ohid, gbtid, runtime, verbose):
         time_prev = t0
         
         while ((time()-t0)/60.0) < runtime:
+            curr_fec_errors = lpgbt_fec_error_counter()
             time_passed = (time()-time_prev)/60.0
             if time_passed >= 1:
-                curr_fec_errors = lpgbt_fec_error_counter()
                 if verbose:
                     print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, lpgbt_fec_error_counter()))
                 time_prev = time()
