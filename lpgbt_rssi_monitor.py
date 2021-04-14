@@ -4,13 +4,27 @@ import sys
 import argparse
 import csv
 import matplotlib.pyplot as plt
+import os
+import datetime
 
 def main(system, boss, minutes):
 
     init_adc()
     print("ADC Readings:")
 
-    open("RSSI_values.csv", "w").close()
+    CURR_DIR = os.getcwd()
+
+    if not os.path.exists("rssi_data"):
+        os.makedirs("rssi_data")
+
+
+    now = str(datetime.datetime.now())[:16]
+    now = now.replace(":", "_")
+    foldername = "rssi_data\\"
+    filename = foldername + now + ".txt"
+
+    print(filename)
+    open(filename, "w+").close()
     fieldnames = ["seconds", "RSSI"]
     seconds, rssi = [], []
     second = 0
@@ -21,14 +35,14 @@ def main(system, boss, minutes):
     ax.set_xlabel('minutes')
     ax.set_ylabel('RSSI')
     ax.set_xticks(range(0,run_time_min+1))
-    ax.set_xlim([0,run_time_min])
+    #ax.set_xlim([0,run_time_min])
 
     end_time = int(time()) + 60 * run_time_min
 
     while int(time()) <= end_time:
-        with open("RSSI_values.csv", "a") as csv_file:
+        with open(filename, "a") as csv_file:
             value = read_adc(7, system)
-            #print("\tch %X: 0x%03X = %f (%s)" % (7, value, value / 1024, "RSSI"))
+            print("\tch %X: 0x%03X = %f (%s)" % (7, value, value / 1024, "RSSI"))
 
             csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             info = {"seconds": second, "RSSI": value}
@@ -36,20 +50,22 @@ def main(system, boss, minutes):
 
             seconds.append(second/60)
             rssi.append(value)
-            live_plot(ax, seconds, rssi)
+            live_plot(ax, seconds, rssi, run_time_min)
 
             second += 1
             sleep(1)
+
+    figure_name =  foldername + now + "_plot.pdf"
+    fig.savefig(figure_name, bbox_inches='tight')
 
     print("Time = ", int(time()))
     powerdown_adc()
 
 
-def live_plot(ax, x, y):
-    ax.plot(x, y, 'turquoise')
+def live_plot(ax, x, y, run_time_min):
+    ax.plot(x, y)
     plt.draw()
     plt.pause(0.01)
-
 
 # ================================================================================================
 def init_adc():
@@ -63,7 +79,6 @@ def init_adc():
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x1, 0)  # vref enable
     sleep(0.01)
 
-
 def powerdown_adc():
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x0, 0)  # disable ADC
     writeReg(getNode("LPGBT.RW.ADC.TEMPSENSRESET"), 0x0, 0)  # disable temp sensor
@@ -73,7 +88,6 @@ def powerdown_adc():
     writeReg(getNode("LPGBT.RW.ADC.VDDPSTMONENA"), 0x0, 0)  # disable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDANMONENA"), 0x0, 0)  # disable dividers
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x0, 0)  # vref disable
-
 
 def read_adc(channel, system):
     # ADCInPSelect[3:0]	|  Input
@@ -128,7 +142,6 @@ def read_adc(channel, system):
     writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x0, 0)
 
     return val
-
 
 if __name__ == '__main__':
 
