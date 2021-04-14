@@ -20,7 +20,7 @@ def main(system, boss, minutes):
 
     now = str(datetime.datetime.now())[:16]
     now = now.replace(":", "_")
-    foldername = "rssi_data\\"
+    foldername = "rssi_data/"
     filename = foldername + now + ".txt"
 
     print(filename)
