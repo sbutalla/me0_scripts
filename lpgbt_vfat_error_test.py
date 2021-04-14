@@ -13,12 +13,12 @@ VFAT_TO_ELINK = {
         3  : ("boss" , 0, 0, 3),
         4  : ("boss" , 0, 0, 27),
         5  : ("boss" , 0, 0, 25),
-        6  : ("boss" , 1, 0, 6), # 3
-        7  : ("boss" , 1, 0, 25), # 25
-        8  : ("sub"  , 1, 1, 24), # 24
-        9  : ("boss" , 1, 0, 27), # 27
-        10 : ("sub"  , 1, 1, 6), # 6
-        11 : ("sub"  , 1, 1, 27) # 11
+        6  : ("boss" , 1, 0, 6),
+        7  : ("boss" , 1, 0, 16),
+        8  : ("sub"  , 1, 1, 18),
+        9  : ("boss" , 1, 0, 15), 
+        10 : ("sub"  , 1, 1, 3),
+        11 : ("sub"  , 1, 1, 17)
 }
 
 # For ME0 GEB
@@ -48,7 +48,7 @@ vfat_registers = {
 def vfat_to_oh_gbt_elink(vfat):
     lpgbt = VFAT_TO_ELINK[vfat][0]
     ohid  = VFAT_TO_ELINK[vfat][1]
-    gbtid = VFAT_TO_ELINK[vfat][1]
+    gbtid = VFAT_TO_ELINK[vfat][2]
     elink = VFAT_TO_ELINK[vfat][3]
     return lpgbt, ohid, gbtid, elink
         

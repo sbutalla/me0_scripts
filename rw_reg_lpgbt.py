@@ -156,7 +156,6 @@ def getRegsContaining(nodeString):
 
 # Functions regarding reading/writing registers
 def rw_initialize(system_val, boss=None, ohIdx=None, gbtIdx=None):
-    initialize_success = 1
     global system
     system = system_val
     if system=="chc":
@@ -164,20 +163,24 @@ def rw_initialize(system_val, boss=None, ohIdx=None, gbtIdx=None):
         global gbt_rpi_chc
         gbt_rpi_chc = rpi_chc.rpi_chc()
         if boss is not None:
-            initialize_success *= gbt_rpi_chc.config_select(boss)
-            if initialize_success:
-                initialize_success *= gbt_rpi_chc.en_i2c_switch()
-            if initialize_success:
-                initialize_success *= gbt_rpi_chc.i2c_channel_sel(boss)
-            if not initialize_success:
-                print(Colors.RED + "ERROR: Problem in initialization" + Colors.ENDC)
-                rw_terminate()
+            config_initialize_chc(boss)    
     elif system=="backend":
         import rw_reg
         global rw_reg
         rw_reg.parseXML()
         if ohIdx is not None and gbtIdx is not None:
             select_ic_link(ohIdx, gbtIdx)
+
+def config_initialize_chc(boss):
+    initialize_success = 1
+    initialize_success *= gbt_rpi_chc.config_select(boss)
+    if initialize_success:
+        initialize_success *= gbt_rpi_chc.en_i2c_switch()
+    if initialize_success:
+        initialize_success *= gbt_rpi_chc.i2c_channel_sel(boss)
+    if not initialize_success:
+        print(Colors.RED + "ERROR: Problem in initialization" + Colors.ENDC)
+        rw_terminate()
             
 def select_ic_link(ohIdx, gbtIdx):
     if system=="backend":
