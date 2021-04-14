@@ -20,7 +20,7 @@ def main(system, boss, minutes):
 
     now = str(datetime.datetime.now())[:16]
     now = now.replace(":", "_")
-    foldername = "rssi_data\\"
+    foldername = "rssi_data\"
     filename = foldername + now + ".txt"
 
     print(filename)
@@ -37,22 +37,21 @@ def main(system, boss, minutes):
     ax.set_xticks(range(0,run_time_min+1))
     #ax.set_xlim([0,run_time_min])
 
+    start_time = int(time())
     end_time = int(time()) + 60 * run_time_min
 
     while int(time()) <= end_time:
-        with open(filename, "a") as csv_file:
+        with open(filename, "a") as file:
             value = read_adc(7, system)
-            print("\tch %X: 0x%03X = %f (%s)" % (7, value, value / 1024, "RSSI"))
-
-            csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-            info = {"seconds": second, "RSSI": value}
-            csv_writer.writerow(info)
-
-            seconds.append(second/60)
+            second = time() - start_time
+            seconds.append(second)
             rssi.append(value)
+
             live_plot(ax, seconds, rssi, run_time_min)
 
-            second += 1
+            file.write(str(second) + "\t" + str(value) + "\n" )
+            print("\tch %X: 0x%03X = %f (%s)" % (7, value, value / 1024, "RSSI"))
+
             sleep(1)
 
     figure_name =  foldername + now + "_plot.pdf"
