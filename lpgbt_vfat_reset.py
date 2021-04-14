@@ -124,7 +124,6 @@ if __name__ == '__main__':
 
     if args.system == "chc":
         print ("Using Rpi CHeeseCake for VFAT reset")
-        sys.exit()
     elif args.system == "backend":
         print ("Using Backend for VFAT reset")
         #print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
