@@ -177,7 +177,7 @@ def configLPGBT(readback):
     writeReg(getNode("LPGBT.RWF.LINE_DRIVER.LDMODULATIONCURRENT"), 0x20, readback)
 
     # [0x03b] REFCLK
-    writeReg(getNode("LPGBT.RWF.LINE_DRIVER.REFCLKACBIAS"), 0x1, readback)
+    #writeReg(getNode("LPGBT.RWF.LINE_DRIVER.REFCLKACBIAS"), 0x1, readback)
     writeReg(getNode("LPGBT.RWF.LINE_DRIVER.REFCLKTERM"), 0x1, readback)
 
     # [0x03E] PGCONFIG
