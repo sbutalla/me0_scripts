@@ -48,32 +48,6 @@ Enable TX2 for VTRX+ if required:
 python lpgbt_vtrx.py -s backend -l boss -o <OH_LINK> -g <GBT_LINK> -t name -c TX1 TX2 -e 1
 ```
 
-### Eye Opening Monitor
-
-Take an eye scan:
-
-```
-python lpgbt_eye.py -s backend -l boss -o <OH_LINK> -g <GBT_LINK>
-```
-
-Create an image:
-
-```
-python lpgbt_eye_plot.py -d <DIR NAME for EYE SCAN RESULTS>
-```
-
-### VFAT Communcation
-
-```
-python lpgbt_vfat_error_test.py -s backend -v <LIST of VFATS 0-11> -r <LIIST of REG NAMEs> 
-```
-
-### VFAT Phase Scan
-
-```
-python lpgbt_phase_scan.py -s backend -v <LIST of VFATS 0-11>
-```
-
 ## Using CHeeseCake
 
 ### Configuration
@@ -120,6 +94,12 @@ python lpgbt_config.py -s dryrun -l sub
 
 ```
 
+Fuse the USER IDs with Cheesecake:
+```
+python lpgbt_efuse.py -s chc -l boss -f user_id -u USER_ID_BOSS
+python lpgbt_efuse.py -s chc -l sub -f user_id -u USER_ID_SUB
+```
+
 Fuse the master/boss lpgbt with Cheesecake from text file produced by lpgbt_config.py:
 
 ```
@@ -132,18 +112,45 @@ Fuse the slave/sub lpgbt with Cheesecake from text file produced by lpgbt_config
 python lpgbt_efuse.py -s chc -l sub -f input_file -i config_sub.txt -c 1
 ```
 
-### Eye Opening Monitor
+## Details of all scripts:
 
-Take an eye scan:
+Use -h option for any script to check usage
 
-```
-python lpgbt_eye.py -s chc -l boss
-```
+lpgbt_action_reset_wd.py: either reset or disable/enable watchdog for lpGBT
 
-Create an image:
+lpgbt_bert.py: bit error rate tests for lpGBT (uplink/downlink/loopback)
 
-```
-python lpgbt_eye_plot.py -d <DIR NAME for EYE SCAN RESULTS>
-```
+lpgbt_bert_fec.py: bit error rate tests using fec error rate counting 
+
+lpgbt_config.py: configure lpGBT
+
+lpgbt_efuse.py: fuse registers on lpGBT
+
+lpgbt_elink_scan.py: scan VFAT vs elink 
+
+lpgbt_eye.py: downlink eye diagram using lpGBT
+
+lpgbt_eye_equalizer_scan.py: scan equalizer settings using eye diagram
+
+lpgbt_eye_plot.py: plot downlink eye diagram
+
+lpgbt_led_show.py: GPIO led show
+
+lpgbt_phase_scan.py: phase scan for VFAT elinks and set optimal phase setting
+
+lpgbt_reset.py: reset lpGBT
+
+lpgbt_rssi_monitor.py: monitor for VTRX+ RSSI value
+
+lpgbt_rw_register.py: read/write to any register on lpGBT
+
+lpgbt_status.py: check status of lpGBT
+
+lpgbt_vfat_error_test.py: error rate tests by read/write on VFAT registers
+
+lpgbt_vfat_reset.py: reset VFAT
+
+lpgbt_vtrx.py: enable/disable TX channels or registers on VTRX+
+
 
 
