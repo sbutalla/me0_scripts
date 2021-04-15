@@ -116,7 +116,7 @@ python lpgbt_efuse.py -s chc -l sub -f input_file -i config_sub.txt -c 1
 
 Use -h option for any script to check usage
 
-lpgbt_action_reset_wd.py: either reset or disable/enable watchdog for lpGBT
+```lpgbt_action_reset_wd.py```: either reset or disable/enable watchdog for lpGBT
 
 lpgbt_bert.py: bit error rate tests for lpGBT (uplink/downlink/loopback)
 
