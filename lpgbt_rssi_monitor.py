@@ -7,16 +7,13 @@ import matplotlib.pyplot as plt
 import os
 import datetime
 
-def main(system, boss, minutes):
+def main(system, boss, run_time_min):
 
     init_adc()
     print("ADC Readings:")
 
-    CURR_DIR = os.getcwd()
-
     if not os.path.exists("rssi_data"):
         os.makedirs("rssi_data")
-
 
     now = str(datetime.datetime.now())[:16]
     now = now.replace(":", "_")
@@ -25,20 +22,18 @@ def main(system, boss, minutes):
 
     print(filename)
     open(filename, "w+").close()
-    fieldnames = ["seconds", "RSSI"]
-    seconds, rssi = [], []
-    second = 0
+    minutes, seconds, rssi = [], [], []
 
-    run_time_min = int(minutes)
+    run_time_min = float(run_time_min)
 
     fig, ax = plt.subplots()
     ax.set_xlabel('minutes')
     ax.set_ylabel('RSSI')
-    ax.set_xticks(range(0,run_time_min+1))
+    #ax.set_xticks(range(0,run_time_min+1))
     #ax.set_xlim([0,run_time_min])
 
     start_time = int(time())
-    end_time = int(time()) + 60 * run_time_min
+    end_time = int(time()) + (60 * run_time_min)
 
     while int(time()) <= end_time:
         with open(filename, "a") as file:
@@ -46,23 +41,21 @@ def main(system, boss, minutes):
             second = time() - start_time
             seconds.append(second)
             rssi.append(value)
-
-            live_plot(ax, seconds, rssi, run_time_min)
+            minutes.append(second/60)
+            live_plot(ax, minutes, rssi, run_time_min)
 
             file.write(str(second) + "\t" + str(value) + "\n" )
             print("\tch %X: 0x%03X = %f (%s)" % (7, value, value / 1024, "RSSI"))
 
             sleep(1)
 
-    figure_name =  foldername + now + "_plot.pdf"
+    figure_name = foldername + now + "_plot.pdf"
     fig.savefig(figure_name, bbox_inches='tight')
 
-    print("Time = ", int(time()))
     powerdown_adc()
 
-
 def live_plot(ax, x, y, run_time_min):
-    ax.plot(x, y)
+    ax.plot(x, y, "turquoise")
     plt.draw()
     plt.pause(0.01)
 
