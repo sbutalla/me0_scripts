@@ -17,6 +17,7 @@ def main(system, boss, run_time_min):
 
     now = str(datetime.datetime.now())[:16]
     now = now.replace(":", "_")
+    now = now.replace(" ", "_")
     foldername = "rssi_data/"
     filename = foldername + now + ".txt"
 
