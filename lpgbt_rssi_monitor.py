@@ -217,8 +217,10 @@ if __name__ == '__main__':
         check_rom_readback()
 
     # Check if lpGBT is READY if running through backend
-    # if args.system=="backend":
-    #    check_lpgbt_link_ready(args.ohid, args.gbtid)
+    if args.system=="backend":
+        check_lpgbt_link_ready(args.ohid, args.gbtid)
+    else:
+        check_lpgbt_ready()
 
     try:
         main(args.system, boss, args.minutes)
