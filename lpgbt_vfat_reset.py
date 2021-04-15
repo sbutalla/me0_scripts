@@ -2,7 +2,6 @@ from rw_reg_lpgbt import *
 from time import sleep, time
 import sys
 import argparse
-import random
 
 # VFAT number: boss/sub, ohid, gbtid, gpio 
 # For GE2/1 GEB + Pizza
@@ -60,7 +59,11 @@ def lpgbt_vfat_reset(system, vfat_list):
     gpio_dirL_addr = 0x053
     gpio_outH_addr = 0x054
     gpio_outL_addr = 0x055
-    
+    gpio_dirH_node = getNode("LPGBT.RWF.PIO.PIODIRH")
+    gpio_dirL_node = getNode("LPGBT.RWF.PIO.PIODIRL")
+    gpio_outH_node = getNode("LPGBT.RWF.PIO.PIOOUTH")
+    gpio_outL_node = getNode("LPGBT.RWF.PIO.PIOOUTL")
+
     for vfat in vfat_list:
         lpgbt, oh_select, gbt_select, gpio = vfat_to_oh_gbt_gpio(vfat)
         print ("VFAT#: %02d, lpGBT: %s, OH: %d, GBT: %d, GPIO: %d" %(vfat, lpgbt, oh_select, gbt_select, gpio))
@@ -78,30 +81,54 @@ def lpgbt_vfat_reset(system, vfat_list):
                      
         if system!="dryrun" and system!="backend":
             check_rom_readback()
-        
+
+        # Set GPIO as output
+        gpio_dirH_output = 0
+        gpio_dirL_output = 0
+        if boss:
+            gpio_dirH_output = 0x80 | 0x01
+            gpio_dirL_output = 0x01 | 0x04
+        else:
+            gpio_dirH_output = 0x02 | 0x04 | 0x08
+            gpio_dirL_output = 0x00
+        if system=="backend":
+            mpoke(gpio_dirH_addr, gpio_dirH_output)
+            mpoke(gpio_dirL_addr, gpio_dirL_output)
+        else:
+            writeReg(gpio_dirH_node, gpio_dirH_output, 0)
+            writeReg(gpio_dirL_node, gpio_dirL_output, 0)
+
+        print ("Set GPIO as output (including GPIO 15 for boss lpGBT), register: 0x%03X, value: 0x%02X" %(gpio_dirH_addr, gpio_dirH_output))
+        print ("Set GPIO as output, register: 0x%03X, value: 0x%02X" %(gpio_dirL_addr, gpio_dirL_output))
+        sleep(0.000001)
+
         data_enable = convert_gpio_reg(gpio)
         data_disable = 0x00
-        gpio_dir_addr = 0
         gpio_out_addr = 0
+        gpio_out_node = ""
         if gpio<=7:
-            gpio_dir_addr = gpio_dirL_addr
             gpio_out_addr = gpio_outL_addr
+            gpio_out_node = gpio_outL_node
         else:
-            gpio_dir_addr = gpio_dirH_addr
             gpio_out_addr = gpio_outH_addr
+            gpio_out_node = gpio_outH_node
             if boss:
                 data_enable |= 0x80 # To keep GPIO LED on ASIAGO ON
                 data_disable |= 0x80 # To keep GPIO LED on ASIAGO ON
-        
-        mpoke(gpio_dir_addr, data_enable) # Set GPIO as output
-        print ("Set GPIO as output (including GPIO 15 for boss lpGBT), register: 0x%03X, value: 0x%02X" %(gpio_dir_addr, data_enable))
-        sleep(0.000001) 
-            
-        mpoke(gpio_out_addr, data_enable) # Reset - 1
+
+        # Reset - 1
+        if system=="backend":
+            mpoke(gpio_out_addr, data_enable)
+        else:
+            writeReg(gpio_out_node, data_enable, 0)
         print ("Enable GPIO to reset (including GPIO 15 for boss lpGBT), register: 0x%03X, value: 0x%02X" %(gpio_out_addr, data_enable))
         sleep(0.000001) 
             
-        mpoke(gpio_out_addr, data_disable) # Reset - 0
+        # Reset - 0
+        if system=="backend":
+            mpoke(gpio_out_addr, data_disable)
+        else:
+            writeReg(gpio_out_node, data_disable, 0)
         print ("Disable GPIO (except GPIO 15 for boss lpGBT), register: 0x%03X, value: 0x%02X" %(gpio_out_addr, data_disable))
         sleep(0.000001) 
         
