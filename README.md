@@ -118,39 +118,39 @@ Use -h option for any script to check usage
 
 ```lpgbt_action_reset_wd.py```: either reset or disable/enable watchdog for lpGBT
 
-lpgbt_bert.py: bit error rate tests for lpGBT (uplink/downlink/loopback)
+```lpgbt_bert.py```: bit error rate tests for lpGBT (uplink/downlink/loopback)
 
-lpgbt_bert_fec.py: bit error rate tests using fec error rate counting 
+```lpgbt_bert_fec.py```: bit error rate tests using fec error rate counting 
 
-lpgbt_config.py: configure lpGBT
+```lpgbt_config.py```: configure lpGBT
 
-lpgbt_efuse.py: fuse registers on lpGBT
+```lpgbt_efuse.py```: fuse registers on lpGBT
 
-lpgbt_elink_scan.py: scan VFAT vs elink 
+```lpgbt_elink_scan.py```: scan VFAT vs elink 
 
-lpgbt_eye.py: downlink eye diagram using lpGBT
+```lpgbt_eye.py```: downlink eye diagram using lpGBT
 
-lpgbt_eye_equalizer_scan.py: scan equalizer settings using eye diagram
+```lpgbt_eye_equalizer_scan.py```: scan equalizer settings using eye diagram
 
-lpgbt_eye_plot.py: plot downlink eye diagram
+```lpgbt_eye_plot.py```: plot downlink eye diagram
 
-lpgbt_led_show.py: GPIO led show
+```lpgbt_led_show.py```: GPIO led show
 
-lpgbt_phase_scan.py: phase scan for VFAT elinks and set optimal phase setting
+```lpgbt_phase_scan.py```: phase scan for VFAT elinks and set optimal phase setting
 
-lpgbt_reset.py: reset lpGBT
+```lpgbt_reset.py```: reset lpGBT
 
-lpgbt_rssi_monitor.py: monitor for VTRX+ RSSI value
+```lpgbt_rssi_monitor.py```: monitor for VTRX+ RSSI value
 
-lpgbt_rw_register.py: read/write to any register on lpGBT
+```lpgbt_rw_register.py```: read/write to any register on lpGBT
 
-lpgbt_status.py: check status of lpGBT
+```lpgbt_status.py```: check status of lpGBT
 
-lpgbt_vfat_error_test.py: error rate tests by read/write on VFAT registers
+```lpgbt_vfat_error_test.py```: error rate tests by read/write on VFAT registers
 
-lpgbt_vfat_reset.py: reset VFAT
+```lpgbt_vfat_reset.py```: reset VFAT
 
-lpgbt_vtrx.py: enable/disable TX channels or registers on VTRX+
+```lpgbt_vtrx.py```: enable/disable TX channels or registers on VTRX+
 
 
 
