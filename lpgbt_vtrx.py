@@ -313,16 +313,26 @@ if __name__ == '__main__':
         sys.exit()
 
     if args.data is not None:
-        if len(reg_list) != len(args.channel) * len(args.data):
-            print (Colors.YELLOW + "Number of registers and data values do not match" + Colors.ENDC)
-            sys.exit()
-        for c in args.channel:
+        if args.type == "reg":
+            if len(reg_list) != len(args.data):
+                print (Colors.YELLOW + "Number of registers and data values do not match" + Colors.ENDC)
+                sys.exit()
             for data in args.data:
                 if int(data,16) > 255:
                     print (Colors.YELLOW + "Data value can only be 8 bit" + Colors.ENDC)
                     sys.exit()
                 data_list.append(int(data,16))
-            
+        elif  args.type == "name":
+            if len(reg_list) != len(args.channel) * len(args.data):
+                print (Colors.YELLOW + "Number of registers and data values do not match" + Colors.ENDC)
+                sys.exit()
+            for c in args.channel:
+                for data in args.data:
+                    if int(data,16) > 255:
+                        print (Colors.YELLOW + "Data value can only be 8 bit" + Colors.ENDC)
+                        sys.exit()
+                    data_list.append(int(data,16))
+
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
