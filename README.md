@@ -150,6 +150,8 @@ Use -h option for any script to check usage
 
 ```lpgbt_vfat_reset.py```: reset VFAT
 
+```lpgbt_vfat_sbit_test.py```: S-bit testing for VFATs
+
 ```lpgbt_vtrx.py```: enable/disable TX channels or registers on VTRX+
 
 
