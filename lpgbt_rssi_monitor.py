@@ -19,7 +19,7 @@ def main(system, boss, run_time_min):
     now = now.replace(":", "_")
     now = now.replace(" ", "_")
     foldername = "rssi_data/"
-    filename = foldername + now + ".txt"
+    filename = foldername + "rssi_data_" + now + ".txt"
 
     print(filename)
     open(filename, "w+").close()
