@@ -66,7 +66,7 @@ def check_fec_errors(system, boss, path, ohid, gbtid, runtime, vfat_list, verbos
         fec_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.GBT%d_FEC_ERR_CNT' % (ohid, gbtid))
         vfat_node = []
         for vfat in vfat_list:
-            vfat_node.append(get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (ohid, vfat-6*gbtid, "TEST_REG")))
+            vfat_node.append(get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (ohid, vfat-6*ohid, "TEST_REG")))
         
         # start error counting loop
         start_fec_errors = read_backend_reg(fec_node)
