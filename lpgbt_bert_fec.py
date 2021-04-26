@@ -200,6 +200,8 @@ if __name__ == '__main__':
         if args.ohid is not None or args.gbtid is not None:
             print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
             sys.exit()
+        args.ohid = -9999
+        args.gbtid = -9999
 
     if args.path not in ["uplink", "downlink"]:
         print (Colors.YELLOW + "Enter valid path" + Colors.ENDC)
