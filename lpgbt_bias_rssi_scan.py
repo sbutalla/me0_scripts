@@ -80,6 +80,11 @@ def main(system, boss, channel, name, reg, upper, lower):
             enable_status = 0x00
         print("")
 
+    # Reading Initial Bias value
+    print ("Initial register value:")
+    initial_bias = i2cmaster_read(system, reg)
+    print ("")
+
     # Starting bias scan
     rssi_array, bias_array = [], []
     
@@ -108,13 +113,17 @@ def main(system, boss, channel, name, reg, upper, lower):
         out_file.write("0x%02X  0x%02X\n" %(i, rssi))
 
     out_file.close()
-    print ("")
     
     #fig, ax = plt.subplots()
     #ax.set_xlabel('Hex')
     #ax.set_ylabel('RSSI')
     #plt.plot(data_array, rssi_array)
     #plt.show()
+
+    # Setting back the bias to the initial value
+    print ("Setting back initial register value:")
+    i2cmaster_write(system, reg, initial_bias)
+    print ("")
 
 if __name__ == '__main__':
     # Parsing arguments
