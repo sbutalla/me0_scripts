@@ -100,7 +100,10 @@ def main(system, boss, channel, name, reg, upper, lower):
     
     print ("Starting bias scan for channel %s for register %s: \n" %(channel, name))
     for i in range(lower, upper+1):
-       
+
+        if name=="modcur_reg":
+            i |= 0x80 # to include the enable
+
         # Writing bias registers
         i2cmaster_write(system, reg, i)
 
@@ -134,7 +137,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-c", "--channel", action="store", dest="channel", help="channel = TX1, TX2, TX3, TX4")
-    parser.add_argument("-n", "--name", action="store", dest="name", help="name = biascur_reg, modcur_reg, empamp_reg")
+    parser.add_argument("-n", "--name", action="store", dest="name", help="name = biascur_reg, modcur_reg")
     parser.add_argument("-ll", "--lower_limit", action="store", dest="lower_limit", help="lower limit, enter in 0x (hex) format")
     parser.add_argument("-ul", "--upper_limit", action="store", dest="upper_limit", help="upper limit, enter in 0x (hex) format")
     args = parser.parse_args()
@@ -196,7 +199,7 @@ if __name__ == '__main__':
     if args.channel not in ["TX1", "TX2", "TX3", "TX4"]:
         print(Colors.YELLOW + "Only allowed channels: TX1, TX2, TX3, TX4" + Colors.ENDC)
         sys.exit()
-    if args.name not in ["biascur_reg", "modcur_reg", "empamp_reg"]:
+    if args.name not in ["biascur_reg", "modcur_reg"]:
         print(Colors.YELLOW + "Invalid register name" + Colors.ENDC)
         sys.exit()
     reg = TX_reg[args.channel][args.name]
@@ -210,11 +213,11 @@ if __name__ == '__main__':
         
     ul = int(args.upper_limit, 16)
     ll = int(args.lower_limit, 16)
-    if ul > 255:
-        print(Colors.YELLOW + "Upper limit value can only be 8 bit" + Colors.ENDC)
+    if ul > 127:
+        print(Colors.YELLOW + "Upper limit value can only be 7 bit" + Colors.ENDC)
         sys.exit() 
-    if ll > 255:
-        print(Colors.YELLOW + "Lower limit value can only be 8 bit" + Colors.ENDC)
+    if ll > 127:
+        print(Colors.YELLOW + "Lower limit value can only be 7 bit" + Colors.ENDC)
         sys.exit()   
     if ll>ul:
         print(Colors.YELLOW + "Upper limit has to be larger tha lower limit" + Colors.ENDC)
