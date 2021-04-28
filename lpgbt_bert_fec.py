@@ -53,7 +53,7 @@ def vfat_to_oh_gbt_elink(vfat):
     return lpgbt, ohid, gbtid, elink
 
 
-def check_fec_errors(system, boss, path, ohid, gbtid, runtime, vfat_list, verbose):
+def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, verbose):
 
     print ("Checking FEC Errors for: " + path)
     fec_errors = 0
@@ -98,36 +98,60 @@ def check_fec_errors(system, boss, path, ohid, gbtid, runtime, vfat_list, verbos
         
     elif path == "downlink": # check FEC errors on lpGBT
         # Enable the counter
-        writeReg(getNode("LPGBT.RW.PROCESS_MONITOR.DLDPFECCOUNTERENABLE"), 0x1, 0)
+        if opr in ["start", "run"]:
+            writeReg(getNode("LPGBT.RW.PROCESS_MONITOR.DLDPFECCOUNTERENABLE"), 0x1, 0)
     
         # start error counting loop
         start_fec_errors = lpgbt_fec_error_counter()
-        print ("Start Error Counting for time = %f minutes" % (runtime))
-        print ("Starting with number of FEC Errors = %d\n" % (start_fec_errors))
+        if opr == "run":
+            print ("Start Error Counting for time = %f minutes" % (runtime))
+        if opr in ["start", "run"]:
+            print ("Starting with number of FEC Errors = %d\n" % (start_fec_errors))
         t0 = time()
         time_prev = t0
-        
-        while ((time()-t0)/60.0) < runtime:
-            curr_fec_errors = lpgbt_fec_error_counter()
-            time_passed = (time()-time_prev)/60.0
-            if time_passed >= 1:
-                if verbose:
-                    print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, lpgbt_fec_error_counter()))
-                time_prev = time()
+
+        if opr == "run":
+            while ((time()-t0)/60.0) < runtime:
+                curr_fec_errors = lpgbt_fec_error_counter()
+                time_passed = (time()-time_prev)/60.0
+                if time_passed >= 1:
+                    if verbose:
+                        print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, lpgbt_fec_error_counter()))
+                    time_prev = time()
         
         end_fec_errors = lpgbt_fec_error_counter()
-        print ("\nEnd Error Counting with number of FEC Errors = %d\n" %(end_fec_errors))
+        if opr == "read":
+            print ("\nNumber of FEC Errors = %d\n" %(end_fec_errors))
+        elif opr in ["run", "stop"]:
+            print ("\nEnd Error Counting with number of FEC Errors = %d\n" %(end_fec_errors))
         fec_errors = end_fec_errors - start_fec_errors
         
         # Disable the counter
-        writeReg(getNode("LPGBT.RW.PROCESS_MONITOR.DLDPFECCOUNTERENABLE"), 0x0, 0)
-            
+        if opr in ["run", "stop"]:
+            writeReg(getNode("LPGBT.RW.PROCESS_MONITOR.DLDPFECCOUNTERENABLE"), 0x0, 0)
+
+        if opr != "run":
+            return
+
+    data_rate=0
+    if path=="uplink":
+        print ("For Uplink:\n")
+        data_rate = 10.24 * 1e9
+    elif path=="downlink":
+        print ("For Downlink:\n")
+        data_rate = 2.56 * 1e9
+    ber = float(fec_errors) / (data_rate * runtime * 60)
+    if ber!=0:
+        ber_str = "{:.2e}".format(ber)
+    else:
+        ber_str = "0"
     result_string = ""
     if fec_errors == 0:
         result_string += Colors.GREEN 
     else:
-        result_string += Colors.YELLOW 
-    result_string += "Number of FEC errors in " + str(runtime) + " minutes: " + str(fec_errors) + Colors.ENDC + "\n"
+        result_string += Colors.YELLOW
+    result_string += "Number of FEC errors in " + str(runtime) + " minutes: " + str(fec_errors) + "\n"
+    result_string += "Bit Error Rate: " + ber_str + Colors.ENDC + "\n"
     print (result_string)
     
     
@@ -143,11 +167,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LPGBT Bit Error Rate Test (BERT) using FEC Error Counters')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss/sub")
-    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)") 
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend/dryrun)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend/dryrun)")
     parser.add_argument("-p", "--path", action="store", dest="path", help="path = uplink, downlink")
+    parser.add_argument("-r", "--opr", action="store", dest="opr", default="run", help="opr = start, run, read, stop (only for downlink)")
     parser.add_argument("-t", "--time", action="store", dest="time", help="TIME = measurement time in minutes")
     parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11) for read/write TEST_REG")
+    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugiin card addressing needs should be enabled")
     parser.add_argument("-z", "--verbose", action="store_true", dest="verbose", help="VERBOSE")
     args = parser.parse_args()
 
@@ -211,6 +237,13 @@ if __name__ == '__main__':
         if args.system == "chc":
             print (Colors.YELLOW + "For uplink, cheesecake not possible" + Colors.ENDC)
             sys.exit()
+        if args.opr != "run":
+            print (Colors.YELLOW + "For uplink, operation option not required" + Colors.ENDC)
+            sys.exit()
+    elif args.path == "downlink":
+        if args.opr not in ["start", "run", "read", "stop"]:
+            print (Colors.YELLOW + "Inavlid operation" + Colors.ENDC)
+            sys.exit()
 
     if not boss:
         if args.path != "uplink":
@@ -237,6 +270,10 @@ if __name__ == '__main__':
                 sys.exit()
             vfat_list.append(v_int)
 
+    if args.addr:
+        print ("Enabling VFAT addressing for plugin cards")
+        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
@@ -258,7 +295,7 @@ if __name__ == '__main__':
             check_lpgbt_ready()
 
     try:
-        check_fec_errors(args.system, boss, args.path, int(args.ohid), int(args.gbtid), float(args.time), vfat_list, args.verbose)
+        check_fec_errors(args.system, boss, args.path, args.opr, int(args.ohid), int(args.gbtid), float(args.time), vfat_list, args.verbose)
  
     except KeyboardInterrupt:
         print (Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)

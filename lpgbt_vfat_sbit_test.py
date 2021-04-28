@@ -118,7 +118,7 @@ def configureVfatForPulsing(vfatN, ohN, channel):
         write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,channel)), 0x8000)
 
 
-def lpgbt_vfat_sbit(system, vfat, channel_list):
+def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime):
     print ("LPGBT VFAT S-Bit Test\n")
     
     # Enable the generator
@@ -127,11 +127,11 @@ def lpgbt_vfat_sbit(system, vfat, channel_list):
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 1)
     
     # Configure TTC generator
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"),  1)
+    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.ENABLE"), 1)
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 50)
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_GAP"),  CALPULSE_GAP)
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_COUNT"),  0)
+    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_GAP"), CALPULSE_GAP)
+    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_COUNT"), nl1a)
 
     lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
     print ("Testing VFAT#: %02d\n" %(vfat))
@@ -143,6 +143,7 @@ def lpgbt_vfat_sbit(system, vfat, channel_list):
     #for i in range(12):
     #    write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.FPGA.TRIG.CTRL.TU_MASK.VFAT%i_TU_MASK" % (oh_select, i)), 0)
 
+    # Start the cyclic generator
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_START"), 1)
 
     # configure all vfats on the OH with default configuration
@@ -160,7 +161,45 @@ def lpgbt_vfat_sbit(system, vfat, channel_list):
         print("Configuring VFAT %d for pulsing on channel %d" % (vfat, channel))
         configureVfatForPulsing(vfat-6*oh_select, oh_select, channel)
 
+    # Reading S-bit counter ??
+    if nl1a != 0:
+        print ("\nReading S-bit counter for %d L1A cycles\n" % (nl1a))
+    else:
+        print ("\nReading S-bit counter for %f minutes\n" %(runtime))
+    s_bit_counter = 0
+    cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
+    counter_node = get_rwreg_node("") ## add register here
+
+    cyclic_running = read_backend_reg(cyclic_running_node)
+    t0 = time()
+    time_prev = t0
+    if nl1a != 0:
+        while cyclic_running:
+            cyclic_running = read_backend_reg(cyclic_running_node)
+            time_passed = (time()-time_prev)/60.0
+            if time_passed >= 1:
+                s_bit_counter = read_backend_reg(counter_node)
+                print ("Time passed: %f minutes, S-bit counter = %d" % ((time()-t0)/60.0, s_bit_counter))
+                time_prev = time()
+    else:
+        while ((time()-t0)/60.0) < runtime:
+            time_passed = (time()-time_prev)/60.0
+            if time_passed >= 1:
+                s_bit_counter = read_backend_reg(counter_node)
+                print ("Time passed: %f minutes, S-bit counter = %d" % ((time()-t0)/60.0, s_bit_counter))
+                time_prev = time()
+
+    print ("")
+    s_bit_counter = read_backend_reg(counter_node)
+    if nl1a != 0:
+        print ("Number of L1A cycles: %d, S-bit counter: %d" %(nl1a, s_bit_counter))
+    else:
+        print ("Time: %f minutes, S-bit counter: %d" %(runtime, s_bit_counter))
+
     print ("\nS-bit testing done\n")
+
+    # Stop the cyclic generator
+    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
 
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 0)
       
@@ -175,6 +214,9 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--channels", action="store", dest="channels", nargs='+', help="channels = list of channels for chosen VFAT (0-127)")
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-n", "--nl1a", action="store", dest="nl1a", help="nl1a = fixed number of L1A cycles")
+    parser.add_argument("-t", "--time", action="store", dest="time", help="time = time for which to run the S-bit testing (in minutes)")
+    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugiin card addressing needs should be enabled")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -213,7 +255,28 @@ if __name__ == '__main__':
             print (Colors.YELLOW + "Invalid Channel number, only allowed 0-127" + Colors.ENDC)
             sys.exit()
         channel_list.append(c_int)
-       
+
+    nl1a = 0
+    if args.nl1a is not None:
+        nl1a = int(args.nl1a)
+        if args.time is not None:
+            print (Colors.YELLOW + "Cannot give both time and number of L1A cycles" + Colors.ENDC)
+            sys.exit()
+    runtime = 0
+    if args.time is not None:
+        runtime = float(args.time)
+        if args.nl1a is not None:
+            if args.time is not None:
+                print (Colors.YELLOW + "Cannot give both tiime and number of L1A cycles" + Colors.ENDC)
+                sys.exit()
+    if nl1a==0 and runtime==0:
+        print (Colors.YELLOW + "Enter either runtime or number of L1A cycles" + Colors.ENDC)
+        sys.exit()
+
+    if args.addr:
+        print ("Enabling VFAT addressing for plugin cards")
+        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
@@ -225,7 +288,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_vfat_sbit(args.system, vfat, channel_list)
+        lpgbt_vfat_sbit(args.system, vfat, channel_list, nl1a, runtime)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

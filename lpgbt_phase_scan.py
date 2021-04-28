@@ -244,6 +244,7 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
     parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", help="bestphase = Best value of the elinkRX phase (in hex), calculated from phase scan by default")
     parser.add_argument("-t", "--test", action="store", dest="test", default="0", help="test = enter 1 for only testing vfat communication, default is 0")
+    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugiin card addressing needs should be enabled")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -286,7 +287,11 @@ if __name__ == '__main__':
         if int(args.bestphase, 16)>16:
             print (Colors.YELLOW + "Phase can only be 4 bits" + Colors.ENDC)
             sys.exit()
-    
+
+    if args.addr:
+        print ("Enabling VFAT addressing for plugin cards")
+        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()

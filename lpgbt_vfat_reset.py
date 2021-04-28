@@ -147,6 +147,7 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugiin card addressing needs should be enabled")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -175,7 +176,11 @@ if __name__ == '__main__':
             print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
             sys.exit()
         vfat_list.append(v_int)
-       
+
+    if args.addr:
+        print ("Enabling VFAT addressing for plugin cards")
+        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+        
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
