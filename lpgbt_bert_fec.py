@@ -250,9 +250,11 @@ if __name__ == '__main__':
             print (Colors.YELLOW + "Only uplink can be checked for sub lpGBT" + Colors.ENDC)
             sys.exit()
 
-    if args.time is None:
-        print (Colors.YELLOW + "BERT measurement time required" + Colors.ENDC)
-        sys.exit()
+
+    if args.path == "uplink" or (args.path == "downlink" and args.opr == "run"):
+        if args.time is None:
+            print (Colors.YELLOW + "BERT measurement time required" + Colors.ENDC)
+            sys.exit()
 
     vfat_list = []
     if args.vfats is not None:
@@ -296,7 +298,6 @@ if __name__ == '__main__':
 
     try:
         check_fec_errors(args.system, boss, args.path, args.opr, int(args.ohid), int(args.gbtid), float(args.time), vfat_list, args.verbose)
- 
     except KeyboardInterrupt:
         print (Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
