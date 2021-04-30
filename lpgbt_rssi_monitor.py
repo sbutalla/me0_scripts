@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import datetime
 
-def main(system, boss, run_time_min):
+def main(system, boss, run_time_min, gain):
 
     init_adc()
     print("ADC Readings:")
@@ -29,7 +29,7 @@ def main(system, boss, run_time_min):
 
     fig, ax = plt.subplots()
     ax.set_xlabel('minutes')
-    ax.set_ylabel('RSSI')
+    ax.set_ylabel('RSSI (uA)')
     #ax.set_xticks(range(0,run_time_min+1))
     #ax.set_xlim([0,run_time_min])
 
@@ -38,15 +38,16 @@ def main(system, boss, run_time_min):
 
     while int(time()) <= end_time:
         with open(filename, "a") as file:
-            value = read_adc(7, system)
+            value = read_adc(7, gain, system)
+            rssi_current = rssi_current_conversion(value, gain) * 1e6 # in uA
             second = time() - start_time
             seconds.append(second)
-            rssi.append(value)
+            rssi.append(rssi_current)
             minutes.append(second/60)
             live_plot(ax, minutes, rssi, run_time_min)
 
-            file.write(str(second) + "\t" + str(value) + "\n" )
-            print("\tch %X: 0x%03X = %f (%s)" % (7, value, value / 1024, "RSSI"))
+            file.write(str(second) + "\t" + str(rssi_current) + "\n" )
+            print("\tch %X: 0x%03X = %f (RSSI (uA))" % (7, value, rssi_current))
 
             sleep(1)
 
@@ -60,7 +61,7 @@ def live_plot(ax, x, y, run_time_min):
     plt.draw()
     plt.pause(0.01)
 
-# ================================================================================================
+
 def init_adc():
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)  # enable ADC
     writeReg(getNode("LPGBT.RW.ADC.TEMPSENSRESET"), 0x1, 0)  # resets temp sensor
@@ -72,6 +73,7 @@ def init_adc():
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x1, 0)  # vref enable
     sleep(0.01)
 
+
 def powerdown_adc():
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x0, 0)  # disable ADC
     writeReg(getNode("LPGBT.RW.ADC.TEMPSENSRESET"), 0x0, 0)  # disable temp sensor
@@ -82,7 +84,8 @@ def powerdown_adc():
     writeReg(getNode("LPGBT.RW.ADC.VDDANMONENA"), 0x0, 0)  # disable dividers
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x0, 0)  # vref disable
 
-def read_adc(channel, system):
+
+def read_adc(channel, gain, system):
     # ADCInPSelect[3:0]	|  Input
     # ------------------|----------------------------------------
     # 4'd0	        |  ADC0 (external pin)
@@ -102,32 +105,28 @@ def read_adc(channel, system):
     # 4'd14	        |  Temperature sensor (internal signal)
     # 4'd15	        |  VREF/2 (internal signal)
 
-    # "LPGBT.RW.ADC.ADCINPSELECT"
-    # "LPGBT.RW.ADC.ADCINNSELECT"
-    # mpoke (0x111, channel<<4 | 0xf)
     writeReg(getNode("LPGBT.RW.ADC.ADCINPSELECT"), channel, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0xf, 0)
 
-    # "LPGBT.RW.ADC.ADCGAINSELECT"
-    # "LPGBT.RW.ADC.ADCCONVERT"
-    # mpoke (0x113, 0x84)
+    gain_settings = {
+        2: 0x00,
+        8: 0x01,
+        16: 0x10,
+        32: 0x11
+    }
+    writeReg(getNode("LPGBT.RW.ADC.ADCGAINSELECT"), gain_settings[gain], 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x1, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
     done = 0
     while (done == 0):
-        # done = 0x1 & (mpeek(0x1b8) >> 6) # "LPGBT.RO.ADC.ADCDONE"
         if system != "dryrun":
             done = readReg(getNode("LPGBT.RO.ADC.ADCDONE"))
         else:
             done = 1
 
-    # val  = mpeek(0x1b9)               # LPGBT.RO.ADC.ADCVALUEL
-    # val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
     val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
-    # val |= (0x3 & mpeek (0x1b8)) << 8 # LPGBT.RO.ADC.ADCVALUEH
     val |= readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8
-    # mpoke (0x113, 0x04)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
@@ -135,6 +134,18 @@ def read_adc(channel, system):
     writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x0, 0)
 
     return val
+
+def rssi_current_conversion(rssi_adc, gain):
+    # Resistor values
+    R1 = 4.7 * 1000 # 4.7 kOhm
+    R2 = 1000.0 * 1000 # 1 MOhm
+    R3 = 470.0 * 1000 # 470 kOhm
+
+    rssi_adc_converted = 1.0 * (rssi_adc/1023.0) # 10-bit ADC, range 0-1 V
+    rssi_voltage = rssi_adc_converted/gain # Gain
+    v_r = rssi_voltage * ((R2+R3)/R3) # voltage divider
+    rssi_current = (2.5 - v_r)/R1 # rssi current
+    return rssi_current
 
 if __name__ == '__main__':
 
@@ -145,6 +156,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-m", "--minutes", action="store", dest="minutes", help="minutes = int. # of minutes you want to run")
+    parser.add_argument("-a", "--gain", action="store", dest="gain", default = "2", help="gain = Gain for RSSI ADC: 2, 8, 16, 32")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -197,6 +209,11 @@ if __name__ == '__main__':
             print(Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
             sys.exit()
 
+    if args.gain not in ["2", "8", "16", "32"]:
+        print(Colors.YELLOW + "Allowed values of gain = 2, 8, 16, 32" + Colors.ENDC)
+        sys.exit()
+    gain = int(args.gain)
+
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
@@ -217,7 +234,7 @@ if __name__ == '__main__':
         check_lpgbt_ready()
 
     try:
-        main(args.system, boss, args.minutes)
+        main(args.system, boss, args.minutes, gain)
     except KeyboardInterrupt:
         print(Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

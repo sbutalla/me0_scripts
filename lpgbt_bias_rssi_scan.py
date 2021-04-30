@@ -4,6 +4,7 @@ import sys
 import os
 import argparse
 from lpgbt_vtrx import i2cmaster_write, i2cmaster_read
+from lpgbt_rssi_monitor import rssi_current_conversion, read_adc, init_adc, powerdown_adc
 import matplotlib.pyplot as plt
 import datetime
 
@@ -25,35 +26,7 @@ TX_enable_bit["TX4"] = 3
 
 i2c_master_timeout = 1  # 1s
 
-def read_rssi(system):
-    channel = 7 #channel to read rssi values
-    writeReg(getNode("LPGBT.RW.ADC.ADCINPSELECT"), channel, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0xf, 0)
-
-    writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x1, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
-
-    done = 0
-    while (done == 0):
-        # done = 0x1 & (mpeek(0x1b8) >> 6) # "LPGBT.RO.ADC.ADCDONE"
-        if system != "dryrun":
-            done = readReg(getNode("LPGBT.RO.ADC.ADCDONE"))
-        else:
-            done = 1
-
-    val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
-    val |= readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8
-
-    writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
-
-    writeReg(getNode("LPGBT.RW.ADC.ADCINPSELECT"), 0x0, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x0, 0)
-
-    return val
-
-
-def main(system, boss, channel, name, reg, upper, lower):
+def main(system, boss, channel, name, reg, upper, lower, gain):
     if not boss:
         print(
             Colors.RED + "ERROR: VTRX+ control only for boss since I2C master of boss connected to VTRX+" + Colors.ENDC)
@@ -86,6 +59,7 @@ def main(system, boss, channel, name, reg, upper, lower):
     print ("")
 
     # Starting bias scan
+    init_adc()
     rssi_array, bias_array = [], []
     
     if not os.path.exists("bias_rssi_scan"):
@@ -108,13 +82,15 @@ def main(system, boss, channel, name, reg, upper, lower):
         i2cmaster_write(system, reg, i)
 
         # Reading RSSI
-        rssi = read_rssi(system)
+        rssi = read_adc(7, gain, system) # RSSI - ADC channel 7
+        rssi_current = rssi_current_conversion(rssi, gain) * 1e6 # in uA
 
-        rssi_array.append(rssi)
+        rssi_array.append(rssi_current)
         bias_array.append(i)
-        print ("%s=0x%02X: RSSI=0x%02X\n" %(name, i, rssi))
-        out_file.write("0x%02X  0x%02X\n" %(i, rssi))
+        print ("%s=0x%02X: RSSI=%f (uA)\n" %(name, i, rssi_current))
+        out_file.write("0x%02X  %f\n" %(i, rssi_current))
 
+    powerdown_adc()
     out_file.close()
     
     #fig, ax = plt.subplots()
@@ -140,6 +116,7 @@ if __name__ == '__main__':
     parser.add_argument("-n", "--name", action="store", dest="name", help="name = biascur_reg, modcur_reg")
     parser.add_argument("-ll", "--lower_limit", action="store", dest="lower_limit", help="lower limit, enter in 0x (hex) format")
     parser.add_argument("-ul", "--upper_limit", action="store", dest="upper_limit", help="upper limit, enter in 0x (hex) format")
+    parser.add_argument("-a", "--gain", action="store", dest="gain", default = "2", help="gain = Gain for RSSI ADC: 2, 8, 16, 32")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -223,6 +200,11 @@ if __name__ == '__main__':
         print(Colors.YELLOW + "Upper limit has to be larger tha lower limit" + Colors.ENDC)
         sys.exit() 
 
+    if args.gain not in ["2", "8", "16", "32"]:
+        print(Colors.YELLOW + "Allowed values of gain = 2, 8, 16, 32" + Colors.ENDC)
+        sys.exit()
+    gain = int(args.gain)
+
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
@@ -241,7 +223,7 @@ if __name__ == '__main__':
     #    check_lpgbt_link_ready(args.ohid, args.gbtid)
 
     try:
-        main(args.system, boss, args.channel, args.name, reg, ul, ll)
+        main(args.system, boss, args.channel, args.name, reg, ul, ll, gain)
     except KeyboardInterrupt:
         print(Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
