@@ -441,7 +441,8 @@ def mpoke(address, value):
         rw_terminate()
 
 def readRegStr(reg):
-    return '{0:#010x}'.format(readReg(reg))
+    return '0x%02X'%(readReg(reg))
+    #return '{0:#010x}'.format(readReg(reg))
 
 def readReg(reg):
     try:

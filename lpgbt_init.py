@@ -3,12 +3,12 @@ from time import sleep, time
 import sys
 import argparse
 
-def main(system, boss, type):
+def main(system, boss, type, invert):
 
     if boss:
-        print ("Reset boss lpGBT\n")
+        print ("Initialize boss lpGBT\n")
     else:
-        print ("Reset sub lpGBT\n")
+        print ("Initialize sub lpGBT\n")
 
     if type=="pll_reset":
         if system=="backend":
@@ -29,28 +29,41 @@ def main(system, boss, type):
             writeReg(getNode("LPGBT.RW.POWERUP.PUSMSTATEFORCED"), 0x00, 0)
 
     print ("Reset Done\n")
-    
+
+    if invert:
+        invert_eptx(boss, 0)
+        print ("EPTX inversion Done\n")
+
+    print ("Initialization Done\n")
+
+def invert_eptx(boss, readback):
+    if (boss):
+        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX10INVERT"), 0x1, readback) #boss 4
+        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX23INVERT"), 0x1, readback) #boss 11
+
+
 if __name__ == '__main__':
 
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='lpGBT Reset')
+    parser = argparse.ArgumentParser(description='lpGBT Initialization')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-t", "--type", action="store", dest="type", help="type = pll_reset or full_reset")
+    parser.add_argument("-i", "--invert", action="store_true", dest="invert", help="invert = to invert eptx")
     args = parser.parse_args()
 
     if args.system == "chc":
-        print ("Using Rpi CHeeseCake for reset")
+        print ("Using Rpi CHeeseCake for initialization")
     elif args.system == "backend":
-        print ("Using Backend for reset")
+        print ("Using Backend for initialization")
     elif args.system == "dongle":
         #print ("Using USB Dongle for reset")
         print (Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
-        print ("Dry Run - not actually resetting lpGBT")
+        print ("Dry Run - not actually initializing lpGBT")
     else:
         print (Colors.YELLOW + "Only valid options: chc, backend, dongle, dryrun" + Colors.ENDC)
         sys.exit()
@@ -93,6 +106,11 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Valid options for type = pll_reset, full_reset" + Colors.ENDC)
         sys.exit()
 
+    if not boss:
+        if args.invert:
+            print (Colors.YELLOW + "EPTX inversion only for boss" + Colors.ENDC)
+            sys.exit()
+
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
@@ -112,7 +130,7 @@ if __name__ == '__main__':
 
     # Configuring LPGBT
     try:
-        main(args.system, boss, args.type)
+        main(args.system, boss, args.type, args.invert)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

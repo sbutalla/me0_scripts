@@ -122,7 +122,7 @@ Use -h option for any script to check usage
 
 ```lpgbt_bert_fec.py```: bit error rate tests using fec error rate counting 
 
-````lpgbt_bias_rssi_scan.py```: scan VTRX+ bias current vs RSSI
+```lpgbt_bias_rssi_scan.py```: scan VTRX+ bias current vs RSSI
 
 ```lpgbt_config.py```: configure lpGBT
 
@@ -140,7 +140,7 @@ Use -h option for any script to check usage
 
 ```lpgbt_phase_scan.py```: phase scan for VFAT elinks and set optimal phase setting
 
-```lpgbt_reset.py```: reset lpGBT
+```lpgbt_init.py```: initialize lpGBT
 
 ```lpgbt_rssi_monitor.py```: monitor for VTRX+ RSSI value
 
@@ -155,6 +155,9 @@ Use -h option for any script to check usage
 ```lpgbt_vfat_sbit_test.py```: S-bit testing for VFATs
 
 ```lpgbt_vtrx.py```: enable/disable TX channels or registers on VTRX+
+
+```reg_interface.py```: interactive tool to communicate with lpGBT registers
+
 
 
 

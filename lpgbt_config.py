@@ -49,7 +49,7 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
 
         if not minimal:
             # invert eptx
-            invert_eptx(boss, readback)
+            #invert_eptx(boss, readback)
 
             # configure reset + led outputs
             configure_gpio(boss, readback)
@@ -288,8 +288,8 @@ def invert_hsio(boss, readback):
 
 def invert_eptx(boss, readback):
     if (boss):
-        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX10INVERT"), 0x0, readback) #boss 4
-        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX23INVERT"), 0x0, readback) #boss 11
+        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX10INVERT"), 0x1, readback) #boss 4
+        writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX23INVERT"), 0x1, readback) #boss 11
 
 
 def configure_ec_channel(boss, readback):

@@ -24,7 +24,7 @@ class Prompt(Cmd):
             elif reg.isModule:
                 print ('This is a module!')
             else:
-                print (hex(address),'\t',reg.name,'\t','No read permission!')
+                print (hex(address),reg.name,'No read permission!')
         else:
             print (args,'not found!')
 
@@ -46,7 +46,7 @@ class Prompt(Cmd):
                     print ('Write Value must be a number!')
                     return
                 if 'w' in str(reg.permission):
-                    print (writeReg(reg,value))
+                    print (writeReg(reg, value, 0))
                 else:
                     print ('No write permission!')
             else:
@@ -74,7 +74,7 @@ class Prompt(Cmd):
     def do_readFW(self, args):
         """Quick read of all FW-related registers"""
         for reg in getNodesContaining('STATUS.FW'):
-            if 'r' in str(reg.permission): print (hex(reg.real_address),reg.permission,'\t',tabPad(reg.name,4),readRegStr(reg))
+            if 'r' in str(reg.permission): print (hex(reg.real_address),reg.permission,reg.name,readRegStr(reg))
 
     def do_readKW(self, args):
         """Read all registers containing KeyWord. USAGE: readKW <KeyWord>"""
@@ -82,9 +82,9 @@ class Prompt(Cmd):
             for reg in getNodesContaining(args):
                 address = reg.real_address
                 if 'r' in str(reg.permission):
-                    print (hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7),readRegStr(reg))
-                elif reg.isModule: print (hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7)) #,'Module!'
-                else: print (hex(address).rstrip('L'),reg.permission,'\t',tabPad(reg.name,7)) #,'No read permission!'
+                    print (hex(address).rstrip('L'),reg.permission,reg.name,readRegStr(reg))
+                elif reg.isModule: print (hex(address).rstrip('L'),reg.permission,reg.name) #,'Module!'
+                else: print (hex(address).rstrip('L'),reg.permission,reg.name) #,'No read permission!'
         else: print (args,'not found!')
 
 
@@ -108,11 +108,11 @@ class Prompt(Cmd):
         if reg is not None:
             address = reg.real_address
             if 'r' in str(reg.permission):
-                print (hex(address),'{0:#010x}'.format(reg.mask),reg.permission,'\t',reg.name,'\t',readRegStr(reg))
+                print (hex(address),'{0:#010x}'.format(reg.mask),reg.permission,reg.name,readRegStr(reg))
             elif reg.isModule:
                 print ('This is a module!')
             else:
-                print (hex(address),'\t',reg.name,'\t','No read permission!')
+                print (hex(address),reg.name,'No read permission!')
         else:
             print (args,'not found!')
 
@@ -208,7 +208,7 @@ if __name__ == '__main__':
 
     try:
         prompt = Prompt()
-        prompt.prompt = args.system
+        prompt.prompt = args.system + ":> "
         prompt.cmdloop('Starting Register Command Line Interface.')
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
