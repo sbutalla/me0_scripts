@@ -6,7 +6,7 @@ import random
 
 # VFAT number: boss/sub, ohid, gbtid, elink 
 # For GE2/1 GEB + Pizza
-VFAT_TO_ELINK = {
+VFAT_TO_ELINK_GE21 = {
         0  : ("sub"  , 0, 1, 6),
         1  : ("sub"  , 0, 1, 24),
         2  : ("sub"  , 0, 1, 11),
@@ -22,20 +22,22 @@ VFAT_TO_ELINK = {
 }
 
 # For ME0 GEB
-#VFAT_TO_ELINK = {
-#        0  : ("boss" , 0, 0, 6),
-#        1  : ("sub"  , 0, 1, 24),
-#        2  : ("boss" , 0, 0, 11),
-#        3  : ("boss" , 0, 0, 3),
-#        4  : ("sub"  , 0, 1, 27),
-#        5  : ("sub"  , 0, 1, 25),
-#        6  : ("boss" , 1, 0, 6), # 3
-#        7  : ("sub"  , 1, 1, 24), # 25
-#        8  : ("boss" , 1, 0, 27), # 24
-#        9  : ("boss" , 1, 0, 6), # 27
-#        10 : ("sub"  , 1, 1, 27), # 6
-#        11 : ("sub"  , 1, 1, 25) # 11
-#}
+VFAT_TO_ELINK_ME0 = {
+        0  : ("boss" , 0, 0, 6),
+        1  : ("sub"  , 0, 1, 24),
+        2  : ("boss" , 0, 0, 11),
+        3  : ("boss" , 0, 0, 3),
+        4  : ("sub"  , 0, 1, 27),
+        5  : ("sub"  , 0, 1, 25),
+        6  : ("boss" , 1, 0, 6), # 3
+        7  : ("sub"  , 1, 1, 24), # 25
+        8  : ("boss" , 1, 0, 27), # 24
+        9  : ("boss" , 1, 0, 6), # 27
+        10 : ("sub"  , 1, 1, 27), # 6
+        11 : ("sub"  , 1, 1, 25) # 11
+}
+
+VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
 
 # Register to read/write
 vfat_registers = {

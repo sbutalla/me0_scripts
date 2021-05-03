@@ -3,38 +3,40 @@ from time import sleep, time
 import sys
 import argparse
 
-# VFAT number: boss/sub, ohid, gbtid, gpio 
+# VFAT number: boss/sub, ohid, gbtid, elink
 # For GE2/1 GEB + Pizza
-VFAT_TO_GPIO = {
-        0  : ("sub"  , 0, 1, 10),
-        1  : ("sub"  , 0, 1, 9),
+VFAT_TO_ELINK_GE21 = {
+        0  : ("sub"  , 0, 1, 6),
+        1  : ("sub"  , 0, 1, 24),
         2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 0),
-        4  : ("boss" , 0, 0, 2),
-        5  : ("boss" , 0, 0, 8),
-        6  : ("boss" , 1, 0, 0), 
-        7  : ("boss" , 1, 0, 8),
-        8  : ("sub"  , 1, 1, 9), 
-        9  : ("boss" , 1, 0, 2), 
-        10 : ("sub"  , 1, 1, 10), 
-        11 : ("sub"  , 1, 1, 11) 
+        3  : ("boss" , 0, 0, 3),
+        4  : ("boss" , 0, 0, 27),
+        5  : ("boss" , 0, 0, 25),
+        6  : ("boss" , 1, 0, 6),
+        7  : ("boss" , 1, 0, 16),
+        8  : ("sub"  , 1, 1, 18),
+        9  : ("boss" , 1, 0, 15),
+        10 : ("sub"  , 1, 1, 3),
+        11 : ("sub"  , 1, 1, 17)
 }
 
 # For ME0 GEB
-#VFAT_TO_GPIO = {
-#        0  : ("sub"  , 0, 1, 10),
-#        1  : ("sub"  , 0, 1, 0),
-#        2  : ("sub"  , 0, 1, 11),
-#        3  : ("boss" , 0, 0, 0),
-#        4  : ("boss" , 0, 0, 2),
-#        5  : ("boss" , 0, 0, 8),
-#        6  : ("boss" , 1, 0, 0), 
-#        7  : ("boss" , 1, 0, 8),
-#        8  : ("sub"  , 1, 1, 0), 
-#        9  : ("boss" , 1, 0, 2), 
-#        10 : ("sub"  , 1, 1, 10), 
-#        11 : ("sub"  , 1, 1, 11) 
-#}
+VFAT_TO_ELINK_ME0 = {
+        0  : ("boss" , 0, 0, 6),
+        1  : ("sub"  , 0, 1, 24),
+        2  : ("boss" , 0, 0, 11),
+        3  : ("boss" , 0, 0, 3),
+        4  : ("sub"  , 0, 1, 27),
+        5  : ("sub"  , 0, 1, 25),
+        6  : ("boss" , 1, 0, 6), # 3
+        7  : ("sub"  , 1, 1, 24), # 25
+        8  : ("boss" , 1, 0, 27), # 24
+        9  : ("boss" , 1, 0, 6), # 27
+        10 : ("sub"  , 1, 1, 27), # 6
+        11 : ("sub"  , 1, 1, 25) # 11
+}
+
+VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
 
 def vfat_to_oh_gbt_gpio(vfat):
     lpgbt = VFAT_TO_GPIO[vfat][0]

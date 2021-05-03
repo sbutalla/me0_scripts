@@ -10,7 +10,7 @@ config_sub = {}
 
 # VFAT number: boss/sub, ohid, gbtid
 # For GE2/1 GEB + Pizza
-VFAT_TO_ELINK = {
+VFAT_TO_ELINK_GE21 = {
         0  : ("sub"  , 0, 1),
         1  : ("sub"  , 0, 1),
         2  : ("sub"  , 0, 1),
@@ -26,20 +26,22 @@ VFAT_TO_ELINK = {
 }
 
 # For ME0 GEB
-#VFAT_TO_ELINK = {
-#        0  : ("boss" , 0, 0),
-#        1  : ("sub"  , 0, 1),
-#        2  : ("boss" , 0, 0),
-#        3  : ("boss" , 0, 0),
-#        4  : ("sub"  , 0, 1),
-#        5  : ("sub"  , 0, 1),
-#        6  : ("boss" , 1, 0),
-#        7  : ("sub"  , 1, 1),
-#        8  : ("boss" , 1, 0),
-#        9  : ("boss" , 1, 0),
-#        10 : ("sub"  , 1, 1),
-#        11 : ("sub"  , 1, 1)
-#}
+VFAT_TO_ELINK_ME0 = {
+        0  : ("boss" , 0, 0),
+        1  : ("sub"  , 0, 1),
+        2  : ("boss" , 0, 0),
+        3  : ("boss" , 0, 0),
+        4  : ("sub"  , 0, 1),
+        5  : ("sub"  , 0, 1),
+        6  : ("boss" , 1, 0),
+        7  : ("sub"  , 1, 1),
+        8  : ("boss" , 1, 0),
+        9  : ("boss" , 1, 0),
+        10 : ("sub"  , 1, 1),
+        11 : ("sub"  , 1, 1)
+}
+
+VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
 
 def getConfig (filename):
     f = open(filename, 'r')
@@ -94,7 +96,7 @@ def lpgbt_elink_scan(system, vfat_list):
     for vfat in vfat_list:
         for elink in range(0,28):
             sys.stdout.write("VFAT%02d , ELINK %02d:" % (vfat, elink))
-            if n_err_vfat_elink[vfat][elink]>5:
+            if n_err_vfat_elink[vfat][elink]==0:
                 char=Colors.GREEN + "+\n" + Colors.ENDC
             else:
                 char=Colors.RED + "-\n" + Colors.ENDC
