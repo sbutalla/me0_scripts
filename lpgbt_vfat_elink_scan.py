@@ -27,18 +27,18 @@ VFAT_TO_ELINK_GE21 = {
 
 # For ME0 GEB
 VFAT_TO_ELINK_ME0 = {
-        0  : ("boss" , 0, 0),
+        0  : ("sub"  , 0, 1),
         1  : ("sub"  , 0, 1),
-        2  : ("boss" , 0, 0),
+        2  : ("sub"  , 0, 1),
         3  : ("boss" , 0, 0),
-        4  : ("sub"  , 0, 1),
-        5  : ("sub"  , 0, 1),
-        6  : ("boss" , 1, 0),
+        4  : ("boss" , 0, 0),
+        5  : ("boss" , 0, 0),
+        6  : ("sub"  , 1, 1),
         7  : ("sub"  , 1, 1),
-        8  : ("boss" , 1, 0),
+        8  : ("sub"  , 1, 1),
         9  : ("boss" , 1, 0),
-        10 : ("sub"  , 1, 1),
-        11 : ("sub"  , 1, 1)
+        10 : ("boss" , 1, 0),
+        11 : ("boss" , 1, 0),
 }
 
 VFAT_TO_ELINK = VFAT_TO_ELINK_ME0

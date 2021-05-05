@@ -128,8 +128,6 @@ Use -h option for any script to check usage
 
 ```lpgbt_efuse.py```: fuse registers on lpGBT
 
-```lpgbt_elink_scan.py```: scan VFAT vs elink 
-
 ```lpgbt_eye.py```: downlink eye diagram using lpGBT
 
 ```lpgbt_eye_equalizer_scan.py```: scan equalizer settings using eye diagram
@@ -137,8 +135,6 @@ Use -h option for any script to check usage
 ```lpgbt_eye_plot.py```: plot downlink eye diagram
 
 ```lpgbt_led_show.py```: GPIO led show
-
-```lpgbt_phase_scan.py```: phase scan for VFAT elinks and set optimal phase setting
 
 ```lpgbt_init.py```: initialize lpGBT
 
@@ -148,7 +144,11 @@ Use -h option for any script to check usage
 
 ```lpgbt_status.py```: check status of lpGBT
 
+```lpgbt_vfat_elink_scan.py```: scan VFAT vs elink 
+
 ```lpgbt_vfat_error_test.py```: error rate tests by read/write on VFAT registers
+
+```lpgbt_vfat_phase_scan.py```: phase scan for VFAT elinks and set optimal phase setting
 
 ```lpgbt_vfat_reset.py```: reset VFAT
 
