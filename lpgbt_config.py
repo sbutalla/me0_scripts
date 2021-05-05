@@ -48,8 +48,14 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
         invert_hsio(boss, readback)
 
         if not minimal:
+            # invert eprx
+            invert_eprx(boss, readback)
+
+            # invert epclk
+            invert_epclk(boss, readback)
+
             # invert eptx
-            #invert_eptx(boss, readback)
+            invert_eptx(boss, readback)
 
             # configure reset + led outputs
             configure_gpio(boss, readback)
@@ -261,10 +267,10 @@ def configure_eptx(readback):
     writeReg(getNode("LPGBT.RWF.EPORTTX.EPTX3MIRRORENABLE"), 0x1, readback)
 
     #turn on 320 MHz clocks
-    writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK3FREQ"),  0x4, readback)
-    writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK5FREQ"),  0x4, readback)
-    writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK6FREQ"),  0x4, readback)
-    writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK7FREQ"),  0x4, readback)
+    writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK3FREQ"), 0x4, readback)
+    writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK5FREQ"), 0x4, readback)
+    writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK6FREQ"), 0x4, readback)
+    writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK7FREQ"), 0x4, readback)
     writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK15FREQ"), 0x4, readback)
     writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK16FREQ"), 0x4, readback)
 
@@ -284,6 +290,39 @@ def invert_hsio(boss, readback):
     else:
         writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAININVERT"), 0x0, readback)
         writeReg(getNode("LPGBT.RWF.CHIPCONFIG.HIGHSPEEDDATAOUTINVERT"), 0x1, readback)
+
+
+def invert_eprx(boss, readback):
+    if (boss):
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX9INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX4INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX2INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX0INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX19INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX17INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX18INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX20INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX22INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX24INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX26INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX25INVERT"), 0x1, readback)
+    else:
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX21INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX23INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX27INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX24INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX25INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX9INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX10INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX3INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX5INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX1INVERT"), 0x1, readback)
+        writeReg(getNode("LPGBT.RWF.EPORTRX.EPRX_CHN_CONTROL.EPRX12INVERT"), 0x1, readback)
+
+
+def invert_epclk(boss, readback):
+    if (boss):
+        writeReg(getNode("LPGBT.RWF.EPORTCLK.EPCLK7INVERT"), 0x1, readback)
 
 
 def invert_eptx(boss, readback):
