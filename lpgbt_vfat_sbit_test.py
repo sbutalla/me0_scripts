@@ -171,7 +171,7 @@ def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime):
         print ("\nReading S-bit counter for %f minutes\n" %(runtime))
     s_bit_counter = 0
     cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
-    counter_node = get_rwreg_node("") ## add register here
+    counter_node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SBIT_COUNT_ME0") 
 
     cyclic_running = read_backend_reg(cyclic_running_node)
     t0 = time()

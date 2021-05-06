@@ -45,6 +45,7 @@ def main(system, boss, input_config_file, reset_before_config, minimal, readback
             configure_ec_channel(boss, readback)
 
         # invert hsio
+        # Not needed in ASIAGO_v2
         invert_hsio(boss, readback)
 
         if not minimal:
