@@ -56,14 +56,11 @@ def vfat_to_oh_gbt_elink(vfat):
     elink = VFAT_TO_ELINK[vfat][3]
     return lpgbt, ohid, gbtid, elink
      
-def configureVfatForPulsing(vfatN, ohN, channel):
+def configureVfat(vfatN, ohN, low_thresh):
 
     if (read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%i.VFAT%i.SYNC_ERR_CNT"%(ohN,vfatN))) > 0):
         print (Colors.RED + "Link Errors" + Colors.ENDC)
         sys.exit()
-
-    for i in range(128):
-        write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,i)), 0x4000)  # mask all channels and disable the calpulse
 
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_PULSE_STRETCH"       % (ohN , vfatN)) , 7)
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_SYNC_LEVEL_MODE"     % (ohN , vfatN)) , 0)
@@ -90,8 +87,6 @@ def configureVfatForPulsing(vfatN, ohN, channel):
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_MON_GAIN"        % (ohN , vfatN)) , 0)
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_MONITOR_SELECT"      % (ohN , vfatN)) , 0)
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_IREF"            % (ohN , vfatN)) , 32)
-    write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_THR_ZCC_DAC"     % (ohN , vfatN)) , 10)
-    write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_THR_ARM_DAC"     % (ohN , vfatN)) , 100)
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_HYST"            % (ohN , vfatN)) , 5)
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_LATENCY"         % (ohN , vfatN)) , 45)
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_CAL_SEL_POL"     % (ohN , vfatN)) , 1)
@@ -115,109 +110,36 @@ def configureVfatForPulsing(vfatN, ohN, channel):
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_BIAS_SD_I_BFCAS"     % (ohN , vfatN)) , 255)
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(ohN,vfatN)), 1)
 
-    #unmask and enable calpulsing on the given channel
-    if channel >= 0:
-        write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,channel)), 0x8000)
+    if low_thresh:
+        print ("Set low threshold")
+        write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_THR_ZCC_DAC"     % (ohN , vfatN)) , 5)
+        write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_THR_ARM_DAC"     % (ohN , vfatN)) , 5)
 
 
-def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime):
-    print ("LPGBT VFAT S-Bit Test\n")
+def lpgbt_vfat_config(system, vfat_list, low_thresh):
+    print ("LPGBT VFAT Configuration\n")
     
-    # Enable the generator
     vfat_oh_link_reset()
     sleep(0.1)
-    write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 1)
-    
-    # Configure TTC generator
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.ENABLE"), 1)
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 50)
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_GAP"), CALPULSE_GAP)
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_COUNT"), nl1a)
 
-    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-    print ("Testing VFAT#: %02d\n" %(vfat))
+    for vfat in vfat_list:
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        print ("Configuring VFAT#: %02d" %(vfat))
+        configureVfat(vfat-6*oh_select, oh_select, low_thresh)
+        print ("")
 
-    write_backend_reg(get_rwreg_node("GEM_AMC.TRIGGER.SBIT_MONITOR.OH_SELECT"), oh_select)
-
-    #write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.FPGA.TRIG.CTRL.VFAT_MASK" % oh_select), vfatMask)
-
-    #for i in range(12):
-    #    write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.FPGA.TRIG.CTRL.TU_MASK.VFAT%i_TU_MASK" % (oh_select, i)), 0)
-
-    # Start the cyclic generator
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_START"), 1)
-
-    # configure all vfats on the OH with default configuration
-    for i in range(6):
-        syncErrCnt = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, i)))
-        if syncErrCnt > 0:
-            print(Colors.YELLOW + "Skipping VFAT%d because it seems dead (sync err cnt = %d)" % (i, syncErrCnt) + Colors.ENDC)
-        else:
-            print("Configuring VFAT %d with default configuration" % i)
-        configureVfatForPulsing(i, oh_select, -1)
-    print ("")
-    
-    # configure the pulsing VFAT
-    for channel in channel_list:
-        print("Configuring VFAT %d for pulsing on channel %d" % (vfat, channel))
-        configureVfatForPulsing(vfat-6*oh_select, oh_select, channel)
-
-    # Reading S-bit counter
-    if nl1a != 0:
-        print ("\nReading S-bit counter for %d L1A cycles\n" % (nl1a))
-    else:
-        print ("\nReading S-bit counter for %f minutes\n" %(runtime))
-    s_bit_counter = 0
-    cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
-    counter_node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SBIT_COUNT_ME0") 
-
-    cyclic_running = read_backend_reg(cyclic_running_node)
-    t0 = time()
-    time_prev = t0
-    if nl1a != 0:
-        while cyclic_running:
-            cyclic_running = read_backend_reg(cyclic_running_node)
-            time_passed = (time()-time_prev)/60.0
-            if time_passed >= 1:
-                s_bit_counter = read_backend_reg(counter_node)
-                print ("Time passed: %f minutes, S-bit counter = %d" % ((time()-t0)/60.0, s_bit_counter))
-                time_prev = time()
-    else:
-        while ((time()-t0)/60.0) < runtime:
-            time_passed = (time()-time_prev)/60.0
-            if time_passed >= 1:
-                s_bit_counter = read_backend_reg(counter_node)
-                print ("Time passed: %f minutes, S-bit counter = %d" % ((time()-t0)/60.0, s_bit_counter))
-                time_prev = time()
-
-    print ("")
-    s_bit_counter = read_backend_reg(counter_node)
-    if nl1a != 0:
-        print ("Number of L1A cycles: %d, S-bit counter: %d" %(nl1a, s_bit_counter))
-    else:
-        print ("Time: %f minutes, S-bit counter: %d" %(runtime, s_bit_counter))
-
-    print ("\nS-bit testing done\n")
-
-    # Stop the cyclic generator
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
-
-    write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 0)
-      
+    print ("\nVFAT configuration done\n")
 
 if __name__ == '__main__':
 
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='LpGBT VFAT S-Bit Test')
+    parser = argparse.ArgumentParser(description='LpGBT VFAT Configuration')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfat", action="store", dest="vfat", help="vfat = VFAT number (0-11)")
-    parser.add_argument("-c", "--channels", action="store", dest="channels", nargs='+', help="channels = list of channels for chosen VFAT (0-127) or all")
+    parser.add_argument("-v", "--vfat", action="store", nargs='+', dest="vfat", help="vfat = list of VFAT numbers (0-11)")
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
-    parser.add_argument("-n", "--nl1a", action="store", dest="nl1a", help="nl1a = fixed number of L1A cycles")
-    parser.add_argument("-t", "--time", action="store", dest="time", help="time = time for which to run the S-bit testing (in minutes)")
+    parser.add_argument("-lt", "--low_thresh", action="store_true", dest="low_thresh", help="low_thresh = to set low threshold for channels")
     parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugiin card addressing needs should be enabled")
     args = parser.parse_args()
 
@@ -240,44 +162,15 @@ if __name__ == '__main__':
         sys.exit()
 
     if args.vfat is None:
-        print (Colors.YELLOW + "Enter VFAT number" + Colors.ENDC)
+        print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
-    vfat = int(args.vfat)
-    if vfat not in range(0,12):
-        print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
-        sys.exit()
-        
-    if args.channels is None:
-        print (Colors.YELLOW + "Enter Channel numbers" + Colors.ENDC)
-        sys.exit()
-    channel_list = []
-    if args.channels == ["all"]:
-        for i in range(0,128):
-            channel_list.append(i)
-    else:
-        for c in args.channels:
-            c_int = int(c)
-            if c_int not in range(0,128):
-                print (Colors.YELLOW + "Invalid Channel number, only allowed 0-127" + Colors.ENDC)
-                sys.exit()
-            channel_list.append(c_int)
-
-    nl1a = 0
-    if args.nl1a is not None:
-        nl1a = int(args.nl1a)
-        if args.time is not None:
-            print (Colors.YELLOW + "Cannot give both time and number of L1A cycles" + Colors.ENDC)
+    vfat_list = []
+    for v in args.vfat:
+        vfat = int(v)
+        if vfat not in range(0,12):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
             sys.exit()
-    runtime = 0
-    if args.time is not None:
-        runtime = float(args.time)
-        if args.nl1a is not None:
-            if args.time is not None:
-                print (Colors.YELLOW + "Cannot give both tiime and number of L1A cycles" + Colors.ENDC)
-                sys.exit()
-    if nl1a==0 and runtime==0:
-        print (Colors.YELLOW + "Enter either runtime or number of L1A cycles" + Colors.ENDC)
-        sys.exit()
+        vfat_list.append(vfat)
 
     if args.addr:
         print ("Enabling VFAT addressing for plugin cards")
@@ -294,7 +187,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_vfat_sbit(args.system, vfat, channel_list, nl1a, runtime)
+        lpgbt_vfat_config(args.system, vfat_list, args.low_thresh)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

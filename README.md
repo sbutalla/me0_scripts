@@ -144,6 +144,8 @@ Use -h option for any script to check usage
 
 ```lpgbt_status.py```: check status of lpGBT
 
+```lpgbt_vfat_config.py```: configure VFAT
+
 ```lpgbt_vfat_elink_scan.py```: scan VFAT vs elink 
 
 ```lpgbt_vfat_error_test.py```: error rate tests by read/write on VFAT registers
