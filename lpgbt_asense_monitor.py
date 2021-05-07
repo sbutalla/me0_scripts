@@ -12,24 +12,24 @@ def main(system, boss, run_time_min, gain):
     init_adc()
     print("ADC Readings:")
 
-    if not os.path.exists("rssi_data"):
-        os.makedirs("rssi_data")
+    if not os.path.exists("asense_data"):
+        os.makedirs("asense_data")
 
     now = str(datetime.datetime.now())[:16]
     now = now.replace(":", "_")
     now = now.replace(" ", "_")
-    foldername = "rssi_data/"
-    filename = foldername + "rssi_data_" + now + ".txt"
+    foldername = "asense_data/"
+    filename = foldername + "asense_data_" + now + ".txt"
 
     print(filename)
     open(filename, "w+").close()
-    minutes, seconds, rssi = [], [], []
+    minutes, seconds, asense0, asense1, asense2, asense3 = [], [], [], [], [], []
 
     run_time_min = float(run_time_min)
 
     fig, ax = plt.subplots()
     ax.set_xlabel('minutes')
-    ax.set_ylabel('RSSI (uA)')
+    ax.set_ylabel('Asense (mA)')
     #ax.set_xticks(range(0,run_time_min+1))
     #ax.set_xlim([0,run_time_min])
 
@@ -38,16 +38,25 @@ def main(system, boss, run_time_min, gain):
 
     while int(time()) <= end_time:
         with open(filename, "a") as file:
-            value = read_adc(7, gain, system)
-            rssi_current = rssi_current_conversion(value, gain) * 1e6 # in uA
+            asense0_value = read_adc(4, gain, system)
+            asense1_value = read_adc(2, gain, system)
+            asense2_value = read_adc(1, gain, system)
+            asense3_value = read_adc(3, gain, system)
+            asense0_current = asense_current_conversion(asense0_value, gain) * 1e3 # in mA
+            asense1_current = asense_current_conversion(asense1_value, gain) * 1e3 # in mA
+            asense2_current = asense_current_conversion(asense2_value, gain) * 1e3 # in mA
+            asense3_current = asense_current_conversion(asense3_value, gain) * 1e3 # in mA
             second = time() - start_time
             seconds.append(second)
-            rssi.append(rssi_current)
+            asense0.append(asense0_current)
+            asense1.append(asense1_current)
+            asense2.append(asense2_current)
+            asense3.append(asense3_current)
             minutes.append(second/60)
-            live_plot(ax, minutes, rssi, run_time_min)
+            live_plot(ax, minutes, asense0, asense1, asense2, asense3, run_time_min)
 
-            file.write(str(second) + "\t" + str(rssi_current) + "\n" )
-            print("\tch %X: 0x%03X = %f (RSSI (uA))" % (7, value, rssi_current))
+            file.write(str(second) + "\t" + str(asense0_current) + "\t" + str(asense1_current) + "\t" + str(asense2_current) + "\t" + str(asense3_current) + "\n" )
+            print("Time: " + str(second) + " (s) \t Asense0: " + str(asense0_current) + " (mA) \t Asense1: " + str(asense1_current) + " (mA) \t Asense2: " + str(asense2_current) + " (mA)  Asense3: \t" + str(asense3_current) + " (mA) \n" )
 
             sleep(1)
 
@@ -56,8 +65,11 @@ def main(system, boss, run_time_min, gain):
 
     powerdown_adc()
 
-def live_plot(ax, x, y, run_time_min):
-    ax.plot(x, y, "turquoise")
+def live_plot(ax, x, y0, y1, y2, y3, run_time_min):
+    ax.plot(x, y0, "red")
+    ax.plot(x, y1, "blue")
+    ax.plot(x, y2, "black")
+    ax.plot(x, y3, "turquoise")
     plt.draw()
     plt.pause(0.01)
 
@@ -135,22 +147,19 @@ def read_adc(channel, gain, system):
 
     return val
 
-def rssi_current_conversion(rssi_adc, gain):
+def asense_current_conversion(asense_adc, gain):
     # Resistor values
-    R1 = 4.7 * 1000 # 4.7 kOhm
-    R2 = 1000.0 * 1000 # 1 MOhm
-    R3 = 470.0 * 1000 # 470 kOhm
+    R = 10 * 1000 # 10 kOhm
 
-    rssi_adc_converted = 1.0 * (rssi_adc/1023.0) # 10-bit ADC, range 0-1 V
-    rssi_voltage = rssi_adc_converted/gain # Gain
-    v_r = rssi_voltage * ((R2+R3)/R3) # voltage divider
-    rssi_current = (2.5 - v_r)/R1 # rssi current
-    return rssi_current
+    asense_adc_converted = 1.0 * (asense_adc/1023.0) # 10-bit ADC, range 0-1 V
+    asense_voltage = asense_adc_converted/gain # Gain
+    asense_current = asense_voltage/R # asense current
+    return asense_current
 
 if __name__ == '__main__':
 
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='RSSI Monitor for ME0 Optohybrid')
+    parser = argparse.ArgumentParser(description='Asense monitoring for ME0 Optohybrid')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss")
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
@@ -160,17 +169,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.system == "chc":
-        print("Using Rpi CHeeseCake for rssi monitoring")
+        print("Using Rpi CHeeseCake for asense monitoring")
     elif args.system == "backend":
-        # print ("Using Backend for rssi monitoring")
+        # print ("Using Backend for asense monitoring")
         print(Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dongle":
-        # print ("Using USB Dongle for rssi monitoring")
+        # print ("Using USB Dongle for asense monitoring")
         print(Colors.YELLOW + "Only chc (Rpi Cheesecake) or dryrun supported at the moment" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
-        print("Dry Run - not actually running rssi monitoring")
+        print("Dry Run - not actually running asense monitoring")
     else:
         print(Colors.YELLOW + "Only valid options: chc, backend, dongle, dryrun" + Colors.ENDC)
         sys.exit()

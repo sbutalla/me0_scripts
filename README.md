@@ -118,6 +118,8 @@ Use -h option for any script to check usage
 
 ```lpgbt_action_reset_wd.py```: either reset or disable/enable watchdog for lpGBT
 
+```lpgbt_asense_monitor.py```: monitor asense on ME0 GEB
+
 ```lpgbt_bert.py```: bit error rate tests for lpGBT (uplink/downlink/loopback)
 
 ```lpgbt_bert_fec.py```: bit error rate tests using fec error rate counting 
