@@ -21,7 +21,7 @@ VFAT_TO_GPIO_GE21 = {
 }
 
 # For ME0 GEB
-#VFAT_TO_GPIO_ME0 = {
+VFAT_TO_GPIO_ME0 = {
         0  : ("sub"  , 0, 1, 10),
         1  : ("sub"  , 0, 1, 9),
         2  : ("sub"  , 0, 1, 11),
