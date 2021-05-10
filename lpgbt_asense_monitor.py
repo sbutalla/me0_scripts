@@ -149,10 +149,11 @@ def read_adc(channel, gain, system):
 
 def asense_current_conversion(asense_adc, gain):
     # Resistor values
-    R = 10 * 1000 # 10 kOhm
+    R = 0.01 # 0.01 Ohm
 
     asense_adc_converted = 1.0 * (asense_adc/1023.0) # 10-bit ADC, range 0-1 V
     asense_voltage = asense_adc_converted/gain # Gain
+    asense_voltage /= 20 # Gain in current sense circuit
     asense_current = asense_voltage/R # asense current
     return asense_current
 
