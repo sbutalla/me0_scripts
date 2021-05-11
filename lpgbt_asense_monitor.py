@@ -70,6 +70,7 @@ def live_plot(ax, x, y0, y1, y2, y3, run_time_min):
     ax.plot(x, y1, "blue")
     ax.plot(x, y2, "black")
     ax.plot(x, y3, "turquoise")
+    plt.legend(["Asense0", "Asense1", "Asense2", "Asense3"], loc ="upper right")
     plt.draw()
     plt.pause(0.01)
 
@@ -138,7 +139,7 @@ def read_adc(channel, gain, system):
             done = 1
 
     val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
-    val |= readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8
+    val |= (readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
@@ -166,7 +167,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-m", "--minutes", action="store", dest="minutes", help="minutes = int. # of minutes you want to run")
-    parser.add_argument("-a", "--gain", action="store", dest="gain", default = "2", help="gain = Gain for RSSI ADC: 2, 8, 16, 32")
+    parser.add_argument("-a", "--gain", action="store", dest="gain", default = "2", help="gain = Gain for Asense ADCs: 2, 8, 16, 32")
     args = parser.parse_args()
 
     if args.system == "chc":
