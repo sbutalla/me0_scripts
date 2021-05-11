@@ -126,7 +126,7 @@ def read_adc(channel, gain, system):
             done = 1
 
     val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
-    val |= readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8
+    val |= (readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 

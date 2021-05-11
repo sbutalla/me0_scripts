@@ -270,7 +270,7 @@ def read_adc(channel, system):
     #val  = mpeek(0x1b9)               # LPGBT.RO.ADC.ADCVALUEL
     val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
     #val |= (0x3 & mpeek (0x1b8)) << 8 # LPGBT.RO.ADC.ADCVALUEH
-    val |= readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8
+    val |= (readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8)
 
     #mpoke (0x113, 0x04)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
