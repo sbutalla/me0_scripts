@@ -116,7 +116,6 @@ def read_adc(channel, gain, system):
     }
     writeReg(getNode("LPGBT.RW.ADC.ADCGAINSELECT"), gain_settings[gain], 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x1, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
     done = 0
     while (done == 0):
@@ -128,7 +127,6 @@ def read_adc(channel, gain, system):
     val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
     val |= (readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
     writeReg(getNode("LPGBT.RW.ADC.ADCINPSELECT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x0, 0)
@@ -142,7 +140,8 @@ def rssi_current_conversion(rssi_adc, gain):
     R3 = 470.0 * 1000 # 470 kOhm
 
     rssi_adc_converted = 1.0 * (rssi_adc/1023.0) # 10-bit ADC, range 0-1 V
-    rssi_voltage = rssi_adc_converted/gain # Gain
+    #rssi_voltage = rssi_adc_converted/gain # Gain
+    rssi_voltage = rssi_adc_converted
     v_r = rssi_voltage * ((R2+R3)/R3) # voltage divider
     rssi_current = (2.5 - v_r)/R1 # rssi current
     return rssi_current

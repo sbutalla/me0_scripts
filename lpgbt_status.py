@@ -257,7 +257,6 @@ def read_adc(channel, system):
     # "LPGBT.RW.ADC.ADCCONVERT"
     #mpoke (0x113, 0x84)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x1, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
     done = 0
     while (done==0):
@@ -274,7 +273,6 @@ def read_adc(channel, system):
 
     #mpoke (0x113, 0x04)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
     writeReg(getNode("LPGBT.RW.ADC.ADCINPSELECT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x0, 0)

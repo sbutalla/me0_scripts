@@ -129,7 +129,6 @@ def read_adc(channel, gain, system):
     }
     writeReg(getNode("LPGBT.RW.ADC.ADCGAINSELECT"), gain_settings[gain], 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x1, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
     done = 0
     while (done == 0):
@@ -141,7 +140,6 @@ def read_adc(channel, gain, system):
     val = readReg(getNode("LPGBT.RO.ADC.ADCVALUEL"))
     val |= (readReg(getNode("LPGBT.RO.ADC.ADCVALUEH")) << 8)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
-    writeReg(getNode("LPGBT.RW.ADC.ADCENABLE"), 0x1, 0)
 
     writeReg(getNode("LPGBT.RW.ADC.ADCINPSELECT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x0, 0)
@@ -153,7 +151,8 @@ def asense_current_conversion(asense_adc, gain):
     R = 0.01 # 0.01 Ohm
 
     asense_adc_converted = 1.0 * (asense_adc/1023.0) # 10-bit ADC, range 0-1 V
-    asense_voltage = asense_adc_converted/gain # Gain
+    #asense_voltage = asense_adc_converted/gain # Gain
+    asense_voltage = asense_adc_converted
     asense_voltage /= 20 # Gain in current sense circuit
     asense_current = asense_voltage/R # asense current
     return asense_current
