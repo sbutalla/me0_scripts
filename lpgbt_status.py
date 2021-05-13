@@ -178,25 +178,25 @@ def main(system, boss):
     print ("ADC Readings:")
     for i in range(16):
         name = ""
-        if (i==0 ):  name="N/A"
-        if (i==1 ):  name="ASENSE_2"
-        if (i==2 ):  name="ASENSE_1"
-        if (i==3 ):  name="ASENSE_3"
-        if (i==4 ):  name="ASENSE_0"
-        if (i==5 ):  name="1V2_DIV2"
-        if (i==6 ):  name="2V5_DIV3"
-        if (i==7 ):  name="RSSI"
-        if (i==8 ):  name="EOM DAC (internal signal)"
-        if (i==9 ):  name="VDDIO * 0.42 (internal signal)"
-        if (i==10):  name="VDDTX * 0.42 (internal signal)"
-        if (i==11):  name="VDDRX * 0.42 (internal signal)"
-        if (i==12):  name="VDD * 0.42 (internal signal)"
-        if (i==13):  name="VDDA * 0.42 (internal signal)"
-        if (i==14):  name="Temperature sensor (internal signal)"
-        if (i==15):  name="VREF/2 (internal signal)"
+        if (i==0 ):  conv=1; name="N/A"
+        if (i==1 ):  conv=1; name="ASENSE_2"
+        if (i==2 ):  conv=1; name="ASENSE_1"
+        if (i==3 ):  conv=1; name="ASENSE_3"
+        if (i==4 ):  conv=1; name="ASENSE_0"
+        if (i==5 ):  conv=1/2.0; name="1V2_DIV2"
+        if (i==6 ):  conv=1/3.0; name="2V5_DIV3"
+        if (i==7 ):  conv=1; name="RSSI"
+        if (i==8 ):  conv=1; name="EOM DAC (internal signal)"
+        if (i==9 ):  conv=1/0.42; name="VDDIO * 0.42 (internal signal)"
+        if (i==10):  conv=1/0.42; name="VDDTX * 0.42 (internal signal)"
+        if (i==11):  conv=1/0.42; name="VDDRX * 0.42 (internal signal)"
+        if (i==12):  conv=1/0.42; name="VDD * 0.42 (internal signal)"
+        if (i==13):  conv=1/0.42; name="VDDA * 0.42 (internal signal)"
+        if (i==14):  conv=1; name="Temperature sensor (internal signal)"
+        if (i==15):  conv=1/0.50; name="VREF/2 (internal signal)"
 
         read = read_adc(i, system)
-        print ("\tch %X: 0x%03X = %f (%s)" % (i, read, read/1024., name))
+        print ("\tch %X: 0x%03X = %f, reading = %f (%s)" % (i, read, read/1024., conv*read/1024., name))
     powerdown_adc()
     
     # Writing lpGBT configuration to text file
@@ -215,7 +215,7 @@ def init_adc():
     writeReg(getNode("LPGBT.RW.ADC.VDDPSTMONENA"), 0x1, 0) # enable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDANMONENA"), 0x1, 0) # enable dividers
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x1, 0) # vref enable
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFTUNE"), 0x63) # vref tune
+    writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFTUNE"), 0x63, 0) # vref tune
     sleep (0.01)
 
 def powerdown_adc():
@@ -227,7 +227,7 @@ def powerdown_adc():
     writeReg(getNode("LPGBT.RW.ADC.VDDPSTMONENA"), 0x0, 0) # disable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDANMONENA"), 0x0, 0) # disable dividers
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x0, 0) # vref disable
-    writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFTUNE"), 0x0) # vref tune
+    writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFTUNE"), 0x0, 0) # vref tune
 
 def read_adc(channel, system):
     # ADCInPSelect[3:0]	|  Input
