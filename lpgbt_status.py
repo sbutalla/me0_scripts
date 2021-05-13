@@ -215,6 +215,7 @@ def init_adc():
     writeReg(getNode("LPGBT.RW.ADC.VDDPSTMONENA"), 0x1, 0) # enable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDANMONENA"), 0x1, 0) # enable dividers
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x1, 0) # vref enable
+    writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFTUNE"), 0x63) # vref tune
     sleep (0.01)
 
 def powerdown_adc():
@@ -226,6 +227,7 @@ def powerdown_adc():
     writeReg(getNode("LPGBT.RW.ADC.VDDPSTMONENA"), 0x0, 0) # disable dividers
     writeReg(getNode("LPGBT.RW.ADC.VDDANMONENA"), 0x0, 0) # disable dividers
     writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFENABLE"), 0x0, 0) # vref disable
+    writeReg(getNode("LPGBT.RWF.CALIBRATION.VREFTUNE"), 0x0) # vref tune
 
 def read_adc(channel, system):
     # ADCInPSelect[3:0]	|  Input
@@ -273,7 +275,7 @@ def read_adc(channel, system):
 
     #mpoke (0x113, 0x04)
     writeReg(getNode("LPGBT.RW.ADC.ADCCONVERT"), 0x0, 0)
-
+    writeReg(getNode("LPGBT.RW.ADC.ADCGAINSELECT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCINPSELECT"), 0x0, 0)
     writeReg(getNode("LPGBT.RW.ADC.ADCINNSELECT"), 0x0, 0)
 
