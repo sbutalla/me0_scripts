@@ -90,7 +90,6 @@ def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
         ax2.legend((line1, line3), ("Rt2 voltage", "Rt1 voltage"), loc="upper right")
     else:
         ax2.legend((line1, line3), ("Rt3 voltage", "Rt4 voltage"), loc="upper right")
-    ax2.legend(loc="upper right")
     plt.draw()
     plt.pause(0.01)
 
