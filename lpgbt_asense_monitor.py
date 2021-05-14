@@ -88,9 +88,9 @@ def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
     ax2.plot(x, y1, "red")
     ax2.plot(x, y3, "black")
     if oh==0:
-        ax1.legend([y1, y3], ["Rt2 voltage", "Rt1 voltage"])
+        ax2.legend([y1, y3], ["Rt2 voltage", "Rt1 voltage"])
     else:
-        ax1.legend([y1, y3], ["Rt3 voltage", "Rt4 voltage"])
+        ax2.legend([y1, y3], ["Rt3 voltage", "Rt4 voltage"])
     plt.draw()
     plt.pause(0.01)
 
