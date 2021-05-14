@@ -57,9 +57,9 @@ def main(system, boss, oh, run_time_min, gain):
 
             file.write(str(second) + "\t" + str(asense0_converted) + "\t" + str(asense1_converted) + "\t" + str(asense2_converted) + "\t" + str(asense3_converted) + "\n" )
             if oh==0:
-                print("Time: " + str(second) + " (s) \t Asense0 (PG2.5V current): " + str(asense0_converted) + " (A) \t Asense1 (Rt2 voltage): " + str(asense1_converted) + " (V) \t Asense2 (PG1.2V current): " + str(asense2_converted) + " (A) \t Asense3 (Rt1 voltage): \t" + str(asense3_converted) + " (V) \n" )
+                print("Time: " + "{:.2f}".format(second) + " (s) \t Asense0 (PG2.5V current): " + "{:.3f}".format(asense0_converted) + " (A) \t Asense1 (Rt2 voltage): " + "{:.3f}".format(asense1_converted) + " (V) \t Asense2 (PG1.2V current): " + "{:.3f}".format(asense2_converted) + " (A) \t Asense3 (Rt1 voltage): " + "{:.3f}".format(asense3_converted) + " (V) \n" )
             else:
-                print("Time: " + str(second) + " (s) \t Asense0 (PG1.2VD current): " + str(asense0_converted) + " (A) \t Asense1 (Rt3 voltage): " + str(asense1_converted) + " (V) \t Asense2 (PG1.2A current): " + str(asense2_converted) + " (A) \t Asense3 (Rt4 voltage): \t" + str(asense3_converted) + " (V) \n" )
+                print("Time: " + "{:.2f}".format(second) + " (s) \t Asense0 (PG1.2VD current): " + "{:.3f}".format(asense0_converted) + " (A) \t Asense1 (Rt3 voltage): " + "{:.3f}".format(asense1_converted) + " (V) \t Asense2 (PG1.2A current): " + "{:.3f}".format(asense2_converted) + " (A) \t Asense3 (Rt4 voltage): " + "{:.3f}".format(asense3_converted) + " (V) \n" )
 
             sleep(1)
 
