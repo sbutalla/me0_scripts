@@ -75,22 +75,22 @@ def main(system, boss, oh, run_time_min, gain):
     powerdown_adc()
 
 def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
-    ax1.plot(x, y0, "red")
-    ax1.plot(x, y2, "black")
     if oh==0:
-        plt.legend(["PG2.5V current", "PG1.2V current"], loc ="upper right")
+        ax1.plot(x, y0, "red", label="PG2.5V current")
+        ax1.plot(x, y2, "black", label="PG1.2V current")
     else:
-        plt.legend(["PG1.2VD current", "PG1.2VA current"], loc ="upper right")
+        ax1.plot(x, y0, "red", label="PG1.2VD current")
+        ax1.plot(x, y2, "black", label="PG1.2VA current")
     plt.draw()
     plt.pause(0.01)
 
 def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
-    ax2.plot(x, y1, "red")
-    ax2.plot(x, y3, "black")
     if oh==0:
-        plt.legend(["Rt2 voltage", "Rt1 voltage"], loc ="upper right")
+        ax1.plot(x, y1, "red", label="Rt2 voltage")
+        ax1.plot(x, y3, "black", label="Rt1 voltage")
     else:
-        plt.legend(["Rt3 voltage", "Rt4 voltage"], loc ="upper right")
+        ax1.plot(x, y1, "red", label="Rt3 voltage")
+        ax1.plot(x, y3, "black", label="Rt4 voltage")
     plt.draw()
     plt.pause(0.01)
 
