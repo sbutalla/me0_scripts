@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import datetime
 
-def main(system, boss, run_time_min, gain):
+def main(system, boss, oh, run_time_min, gain):
 
     init_adc()
     print("ADC Readings:")
@@ -42,21 +42,24 @@ def main(system, boss, run_time_min, gain):
             asense1_value = read_adc(2, gain, system)
             asense2_value = read_adc(1, gain, system)
             asense3_value = read_adc(3, gain, system)
-            asense0_current = asense_current_conversion(asense0_value, gain) * 1e3 # in mA
-            asense1_current = asense_current_conversion(asense1_value, gain) * 1e3 # in mA
-            asense2_current = asense_current_conversion(asense2_value, gain) * 1e3 # in mA
-            asense3_current = asense_current_conversion(asense3_value, gain) * 1e3 # in mA
+            asense0_converted = asense_current_conversion(asense0_value)
+            asense1_converted = asense_temp_voltage_conversion(asense1_value)
+            asense2_converted = asense_current_conversion(asense2_value)
+            asense3_converted = asense_temp_voltage_conversion(asense3_value)
             second = time() - start_time
             seconds.append(second)
-            asense0.append(asense0_current)
-            asense1.append(asense1_current)
-            asense2.append(asense2_current)
-            asense3.append(asense3_current)
+            asense0.append(asense0_converted)
+            asense1.append(asense1_converted)
+            asense2.append(asense2_converted)
+            asense3.append(asense3_converted)
             minutes.append(second/60)
             live_plot(ax, minutes, asense0, asense1, asense2, asense3, run_time_min)
 
             file.write(str(second) + "\t" + str(asense0_current) + "\t" + str(asense1_current) + "\t" + str(asense2_current) + "\t" + str(asense3_current) + "\n" )
-            print("Time: " + str(second) + " (s) \t Asense0: " + str(asense0_current) + " (mA) \t Asense1: " + str(asense1_current) + " (mA) \t Asense2: " + str(asense2_current) + " (mA)  Asense3: \t" + str(asense3_current) + " (mA) \n" )
+            if oh==0:
+                print("Time: " + str(second) + " (s) \t Asense0 (PG2.5V current): " + str(asense0_converted) + " (A) \t Asense1 (Rt2 voltage): " + str(asense1_converted) + " (V) \t Asense2 (PG1.2V current): " + str(asense2_converted) + " (A) \t Asense3 (Rt1 voltage): \t" + str(asense3_converted) + " (V) \n" )
+            else:
+                print("Time: " + str(second) + " (s) \t Asense0 (PG1.2VD current): " + str(asense0_converted) + " (A) \t Asense1 (Rt3 voltage): " + str(asense1_converted) + " (V) \t Asense2 (PG1.2A current): " + str(asense2_converted) + " (A) \t Asense3 (Rt4 voltage): \t" + str(asense3_converted) + " (V) \n" )
 
             sleep(1)
 
@@ -149,16 +152,22 @@ def read_adc(channel, gain, system):
 
     return val
 
-def asense_current_conversion(asense_adc, gain):
+def asense_current_conversion(asense_adc):
     # Resistor values
     R = 0.01 # 0.01 Ohm
 
-    asense_adc_converted = 1.0 * (asense_adc/1024.0) # 10-bit ADC, range 0-1 V
-    #asense_voltage = asense_adc_converted/gain # Gain
-    asense_voltage = asense_adc_converted
+    asense_voltage = 1.0 * (asense_adc/1024.0) # 10-bit ADC, range 0-1 V
     asense_voltage /= 20 # Gain in current sense circuit
     asense_current = asense_voltage/R # asense current
     return asense_current
+
+def asense_temp_voltage_conversion(asense_adc):
+    # Resistor values
+    R = 0.01 # 0.01 Ohm
+
+    asense_voltage = 1.0 * (asense_adc/1024.0) # 10-bit ADC, range 0-1 V
+    return asense_voltage
+
 
 if __name__ == '__main__':
 
@@ -166,7 +175,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Asense monitoring for ME0 Optohybrid')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss")
-    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7")
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-m", "--minutes", action="store", dest="minutes", help="minutes = int. # of minutes you want to run")
     parser.add_argument("-a", "--gain", action="store", dest="gain", default = "2", help="gain = Gain for Asense ADCs: 2, 8, 16, 32")
@@ -205,22 +214,24 @@ if __name__ == '__main__':
     if boss is None:
         sys.exit()
 
+    if args.ohid is None:
+        print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
+        sys.exit()
+    if int(args.ohid) > 7:
+        print(Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
+        sys.exit()
+    oh = int(args.ohid)%2
+
     if args.system == "backend":
-        if args.ohid is None:
-            print(Colors.YELLOW + "Need OHID for backend" + Colors.ENDC)
-            sys.exit()
         if args.gbtid is None:
             print(Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
-            sys.exit()
-        if int(args.ohid) > 7:
-            print(Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
             sys.exit()
         if int(args.gbtid) > 1:
             print(Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
             sys.exit()
     else:
-        if args.ohid is not None or args.gbtid is not None:
-            print(Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
+        if args.gbtid is not None:
+            print(Colors.YELLOW + "GBTID only needed for backend" + Colors.ENDC)
             sys.exit()
 
     if args.gain not in ["2", "8", "16", "32"]:
@@ -248,7 +259,7 @@ if __name__ == '__main__':
         check_lpgbt_ready()
 
     try:
-        main(args.system, boss, args.minutes, gain)
+        main(args.system, boss, oh, args.minutes, gain)
     except KeyboardInterrupt:
         print(Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
