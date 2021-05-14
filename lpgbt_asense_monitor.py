@@ -33,17 +33,8 @@ def main(system, boss, oh, run_time_min, gain):
     fig2, ax2 = plt.subplots()
     ax2.set_xlabel('minutes')
     ax2.set_ylabel('Rt Voltage (V)')
-
-    if oh==0:
-        plt.legend([asense0, asense2], ["PG2.5V current", "PG1.2V current"])
-        plt.legend([asense1, asense3], ["Rt2 voltage", "Rt1 voltage"])
-    else:
-        plt.legend([asense0, asense2], ["PG1.2VD current", "PG1.2VA current"])
-        plt.legend([asense1, asense3], ["Rt3 voltage", "Rt4 voltage"])
-
     #ax.set_xticks(range(0,run_time_min+1))
     #ax.set_xlim([0,run_time_min])
-
     start_time = int(time())
     end_time = int(time()) + (60 * run_time_min)
 
@@ -83,14 +74,27 @@ def main(system, boss, oh, run_time_min, gain):
     powerdown_adc()
 
 def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
-    ax1.plot(x, y0, "red")
-    ax1.plot(x, y2, "black")
+    if oh==0:
+        ax1.plot(x, y0, "red", label=="PG2.5V current")
+        ax1.plot(x, y2, "black", label="PG1.2V current")
+    else:
+        ax1.plot(x, y0, "red", label=="PG1.2VD current")
+        ax1.plot(x, y2, "black", label="PG1.2VA current")
+    ax1.legend(loc="upper right")
     plt.draw()
     plt.pause(0.01)
 
 def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
     ax2.plot(x, y1, "red")
     ax2.plot(x, y3, "black")
+
+    if oh==0:
+        ax1.plot(x, y1, "red", label=="Rt2 voltage")
+        ax1.plot(x, y3, "black", label="Rt1 voltage")
+    else:
+        ax1.plot(x, y1, "red", label=="Rt3 voltage")
+        ax1.plot(x, y3, "black", label="Rt4 voltage")
+    ax2.legend(loc="upper right")
     plt.draw()
     plt.pause(0.01)
 
