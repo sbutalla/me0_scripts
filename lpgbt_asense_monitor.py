@@ -55,7 +55,7 @@ def main(system, boss, oh, run_time_min, gain):
             minutes.append(second/60)
             live_plot(ax, minutes, asense0, asense1, asense2, asense3, run_time_min)
 
-            file.write(str(second) + "\t" + str(asense0_current) + "\t" + str(asense1_current) + "\t" + str(asense2_current) + "\t" + str(asense3_current) + "\n" )
+            file.write(str(second) + "\t" + str(asense0_convertedt) + "\t" + str(asense1_converted) + "\t" + str(asense2_converted) + "\t" + str(asense3_converted) + "\n" )
             if oh==0:
                 print("Time: " + str(second) + " (s) \t Asense0 (PG2.5V current): " + str(asense0_converted) + " (A) \t Asense1 (Rt2 voltage): " + str(asense1_converted) + " (V) \t Asense2 (PG1.2V current): " + str(asense2_converted) + " (A) \t Asense3 (Rt1 voltage): \t" + str(asense3_converted) + " (V) \n" )
             else:
