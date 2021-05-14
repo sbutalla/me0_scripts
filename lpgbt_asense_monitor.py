@@ -80,7 +80,7 @@ def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
     else:
         ax1.plot(x, y0, "red", label="PG1.2VD current")
         ax1.plot(x, y2, "black", label="PG1.2VA current")
-    ax1.legend(loc="upper right")
+    plt.legend(loc="upper right")
     plt.draw()
     plt.pause(0.01)
 
@@ -91,7 +91,7 @@ def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
     else:
         ax2.plot(x, y1, "red", label="Rt3 voltage")
         ax2.plot(x, y3, "black", label="Rt4 voltage")
-    ax2.legend(loc="upper right")
+    plt.legend(loc="upper right")
     plt.draw()
     plt.pause(0.01)
 
