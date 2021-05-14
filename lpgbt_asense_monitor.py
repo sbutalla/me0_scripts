@@ -33,6 +33,8 @@ def main(system, boss, oh, run_time_min, gain):
     fig2, ax2 = plt.subplots()
     ax2.set_xlabel('minutes')
     ax2.set_ylabel('Rt Voltage (V)')
+    ax1.legend()
+    ax2.legend()
     #ax.set_xticks(range(0,run_time_min+1))
     #ax.set_xlim([0,run_time_min])
 
@@ -81,7 +83,6 @@ def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
     else:
         ax1.plot(x, y0, "red", label="PG1.2VD current")
         ax1.plot(x, y2, "black", label="PG1.2VA current")
-    ax1.legend()
     plt.draw()
     plt.pause(0.01)
 
@@ -92,7 +93,6 @@ def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
     else:
         ax2.plot(x, y1, "red", label="Rt3 voltage")
         ax2.plot(x, y3, "black", label="Rt4 voltage")
-    ax2.legend()
     plt.draw()
     plt.pause(0.01)
 
