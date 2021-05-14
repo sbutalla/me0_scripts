@@ -84,12 +84,12 @@ def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
     plt.pause(0.01)
 
 def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
-    line1, = ax1.plot(x, y1, "red")
-    line3, = ax1.plot(x, 3, "black")
+    line1, = ax2.plot(x, y1, "red")
+    line3, = ax2.plot(x, 3, "black")
     if oh==0:
-        ax1.legend((line1, line3), ("Rt2 voltage", "Rt1 voltage"), loc="upper right")
+        ax2.legend((line1, line3), ("Rt2 voltage", "Rt1 voltage"), loc="upper right")
     else:
-        ax1.legend((line1, line3), ("Rt3 voltage", "Rt4 voltage"), loc="upper right")
+        ax2.legend((line1, line3), ("Rt3 voltage", "Rt4 voltage"), loc="upper right")
     ax2.legend(loc="upper right")
     plt.draw()
     plt.pause(0.01)
