@@ -85,7 +85,7 @@ def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
 
 def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
     line1, = ax2.plot(x, y1, "red")
-    line3, = ax2.plot(x, 3, "black")
+    line3, = ax2.plot(x, y3, "black")
     if oh==0:
         ax2.legend((line1, line3), ("Rt2 voltage", "Rt1 voltage"), loc="upper right")
     else:
