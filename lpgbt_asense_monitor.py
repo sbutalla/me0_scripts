@@ -58,8 +58,6 @@ def main(system, boss, oh, run_time_min, gain):
             minutes.append(second/60)
             live_plot_current(ax1, minutes, asense0, asense2, run_time_min, oh)
             live_plot_temp(ax2, minutes, asense1, asense3, run_time_min, oh)
-            ax1.legend()
-            ax2.legend()
 
             file.write(str(second) + "\t" + str(asense0_converted) + "\t" + str(asense1_converted) + "\t" + str(asense2_converted) + "\t" + str(asense3_converted) + "\n" )
             if oh==0:
@@ -77,22 +75,22 @@ def main(system, boss, oh, run_time_min, gain):
     powerdown_adc()
 
 def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
+    ax1.plot(x, y0, "red")
+    ax1.plot(x, y2, "black")
     if oh==0:
-        ax1.plot(x, y0, "red", label="PG2.5V current")
-        ax1.plot(x, y2, "black", label="PG1.2V current")
+        ax1.legend([y0, y2], ["PG2.5V current", "PG1.2V current"])
     else:
-        ax1.plot(x, y0, "red", label="PG1.2VD current")
-        ax1.plot(x, y2, "black", label="PG1.2VA current")
+        ax1.legend([y0, y2], ["PG1.2VD current", "PG1.2VA current"])
     plt.draw()
     plt.pause(0.01)
 
 def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
+    ax2.plot(x, y1, "red")
+    ax2.plot(x, y3, "black")
     if oh==0:
-        ax2.plot(x, y1, "red", label="Rt2 voltage")
-        ax2.plot(x, y3, "black", label="Rt1 voltage")
+        ax1.legend([y1, y3], ["Rt2 voltage", "Rt1 voltage"])
     else:
-        ax2.plot(x, y1, "red", label="Rt3 voltage")
-        ax2.plot(x, y3, "black", label="Rt4 voltage")
+        ax1.legend([y1, y3], ["Rt3 voltage", "Rt4 voltage"])
     plt.draw()
     plt.pause(0.01)
 
