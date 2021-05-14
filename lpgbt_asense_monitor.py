@@ -33,8 +33,6 @@ def main(system, boss, oh, run_time_min, gain):
     fig2, ax2 = plt.subplots()
     ax2.set_xlabel('minutes')
     ax2.set_ylabel('Rt Voltage (V)')
-    ax1.legend()
-    ax2.legend()
     #ax.set_xticks(range(0,run_time_min+1))
     #ax.set_xlim([0,run_time_min])
 
@@ -60,6 +58,8 @@ def main(system, boss, oh, run_time_min, gain):
             minutes.append(second/60)
             live_plot_current(ax1, minutes, asense0, asense2, run_time_min, oh)
             live_plot_temp(ax2, minutes, asense1, asense3, run_time_min, oh)
+            ax1.legend()
+            ax2.legend()
 
             file.write(str(second) + "\t" + str(asense0_converted) + "\t" + str(asense1_converted) + "\t" + str(asense2_converted) + "\t" + str(asense3_converted) + "\n" )
             if oh==0:
