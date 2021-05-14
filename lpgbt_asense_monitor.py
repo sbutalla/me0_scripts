@@ -74,24 +74,23 @@ def main(system, boss, oh, run_time_min, gain):
     powerdown_adc()
 
 def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
+    line0, = ax1.plot(x, y0, "red")
+    line2, = ax1.plot(x, y2, "black")
     if oh==0:
-        ax1.plot(x, y0, "red", label="PG2.5V current")
-        ax1.plot(x, y2, "black", label="PG1.2V current")
+        ax1.legend((line0, line2), ("PG2.5V current", "PG1.2V current"), loc="upper right")
     else:
-        ax1.plot(x, y0, "red", label="PG1.2VD current")
-        ax1.plot(x, y2, "black", label="PG1.2VA current")
-    plt.legend(loc="upper right")
+        ax1.legend((line0, line2), ("PG1.2VD current", "PG1.2VA current"), loc="upper right")
     plt.draw()
     plt.pause(0.01)
 
 def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
+    line1, = ax1.plot(x, y1, "red")
+    line3, = ax1.plot(x, 3, "black")
     if oh==0:
-        ax2.plot(x, y1, "red", label="Rt2 voltage")
-        ax2.plot(x, y3, "black", label="Rt1 voltage")
+        ax1.legend((line1, line3), ("Rt2 voltage", "Rt1 voltage"), loc="upper right")
     else:
-        ax2.plot(x, y1, "red", label="Rt3 voltage")
-        ax2.plot(x, y3, "black", label="Rt4 voltage")
-    plt.legend(loc="upper right")
+        ax1.legend((line1, line3), ("Rt3 voltage", "Rt4 voltage"), loc="upper right")
+    ax2.legend(loc="upper right")
     plt.draw()
     plt.pause(0.01)
 
