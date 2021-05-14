@@ -27,9 +27,12 @@ def main(system, boss, oh, run_time_min, gain):
 
     run_time_min = float(run_time_min)
 
-    fig, ax = plt.subplots()
-    ax.set_xlabel('minutes')
-    ax.set_ylabel('Asense (mA)')
+    fig1, ax1 = plt.subplots()
+    ax1.set_xlabel('minutes')
+    ax1.set_ylabel('PG Current (A)')
+    fig2, ax2 = plt.subplots()
+    ax2.set_xlabel('minutes')
+    ax2.set_ylabel('Rt Voltage (V)')
     #ax.set_xticks(range(0,run_time_min+1))
     #ax.set_xlim([0,run_time_min])
 
@@ -53,8 +56,8 @@ def main(system, boss, oh, run_time_min, gain):
             asense2.append(asense2_converted)
             asense3.append(asense3_converted)
             minutes.append(second/60)
-            live_plot_current(ax, minutes, asense0, asense2, run_time_min, oh)
-            live_plot_temp(ax, minutes, asense1, asense3, run_time_min, oh)
+            live_plot_current(ax1, minutes, asense0, asense2, run_time_min, oh)
+            live_plot_temp(ax2, minutes, asense1, asense3, run_time_min, oh)
 
             file.write(str(second) + "\t" + str(asense0_converted) + "\t" + str(asense1_converted) + "\t" + str(asense2_converted) + "\t" + str(asense3_converted) + "\n" )
             if oh==0:
@@ -64,14 +67,16 @@ def main(system, boss, oh, run_time_min, gain):
 
             sleep(1)
 
-    figure_name = foldername + now + "_plot.pdf"
-    fig.savefig(figure_name, bbox_inches='tight')
+    figure_name1 = foldername + now + "_pg_current_plot.pdf"
+    fig1.savefig(figure_name1, bbox_inches='tight')
+    figure_name2 = foldername + now + "_rt_voltage_plot.pdf"
+    fig2.savefig(figure_name2, bbox_inches='tight')
 
     powerdown_adc()
 
-def live_plot_current(ax, x, y0, y2, run_time_min, oh):
-    ax.plot(x, y0, "red")
-    ax.plot(x, y2, "black")
+def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
+    ax1.plot(x, y0, "red")
+    ax1.plot(x, y2, "black")
     if oh==0:
         plt.legend(["PG2.5V current", "PG1.2V current"], loc ="upper right")
     else:
@@ -79,9 +84,9 @@ def live_plot_current(ax, x, y0, y2, run_time_min, oh):
     plt.draw()
     plt.pause(0.01)
 
-def live_plot_temp(ax, x, y1, y3, run_time_min, oh):
-    ax.plot(x, y1, "red")
-    ax.plot(x, y3, "black")
+def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
+    ax2.plot(x, y1, "red")
+    ax2.plot(x, y3, "black")
     if oh==0:
         plt.legend(["Rt2 voltage", "Rt1 voltage"], loc ="upper right")
     else:
