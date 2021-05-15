@@ -60,6 +60,9 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
     error_rates = {}
     link_bad_errors = {}
     sync_errors = {}
+
+    vfat_oh_link_reset()
+
     for reg in reg_list:
         print ("Using register: " + reg)
         write_perm = 0
@@ -68,8 +71,6 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
         elif vfat_registers[reg] == "rw":
             print ("Operation: READ & WRITE\n")
             write_perm = 1
-            
-        vfat_oh_link_reset()
 
         errors[reg] = 12*[0]
         error_rates[reg] = 12*[0]
