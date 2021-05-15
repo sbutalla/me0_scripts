@@ -138,7 +138,7 @@ def lpgbt_vfat_reset(system, vfat_list):
         
     # Link reset after VFAT reset
     vfat_oh_link_reset()
-    
+    sleep(0.1)
     
 if __name__ == '__main__':
 

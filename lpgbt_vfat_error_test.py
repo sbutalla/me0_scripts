@@ -62,6 +62,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
     sync_errors = {}
 
     vfat_oh_link_reset()
+    sleep(0.1)
 
     for reg in reg_list:
         print ("Using register: " + reg)
