@@ -1,6 +1,6 @@
 ## General
 
-Script for configuring LpGBTs on ME0 Optohybrid using either RPi+Cheesecake (preferred option) or USB dongle
+Script for configuring lpGBTs on ME0 Optohybrid using either RPi+Cheesecake or Backend
 
 lpGBT naming :
 
@@ -15,6 +15,15 @@ git clone https://github.com/andrewpeck/me0_scripts.git
 cd me0_scripts
 git checkout cheesecake_integration
 ```
+
+## Powering On
+
+After every power on, lpGBTs on ASIAGO need to be configured.
+
+For unfused ASIAGOs: configure both lpGBTs using RPi-CHeeseCake
+
+For fused ASIAGOs: reconfigure both lpGBTs using Backend or RPi-CHeeseCake
+
 
 ## Using Backend
 
@@ -33,19 +42,21 @@ export BOARD_TYPE="cvp13"
 Configure the master/boss lpgbt:
 
 ```
-python lpgbt_config.py -s backend -l boss -o <OH_LINK> -g <GBT_LINK>
+python lpgbt_config.py -s dryrun -l boss
+python lpgbt_config.py -s backend -l boss -o <OH_LINK_NR> -g <GBT_LINK_NR> -i config_boss.txt
 ```
 
 Configure the slave/sub lpgbt:
 
 ```
-python lpgbt_config.py -s backend -l sub -o <OH_LINK> -g <GBT_LINK>
+python lpgbt_config.py -s dryrun -l sub
+python lpgbt_config.py -s backend -l sub -o <OH_LINK_NR> -g <GBT_LINK_NR> -i config_sub.txt
 ```
 
 Enable TX2 for VTRX+ if required:
 
 ```
-python lpgbt_vtrx.py -s backend -l boss -o <OH_LINK> -g <GBT_LINK> -t name -c TX1 TX2 -e 1
+python lpgbt_vtrx.py -s backend -l boss -o <OH_LINK_NR> -g <GBT_LINK_NR> -t name -c TX1 TX2 -e 1
 ```
 
 ## Using CHeeseCake
