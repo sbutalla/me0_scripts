@@ -111,7 +111,15 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
             sync_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
             link_good[vfat][phase]    = simple_read_backend_reg(link_node, 0)
             sync_err_cnt[vfat][phase] = simple_read_backend_reg(sync_node, 9999)
-            print("\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%02d, cfg_run_errs=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase]))
+
+            result_str = ""
+            if link_good[vfat][phase]==1 and sync_err_cnt[vfat][phase]==0 and cfg_run[vfat][phase]==depth:
+                result_str += Colors.GREEN
+            else:
+                result_str += Colors.RED
+            result_str += "\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%02d, cfg_run_errs=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase])
+            result_str += Colors.ENDC
+            print(result_str)
 
     centers = 12*[0]
     widths  = 12*[0]
@@ -223,9 +231,9 @@ def setVfatRxPhase(system, vfat, phase):
 def test_find_phase_center():
     def check_finder(center, width, errs):
         if (center,width) == find_phase_center(errs):
-            print "OK"
+            print ("OK")
         else:
-            print "FAIL"
+            print ("FAIL")
     check_finder (5, 5,  [1,1,1,0,0,0,0,0,1,1,0,0,1,1,1,1]) # normal window
     check_finder (3, 4,  [1,0,0,0,0,1,1,1,1,1,0,0,0,1,1,1]) # symmetric goes to higher number (arbitrary)
     check_finder (0, 5,  [0,0,0,1,1,1,1,0,0,0,0,1,1,1,0,0]) # wraparound
