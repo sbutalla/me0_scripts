@@ -113,7 +113,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
             sync_err_cnt[vfat][phase] = simple_read_backend_reg(sync_node, 9999)
 
             result_str = ""
-            if link_good[vfat][phase]==1 and sync_err_cnt[vfat][phase]==0 and cfg_run[vfat][phase]==depth:
+            if link_good[vfat][phase]==1 and sync_err_cnt[vfat][phase]==0 and cfg_run[vfat][phase]==0:
                 result_str += Colors.GREEN
             else:
                 result_str += Colors.RED
