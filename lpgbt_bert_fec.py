@@ -1,5 +1,5 @@
 from rw_reg_lpgbt import *
-from time import time
+from time import time, sleep
 import sys
 import argparse
 import random
