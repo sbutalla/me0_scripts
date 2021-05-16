@@ -6,7 +6,7 @@ import random
 
 # VFAT number: boss/sub, ohid, gbtid, elink
 # For GE2/1 GEB + Pizza
-VFAT_TO_ELINK = {
+VFAT_TO_ELINK_GE21 = {
         0  : ("sub"  , 0, 1, 6),
         1  : ("sub"  , 0, 1, 24),
         2  : ("sub"  , 0, 1, 11),
@@ -22,20 +22,22 @@ VFAT_TO_ELINK = {
 }
 
 # For ME0 GEB
-#VFAT_TO_ELINK = {
-#        0  : ("boss" , 0, 0, 6),
-#        1  : ("sub"  , 0, 1, 24),
-#        2  : ("boss" , 0, 0, 11),
-#        3  : ("boss" , 0, 0, 3),
-#        4  : ("sub"  , 0, 1, 27),
-#        5  : ("sub"  , 0, 1, 25),
-#        6  : ("boss" , 1, 0, 6), # 3
-#        7  : ("sub"  , 1, 1, 24), # 25
-#        8  : ("boss" , 1, 0, 27), # 24
-#        9  : ("boss" , 1, 0, 6), # 27
-#        10 : ("sub"  , 1, 1, 27), # 6
-#        11 : ("sub"  , 1, 1, 25) # 11
-#}
+VFAT_TO_ELINK_ME0 = {
+        0  : ("sub"  , 0, 1, 6),
+        1  : ("sub"  , 0, 1, 24),
+        2  : ("sub"  , 0, 1, 11),
+        3  : ("boss" , 0, 0, 3),
+        4  : ("boss" , 0, 0, 27),
+        5  : ("boss" , 0, 0, 25),
+        6  : ("sub"  , 1, 1, 6),
+        7  : ("sub"  , 1, 1, 24),
+        8  : ("sub"  , 1, 1, 11),
+        9  : ("boss" , 1, 0, 3),
+        10  : ("boss" , 1, 0, 27),
+        11  : ("boss" , 1, 0, 25),
+}
+
+VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
 
 # Register to read/write
 vfat_registers = {
@@ -57,6 +59,9 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
 
     print ("Checking FEC Errors for: " + path)
     fec_errors = 0
+
+    vfat_oh_link_reset()
+    sleep(0.1)
 
     if path == "uplink": # check FEC errors on backend
         # Reset the error counters
@@ -120,9 +125,20 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
                     time_prev = time()
         
         end_fec_errors = lpgbt_fec_error_counter()
+        end_fec_error_print = ""
+        if end_fec_errors==0:
+            end_fec_error_print += Colors.GREEN
+        else:
+            end_fec_error_print += Colors.RED
         if opr == "read":
-            print ("\nNumber of FEC Errors = %d\n" %(end_fec_errors))
-        elif opr in ["run", "stop"]:
+            end_fec_error_print += "\nNumber of FEC Errors = %d\n" %(end_fec_errors)
+            end_fec_error_print += Colors.ENDC
+            print (end_fec_error_print)
+        elif opr == "stop":
+            end_fec_error_print += "\nEnd Error Counting with number of FEC Errors = %d\n" %(end_fec_errors)
+            end_fec_error_print += Colors.ENDC
+            print (end_fec_error_print)
+        elif opr == "run":
             print ("\nEnd Error Counting with number of FEC Errors = %d\n" %(end_fec_errors))
         fec_errors = end_fec_errors - start_fec_errors
         
