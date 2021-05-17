@@ -149,14 +149,14 @@ def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime):
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_START"), 1)
 
     # configure all vfats on the OH with default configuration
-    for i in range(6):
-        syncErrCnt = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, i)))
-        if syncErrCnt > 0:
-            print(Colors.YELLOW + "Skipping VFAT%d because it seems dead (sync err cnt = %d)" % (i, syncErrCnt) + Colors.ENDC)
-        else:
-            print("Configuring VFAT %d with default configuration" % i)
-        configureVfatForPulsing(i, oh_select, -1)
-    print ("")
+    #for i in range(6):
+    #    syncErrCnt = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, i)))
+    #    if syncErrCnt > 0:
+    #        print(Colors.YELLOW + "Skipping VFAT%d because it seems dead (sync err cnt = %d)" % (i, syncErrCnt) + Colors.ENDC)
+    #    else:
+    #        print("Configuring VFAT %d with default configuration" % i)
+    #    configureVfatForPulsing(i, oh_select, -1)
+    #print ("")
     
     # configure the pulsing VFAT
     for channel in channel_list:
