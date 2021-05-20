@@ -88,7 +88,7 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
                 if system=="backend":
                     if data_read!=data_write:
                         print (Colors.RED + "Register value mismatch\n" + Colors.ENDC)
-                        sys.exit()
+                        rw_terminate()
 
             curr_fec_errors = read_backend_reg(fec_node)
             time_passed = (time()-time_prev)/60.0

@@ -131,10 +131,6 @@ Use -h option for any script to check usage
 
 ```lpgbt_asense_monitor.py```: monitor asense on ME0 GEB
 
-```lpgbt_bert.py```: bit error rate tests for lpGBT (uplink/downlink/loopback)
-
-```lpgbt_bert_fec.py```: bit error rate tests using fec error rate counting 
-
 ```lpgbt_bias_rssi_scan.py```: scan VTRX+ bias current vs RSSI
 
 ```lpgbt_config.py```: configure lpGBT
@@ -149,6 +145,10 @@ Use -h option for any script to check usage
 
 ```lpgbt_led_show.py```: GPIO led show
 
+```lpgbt_optical_link_bert.py```: bit error rate tests for optical links (uplink/downlink/loopback) between lpGBT and backend using PRBS
+
+```lpgbt_optical_link_bert_fec.py```: bit error rate tests for optical links (uplink/downlink) between lpGBT and backend using fec error rate counting 
+
 ```lpgbt_init.py```: initialize lpGBT
 
 ```lpgbt_rssi_monitor.py```: monitor for VTRX+ RSSI value
@@ -161,13 +161,13 @@ Use -h option for any script to check usage
 
 ```lpgbt_vfat_elink_scan.py```: scan VFAT vs elink 
 
-```lpgbt_vfat_error_test.py```: error rate tests by read/write on VFAT registers
-
 ```lpgbt_vfat_phase_scan.py```: phase scan for VFAT elinks and set optimal phase setting
 
 ```lpgbt_vfat_reset.py```: reset VFAT
 
 ```lpgbt_vfat_sbit_test.py```: S-bit testing for VFATs
+
+```lpgbt_vfat_slow_control.py```: error rate tests by read/write on VFAT registers
 
 ```lpgbt_vtrx.py```: enable/disable TX channels or registers on VTRX+
 
