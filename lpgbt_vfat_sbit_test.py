@@ -145,9 +145,6 @@ def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime):
     #for i in range(12):
     #    write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.FPGA.TRIG.CTRL.TU_MASK.VFAT%i_TU_MASK" % (oh_select, i)), 0)
 
-    # Start the cyclic generator
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_START"), 1)
-
     # configure all vfats on the OH with default configuration
     #for i in range(6):
     #    syncErrCnt = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, i)))
@@ -162,6 +159,9 @@ def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime):
     for channel in channel_list:
         print("Configuring VFAT %d for pulsing on channel %d" % (vfat, channel))
         configureVfatForPulsing(vfat-6*oh_select, oh_select, channel)
+
+    # Start the cyclic generator
+    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_START"), 1)
 
     # Reading S-bit counter
     if nl1a != 0:

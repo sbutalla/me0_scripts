@@ -60,7 +60,8 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
     print ("Checking FEC Errors for: " + path)
     fec_errors = 0
 
-    vfat_oh_link_reset()
+    if opr in ["start", "run"]:
+        vfat_oh_link_reset()
     sleep(0.1)
 
     if path == "uplink": # check FEC errors on backend
