@@ -78,7 +78,6 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
         link_bad_errors[reg] = 12*[0]
         sync_errors[reg] = 12*[0]
 
-        t0 = time()
         node = {}
         for vfat in vfat_list:
             lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
@@ -94,11 +93,16 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
         #        data_read_after = read_backend_reg(node[vfat])
         #    n+=1
 
+        t0 = time()
         for vfat in vfat_list:
             n=0
             while n < niter:
+                print ("New loop %f"%((time() - t0)*1e6))
                 write_backend_reg(node[vfat], 0x111222)
+                print ("Reading done %f"%((time() - t0)*1e6))
                 data_read_after = read_backend_reg(node[vfat])
+                print ("Writing done %f"%((time() - t0)*1e6))
+                print ("")
                 n+=1
 
         print ((time()-t0)*1e6)
