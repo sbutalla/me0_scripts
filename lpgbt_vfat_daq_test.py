@@ -123,7 +123,6 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
 
     vfat_oh_link_reset()
     sleep(0.1)
-    write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 1)
 
     link_good_node = {}
     sync_error_node = {}
@@ -209,8 +208,6 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     print ("L1A and Calpulsing cycle completed in %.2f minutes \n"%(total_time/60.0))
     l1a_counter = read_backend_reg(l1a_node)
     calpulse_counter = read_backend_reg(calpulse_node)
-
-    write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 0)
 
     print ("Error test results for DAQ elinks")
     for vfat in vfat_list:
