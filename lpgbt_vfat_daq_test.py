@@ -54,7 +54,7 @@ def vfat_to_oh_gbt_elink(vfat):
     elink = VFAT_TO_ELINK[vfat][3]
     return lpgbt, ohid, gbtid, elink
 
-def configureVfatForPulsing(vfatN, ohN):
+def configureVfatForPulsing(vfatN, ohN, enable_channel):
 
     for i in range(128):
         write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,i)), 0x4000)  # mask all channels and disable the calpulse
@@ -110,8 +110,9 @@ def configureVfatForPulsing(vfatN, ohN):
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(ohN,vfatN)), 1)
 
     #unmask and enable calpulsing for all channels
-    for i in range(128):
-        write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,i)), 0x8000)
+    if enable_channel:
+        for i in range(128):
+            write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,i)), 0x8000)
 
 def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     if nl1a!=0:
@@ -140,6 +141,10 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
         check_lpgbt_link_ready(oh_select, gbt_select)
 
+        print("Configuring VFAT %d for all channels:" % (vfat))
+        enable_channel = 1
+        configureVfatForPulsing(vfat-6*oh_select, oh_select, enable_channel)
+
         link_good_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
         sync_error_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
         link_good = read_backend_reg(link_good_node[vfat])
@@ -158,12 +163,8 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_GAP"), l1a_bxgap)
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_COUNT"), nl1a)
 
-    # configure the pulsing VFAT
     if calpulse:
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 50) # 50 BX between Calpulse and L1A
-        for vfat in vfat_list:
-            print("Configuring VFAT %d for pulsing on all channels:" % (vfat))
-            configureVfatForPulsing(vfat-6*oh_select, oh_select)
     else:
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 0) # Disable Calpulsing
 
@@ -176,6 +177,8 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
     l1a_node = get_rwreg_node("GEM_AMC.TTC.CMD_COUNTERS.L1A")
     calpulse_node = get_rwreg_node("GEM_AMC.TTC.CMD_COUNTERS.CALPULSE")
+    l1a_counter_initial = read_backend_reg(l1a_node)
+    calpulse_counter_initial = read_backend_reg(calpulse_node)
 
     # Start the cyclic generator
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_START"), 1)
@@ -188,26 +191,32 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
             cyclic_running = read_backend_reg(cyclic_running_node)
             time_passed = (time()-time_prev)/60.0
             if time_passed >= 1:
-                l1a_counter = read_backend_reg(l1a_node)
-                calpulse_counter = read_backend_reg(calpulse_node)
+                l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
+                calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
                 print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d,  S-bit counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, s_bit_counter))
                 time_prev = time()
     else:
         while ((time()-t0)/60.0) < runtime:
             time_passed = (time()-time_prev)/60.0
             if time_passed >= 1:
-                l1a_counter = read_backend_reg(l1a_node)
-                calpulse_counter = read_backend_reg(calpulse_node)
+                l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
+                calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
                 print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d,  S-bit counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, s_bit_counter))
                 time_prev = time()
 
     # Stop the cyclic generator
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
 
+    # Disable channels on VFATs
+    for vfat in vfat_list:
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        enable_channel = 0
+        configureVfatForPulsing(vfat-6*oh_select, oh_select, enable_channel)
+
     total_time = time() - t0
-    print ("L1A and Calpulsing cycle completed in %.2f minutes \n"%(total_time/60.0))
-    l1a_counter = read_backend_reg(l1a_node)
-    calpulse_counter = read_backend_reg(calpulse_node)
+    print ("L1A and Calpulsing cycle completed in %.2f seconds (%.2f minutes) \n"%(total_time, total_time/60.0))
+    l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
+    calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
 
     print ("Error test results for DAQ elinks")
     for vfat in vfat_list:
@@ -246,7 +255,10 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         print ("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %d,  Nr. of Calpulses: %d,  DAQ Events: %d,  DAQ CRC Errors: %d" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
 
         daq_data_packet_size = 192 # 192 bits
-        ber = float(daq_crc_error_count_diff[vfat])/(daq_event_count_diff[vfat] * daq_data_packet_size)
+        if daq_event_count_diff[vfat]==0:
+            ber = 0
+        else:
+            ber = float(daq_crc_error_count_diff[vfat])/(daq_event_count_diff[vfat] * daq_data_packet_size)
         ber_ul = 1.0/(daq_event_count_diff[vfat] * daq_data_packet_size)
         if ber==0:
             print (Colors.GREEN + "VFAT#: %02d, Errors = %d,  Bit Error Ratio (BER) < "%(vfat, daq_crc_error_count_diff[vfat]) + "{:.2e}".format(ber_ul) + Colors.ENDC)
