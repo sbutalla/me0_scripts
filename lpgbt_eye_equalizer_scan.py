@@ -14,7 +14,7 @@ def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, bos
     #ymin=1
     #ymax=30
     ymin=0
-    ymax=31
+    ymax=32
     xmin=0
     xmax=64
 
