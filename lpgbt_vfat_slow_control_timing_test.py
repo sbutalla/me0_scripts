@@ -77,108 +77,37 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
         error_rates[reg] = 12*[0]
         link_bad_errors[reg] = 12*[0]
         sync_errors[reg] = 12*[0]
+
+        t0 = time()
+        node = {}
         for vfat in vfat_list:
             lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
             print ("VFAT#: %02d" %(vfat))
             
             check_lpgbt_link_ready(oh_select, gbt_select)
-            node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (oh_select, vfat-6*oh_select, reg))
-            link_good_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
-            sync_error_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
+            node[vfat] = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (oh_select, vfat-6*oh_select, reg))
 
-            t0 = time()
-            t00 = t0
+        #n=0
+        #while n<niter:
+        #    for vfat in vfat_list:
+        #        write_backend_reg(node[vfat], 0x111222)
+        #        data_read_after = read_backend_reg(node[vfat])
+        #    n+=1
+
+        for vfat in vfat_list:
             n=0
             while n < niter:
-
-                link_good = read_backend_reg(link_good_node)
-                sync_err = read_backend_reg(sync_error_node)
-                if link_good == 0:
-                    link_bad_errors[reg][vfat] += 1
-                if sync_err > 0:
-                    sync_errors[reg][vfat] += 1
-            
-                # Reading the register first
-                data_read_before = read_backend_reg(node)
-                if not write_perm:
-                    print ("Register value: " + hex(data_read_before))
-                else:
-                    if verbose:
-                        print ("Register value before writing: " + hex(data_read_before))
-
-                if not write_perm:
-                    n+=1
-                    continue
-                
-                # Writing to the register
-                data_write = random.randint(0, (2**32 - 1)) # random number to write (32 bit)
-                write_backend_reg(node, data_write)
-                if verbose:
-                    print ("Register value written: " + hex(data_write))
-                
-                # Reading the register after writing
-                data_read_after = read_backend_reg(node)
-                if verbose:
-                    if data_read_after == data_write:
-                        print (Colors.GREEN + "Register value after writing: " + hex(data_read_after) + "\n" + Colors.ENDC)
-                    else:
-                        print (Colors.RED + "Register value after writing: " + hex(data_read_after) + "\n" + Colors.ENDC)
-                    
-                if data_read_after!=data_write:
-                    errors[reg][vfat] += 1
-                    
-                # Print % completed every 10 seconds
-                if (time()-t0)>10: 
-                    per_completed = "{:.4f}".format(100 * float(n)/float(niter))
-                    time_elapsed_min = "{:.2f}".format(float(time()-t00)/60.00) # in minutes
-                    time_elapsed_hr = "{:.4f}".format(float(time()-t00)/3600.00) # in hours
-                    print ("\nIteration completed: " + per_completed + "% , Time elapsed: " + time_elapsed_min + " (min) or " + time_elapsed_hr + " (hr)")
-                    t0 = time()
+                write_backend_reg(node[vfat], 0x111222)
+                data_read_after = read_backend_reg(node[vfat])
                 n+=1
 
-            print ("VFAT#: %02d, number of link bad errors: %d, number of sync errors: %d" %(vfat, link_bad_errors[reg][vfat], sync_errors[reg][vfat]))
-            if write_perm:
-                print ("VFAT#: %02d, number of transactions: %d, number of mismatch errors: %d \n" %(vfat, niter, errors[reg][vfat]))
-            else:
-                print ("")
-            error_rates[reg][vfat] = float(errors[reg][vfat])/float(niter)
+        print ((time()-t0)*1e6)
+
+
           
         print ("Operations for register %s completed \n" % (reg))      
 
-    for reg in reg_list:
-        print ("Error test results for register: " + reg)
-        for vfat in vfat_list:
-            link_result_string = ""
-            if link_bad_errors[reg][vfat]==0:
-                link_result_string += Colors.GREEN
-            else:
-                link_result_string += Colors.YELLOW
-            link_result_string += "VFAT#: %02d, nr. of link bad errors: %s" %(vfat, link_bad_errors[reg][vfat])
-            link_result_string += Colors.ENDC
-            print (link_result_string)
 
-            sync_result_string = ""
-            if sync_errors[reg][vfat]==0:
-                sync_result_string += Colors.GREEN
-            else:
-                sync_result_string += Colors.YELLOW
-            sync_result_string += "VFAT#: %02d, nr. of sync errors: %s" %(vfat, sync_errors[reg][vfat])
-            sync_result_string += Colors.ENDC
-            print (sync_result_string)
-
-            if vfat_registers[reg] != "rw":
-                print ("") 
-                continue
-
-            result_string = ""
-            if error_rates[reg][vfat]==0:
-                result_string += Colors.GREEN
-            else:
-                result_string += Colors.YELLOW
-            result_string += "VFAT#: %02d, register mismatch fraction of errors: %s" %(vfat, "{:.4f}".format(error_rates[reg][vfat]))
-            result_string += Colors.ENDC
-            print (result_string)
-            print ("") 
 
 if __name__ == '__main__':
 

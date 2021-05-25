@@ -65,6 +65,10 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
     sleep(0.1)
 
     if path == "uplink": # check FEC errors on backend
+        if opr != "run":
+            print (Colors.YELLOW + "Only run operation allowed forr uplink" + Colors.ENDC)
+            rw_terminate()
+
         # Reset the error counters
         node = get_rwreg_node('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET')
         write_backend_reg(node, 0x001)
@@ -91,9 +95,9 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
                         print (Colors.RED + "Register value mismatch\n" + Colors.ENDC)
                         rw_terminate()
 
-            curr_fec_errors = read_backend_reg(fec_node)
             time_passed = (time()-time_prev)/60.0
             if time_passed >= 1:
+                curr_fec_errors = read_backend_reg(fec_node)
                 if verbose:
                     print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, curr_fec_errors))
                 time_prev = time()
@@ -118,11 +122,11 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
 
         if opr == "run":
             while ((time()-t0)/60.0) < runtime:
-                curr_fec_errors = lpgbt_fec_error_counter()
                 time_passed = (time()-time_prev)/60.0
                 if time_passed >= 1:
+                    curr_fec_errors = lpgbt_fec_error_counter()
                     if verbose:
-                        print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, lpgbt_fec_error_counter()))
+                        print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, curr_fec_errors))
                     time_prev = time()
         
         end_fec_errors = lpgbt_fec_error_counter()
@@ -152,23 +156,25 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
 
     data_rate=0
     if path=="uplink":
-        print ("For Uplink:\n")
+        print ("For Uplink:")
         data_rate = 10.24 * 1e9
     elif path=="downlink":
-        print ("For Downlink:\n")
+        print ("For Downlink:")
         data_rate = 2.56 * 1e9
     ber = float(fec_errors) / (data_rate * runtime * 60)
+    ber_ul = 1.0/ (data_rate * runtime * 60)
+    ber_str = ""
     if ber!=0:
-        ber_str = "{:.2e}".format(ber)
+        ber_str = "= {:.2e}".format(ber)
     else:
-        ber_str = "0"
+        ber_str = "< {:.2e}".format(ber_ul)
     result_string = ""
     if fec_errors == 0:
         result_string += Colors.GREEN 
     else:
         result_string += Colors.YELLOW
     result_string += "Number of FEC errors in " + str(runtime) + " minutes: " + str(fec_errors) + "\n"
-    result_string += "Bit Error Rate: " + ber_str + Colors.ENDC + "\n"
+    result_string += "Bit Error Ratio (BER) " + ber_str + Colors.ENDC + "\n"
     print (result_string)
     
     
@@ -181,13 +187,13 @@ def lpgbt_fec_error_counter():
        
 if __name__ == '__main__':
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='LPGBT Bit Error Rate Test (BERT) using FEC Error Counters')
+    parser = argparse.ArgumentParser(description='LPGBT Bit Error Ratio Test (BERT) using FEC Error Counters')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss/sub")
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend/dryrun)")
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend/dryrun)")
     parser.add_argument("-p", "--path", action="store", dest="path", help="path = uplink, downlink")
-    parser.add_argument("-r", "--opr", action="store", dest="opr", default="run", help="opr = start, run, read, stop (only for downlink)")
+    parser.add_argument("-r", "--opr", action="store", dest="opr", default="run", help="opr = start, run, read, stop (only run allowed for uplink)")
     parser.add_argument("-t", "--time", action="store", dest="time", help="TIME = measurement time in minutes")
     parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11) for read/write TEST_REG")
     parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugiin card addressing needs should be enabled")
@@ -255,18 +261,17 @@ if __name__ == '__main__':
             print (Colors.YELLOW + "For uplink, cheesecake not possible" + Colors.ENDC)
             sys.exit()
         if args.opr != "run":
-            print (Colors.YELLOW + "For uplink, operation option not required" + Colors.ENDC)
+            print (Colors.YELLOW + "For uplink, only run operation allowed" + Colors.ENDC)
             sys.exit()
     elif args.path == "downlink":
         if args.opr not in ["start", "run", "read", "stop"]:
-            print (Colors.YELLOW + "Inavlid operation" + Colors.ENDC)
+            print (Colors.YELLOW + "Invalid operation" + Colors.ENDC)
             sys.exit()
 
     if not boss:
         if args.path != "uplink":
             print (Colors.YELLOW + "Only uplink can be checked for sub lpGBT" + Colors.ENDC)
             sys.exit()
-
 
     if args.path == "uplink" or (args.path == "downlink" and args.opr == "run"):
         if args.time is None:

@@ -310,11 +310,17 @@ def simple_read_backend_reg(node, error_value):
         if output != "Bus Error":
             output_value = int(output,16)
         else:
-            output = rw_reg.readReg(node)
-            if output != "Bus Error":
-                output_value = int(output,16)
-            else:
-                output_value = error_value
+            output_value = error_value
+    return output_value
+
+def simple_write_backend_reg(node, data, error_value):
+    output_value = 0
+    if system=="backend":
+        output = rw_reg.writeReg(node, data)
+        if output != "Bus Error":
+            output_value = 1
+        else:
+            output_value = error_value
     return output_value
 
 def read_backend_reg(node):

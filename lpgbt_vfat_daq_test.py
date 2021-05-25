@@ -4,7 +4,7 @@ import sys
 import argparse
 import random
 
-# VFAT number: boss/sub, ohid, gbtid, elink
+# VFAT number: boss/sub, ohid, gbtid, elink 
 # For GE2/1 GEB + Pizza
 VFAT_TO_ELINK_GE21 = {
         0  : ("sub"  , 0, 1, 6),
@@ -39,18 +39,22 @@ VFAT_TO_ELINK_ME0 = {
 
 VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
 
+# Register to read/write
+vfat_registers = {
+        "HW_ID": "r",
+        "HW_ID_VER": "r",
+        "TEST_REG": "rw",
+        "HW_CHIP_ID": "r"
+}
+
 def vfat_to_oh_gbt_elink(vfat):
     lpgbt = VFAT_TO_ELINK[vfat][0]
     ohid  = VFAT_TO_ELINK[vfat][1]
     gbtid = VFAT_TO_ELINK[vfat][2]
     elink = VFAT_TO_ELINK[vfat][3]
     return lpgbt, ohid, gbtid, elink
-     
-def configureVfatForPulsing(vfatN, ohN, channel_list):
 
-    if (read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%i.VFAT%i.SYNC_ERR_CNT"%(ohN,vfatN))) > 0):
-        print (Colors.RED + "Link Errors" + Colors.ENDC)
-        rw_terminate()
+def configureVfatForPulsing(vfatN, ohN):
 
     for i in range(128):
         write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,i)), 0x4000)  # mask all channels and disable the calpulse
@@ -105,60 +109,72 @@ def configureVfatForPulsing(vfatN, ohN, channel_list):
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_BIAS_SD_I_BFCAS"     % (ohN , vfatN)) , 255)
     write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(ohN,vfatN)), 1)
 
-    #unmask and enable calpulsing on the given channels
-    if channel_list is not None:
-        for channel in channel_list:
-            write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,channel)), 0x8000)
+    #unmask and enable calpulsing for all channels
+    for i in range(128):
+        write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.VFAT_CHANNELS.CHANNEL%i"%(ohN,vfatN,i)), 0x8000)
 
+def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
+    if nl1a!=0:
+        print ("LPGBT VFAT Bit Error Ratio Test with %d L1A's\n" % (nl1a))
+    elif runtime!=0:
+        print ("LPGBT VFAT Bit Error Ratio Test for %.2f minutes\n" % (runtime))
+    errors = {}
+    error_rates = {}
 
-def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime, l1a_bxgap):
-    print ("LPGBT VFAT S-Bit Test\n")
-    
-    # Enable the generator
     vfat_oh_link_reset()
     sleep(0.1)
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 1)
-    
+
+    link_good_node = {}
+    sync_error_node = {}
+    daq_event_count_node = {}
+    daq_crc_error_node = {}
+    daq_event_count_initial = 12*[0]
+    daq_crc_error_count_initial = 12*[0]
+    daq_event_count_final = 12*[0]
+    daq_crc_error_count_final = 12*[0]
+    daq_event_count_diff = 12*[0]
+    daq_crc_error_count_diff = 12*[0]
+
+    # Check ready and get nodes
+    for vfat in vfat_list:
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        check_lpgbt_link_ready(oh_select, gbt_select)
+
+        link_good_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
+        sync_error_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
+        link_good = read_backend_reg(link_good_node[vfat])
+        sync_err = read_backend_reg(sync_error_node[vfat])
+        if system!="dryrun" and (link_good == 0 or sync_err > 0):
+            print (Colors.RED + "Link is bad for VFAT# %02d"%(vfat) + Colors.ENDC)
+            rw_terminate()
+        daq_event_count_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_EVENT_CNT' % (oh_select, vfat-6*oh_select))
+        daq_crc_error_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_CRC_ERROR_CNT' % (oh_select, vfat-6*oh_select))
+        daq_event_count_initial[vfat] = read_backend_reg(daq_event_count_node[vfat])
+        daq_crc_error_count_initial[vfat] = read_backend_reg(daq_crc_error_node[vfat])
+
     # Configure TTC generator
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.ENABLE"), 1)
-    write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 50) # 50 BX between Calpulse and L1A
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_GAP"), l1a_bxgap)
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_COUNT"), nl1a)
 
-    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-    print ("Testing VFAT#: %02d\n" %(vfat))
-
-    write_backend_reg(get_rwreg_node("GEM_AMC.TRIGGER.SBIT_MONITOR.OH_SELECT"), oh_select)
-
-    #write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.FPGA.TRIG.CTRL.VFAT_MASK" % oh_select), vfatMask)
-
-    #for i in range(12):
-    #    write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.FPGA.TRIG.CTRL.TU_MASK.VFAT%i_TU_MASK" % (oh_select, i)), 0)
-
-    # configure all vfats on the OH with default configuration
-    #for i in range(6):
-    #    syncErrCnt = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, i)))
-    #    if syncErrCnt > 0:
-    #        print(Colors.YELLOW + "Skipping VFAT%d because it seems dead (sync err cnt = %d)" % (i, syncErrCnt) + Colors.ENDC)
-    #    else:
-    #        print("Configuring VFAT %d with default configuration" % i)
-    #    configureVfatForPulsing(i, oh_select, -1)
-    #print ("")
-    
     # configure the pulsing VFAT
-    print("Configuring VFAT %d for pulsing on channels:" % (vfat))
-    print (channel_list)
-    configureVfatForPulsing(vfat-6*oh_select, oh_select, channel_list)
-
-    # Reading S-bit counter
-    if nl1a != 0:
-        print ("\nReading S-bit counter for %d L1A cycles\n" % (nl1a))
+    if calpulse:
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 50) # 50 BX between Calpulse and L1A
+        for vfat in vfat_list:
+            print("Configuring VFAT %d for pulsing on all channels:" % (vfat))
+            configureVfatForPulsing(vfat-6*oh_select, oh_select)
     else:
-        print ("\nReading S-bit counter for %.2f minutes\n" %(runtime))
-    s_bit_counter = 0
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 0) # Disable Calpulsing
+
+    if nl1a != 0:
+        print ("\nRunning for %d L1A cycles for VFATs:" % (nl1a))
+    else:
+        print ("\nRunning for %f minutes for VFATs:" %(runtime))
+    print (vfat_list)
+    print ("")
     cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
-    counter_node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SBIT_COUNT_ME0")
     l1a_node = get_rwreg_node("GEM_AMC.TTC.CMD_COUNTERS.L1A")
     calpulse_node = get_rwreg_node("GEM_AMC.TTC.CMD_COUNTERS.CALPULSE")
 
@@ -173,7 +189,6 @@ def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime, l1a_bxgap):
             cyclic_running = read_backend_reg(cyclic_running_node)
             time_passed = (time()-time_prev)/60.0
             if time_passed >= 1:
-                s_bit_counter = read_backend_reg(counter_node)
                 l1a_counter = read_backend_reg(l1a_node)
                 calpulse_counter = read_backend_reg(calpulse_node)
                 print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d,  S-bit counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, s_bit_counter))
@@ -182,7 +197,6 @@ def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime, l1a_bxgap):
         while ((time()-t0)/60.0) < runtime:
             time_passed = (time()-time_prev)/60.0
             if time_passed >= 1:
-                s_bit_counter = read_backend_reg(counter_node)
                 l1a_counter = read_backend_reg(l1a_node)
                 calpulse_counter = read_backend_reg(calpulse_node)
                 print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d,  S-bit counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, s_bit_counter))
@@ -193,61 +207,83 @@ def lpgbt_vfat_sbit(system, vfat, channel_list, nl1a, runtime, l1a_bxgap):
 
     total_time = time() - t0
     print ("L1A and Calpulsing cycle completed in %.2f minutes \n"%(total_time/60.0))
-    s_bit_counter = read_backend_reg(counter_node)
     l1a_counter = read_backend_reg(l1a_node)
     calpulse_counter = read_backend_reg(calpulse_node)
 
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 0)
 
-    l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
-    s_bit_expected = 0
-    if system != "dryrun":
-        s_bit_expected = len(channel_list) * l1a_counter
-        print ("Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %d,  Nr. of Calpulses: %d,  S-bits expected: %d,  S-bit counter: %d" %(total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, s_bit_expected, s_bit_counter))
-    else:
-        if nl1a != 0:
-            s_bit_expected = len(channel_list) * nl1a
-            print ("Number of L1A cycles: %d,  S-bits expected: %d,  S-bit counter: %d" %(nl1a, s_bit_expected, s_bit_counter))
+    print ("Error test results for DAQ elinks")
+    for vfat in vfat_list:
+        link_good = read_backend_reg(link_good_node[vfat])
+        sync_err = read_backend_reg(sync_error_node[vfat])
+        if link_good == 1:
+            print (Colors.GREEN + "VFAT#: %02d, link is GOOD"%(vfat) + Colors.ENDC)
         else:
-            s_bit_expected = len(channel_list) * l1a_rate * runtime
-            print ("Time: %.2f minutes,  L1A rate: %.2f kHz,  Nr. of L1A cycles: %.2f,  S-bits expected: %d,  S-bit counter: %d" %(runtime, l1a_rate/1000.0, l1a_rate * runtime, s_bit_expected, s_bit_counter))
+            print (Colors.RED + "VFAT#: %02d, link is BAD"%(vfat) + Colors.ENDC)
+        if sync_err==0:
+            print (Colors.GREEN + "VFAT#: %02d, nr. of sync errors: %d"%(vfat, sync_err) + Colors.ENDC)
+        else:
+            print (Colors.RED + "VFAT#: %02d, nr. of sync errors: %d"%(vfat, sync_err) + Colors.ENDC)
 
-    n_err = s_bit_expected - s_bit_counter
-    ber = float(n_err)/s_bit_expected
-    ber_ul = 1.0/s_bit_expected
-    if ber==0:
-        print (Colors.GREEN + "Errors = %d,  Bit Error Ratio (BER) < "%(n_err) + "{:.2e}".format(ber_ul) + Colors.ENDC)
-    else:
-        print (Colors.YELLOW + "Errors = %d,  Bit Error Ratio (BER) = "%(n_err) + "{:.2e}".format(ber) + Colors.ENDC)
+        daq_event_count_final[vfat] = read_backend_reg(daq_event_count_node[vfat])
+        daq_crc_error_count_final[vfat] = read_backend_reg(daq_crc_error_node[vfat])
+        daq_event_count_diff[vfat] = daq_event_count_final[vfat] - daq_event_count_initial[vfat]
+        daq_crc_error_count_diff[vfat] = daq_crc_error_count_final[vfat] - daq_crc_error_count_initial[vfat]
 
-    print ("\nS-bit testing done\n")
+        l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
+        if system == "dryrun":
+            if nl1a != 0:
+                daq_event_count_diff[vfat] = nl1a
+                l1a_counter = nl1a
+                if calpulse:
+                    calpulse_counter = nl1a
+                else:
+                    calpulse_counter = 0
+            else:
+                daq_event_count_diff[vfat] = l1a_rate * runtime
+                l1a_counter = l1a_rate * runtime
+                if calpulse:
+                    calpulse_counter = l1a_rate * runtime
+                else:
+                    calpulse_counter = 0
+        print ("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %d,  Nr. of Calpulses: %d,  DAQ Events: %d,  DAQ CRC Errors: %d" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
 
+        daq_data_packet_size = 192 # 192 bits
+        ber = float(daq_crc_error_count_diff[vfat])/(daq_event_count_diff[vfat] * daq_data_packet_size)
+        ber_ul = 1.0/(daq_event_count_diff[vfat] * daq_data_packet_size)
+        if ber==0:
+            print (Colors.GREEN + "VFAT#: %02d, Errors = %d,  Bit Error Ratio (BER) < "%(vfat, daq_crc_error_count_diff[vfat]) + "{:.2e}".format(ber_ul) + Colors.ENDC)
+        else:
+            print (Colors.YELLOW + "VFAT#: %02d, Errors = %d,  Bit Error Ratio (BER) = "%(vfat, daq_crc_error_count_diff[vfat]) + "{:.2e}".format(ber) + Colors.ENDC)
+
+            print ("")
+        print ("")
 if __name__ == '__main__':
 
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='LpGBT VFAT S-Bit Test')
+    parser = argparse.ArgumentParser(description='LpGBT VFAT DAQ Error Ratio Test')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfat", action="store", dest="vfat", help="vfat = VFAT number (0-11)")
-    parser.add_argument("-c", "--channels", action="store", dest="channels", nargs='+', help="channels = list of channels for chosen VFAT (0-127) or all")
+    parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-n", "--nl1a", action="store", dest="nl1a", help="nl1a = fixed number of L1A cycles")
-    parser.add_argument("-t", "--time", action="store", dest="time", help="time = time for which to run the S-bit testing (in minutes)")
+    parser.add_argument("-t", "--time", action="store", dest="time", help="time = time (in minutes) to perform the DAQ test")
     parser.add_argument("-b", "--bxgap", action="store", dest="bxgap", default="500", help="bxgap = Nr. of BX between two L1A's (default = 500 i.e. 12.5 us)")
+    parser.add_argument("-c", "--calpulse", action="store_true", dest="calpulse", help="if calpulsing for all channels should be enabled")
     parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
     args = parser.parse_args()
 
     if args.system == "chc":
-        #print ("Using Rpi CHeeseCake for S-bit test")
+        #print ("Using Rpi CHeeseCake for configuration")
         print (Colors.YELLOW + "Only Backend or dryrun supported" + Colors.ENDC)
         sys.exit()
     elif args.system == "backend":
-        print ("Using Backend for S-bit test")
+        print ("Using Backend for configuration")
         #print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
         #sys.exit()
     elif args.system == "dongle":
-        #print ("Using USB Dongle for S-bit test")
+        #print ("Using USB Dongle for configuration")
         print (Colors.YELLOW + "Only Backend or dryrun supported" + Colors.ENDC)
         sys.exit()
     elif args.system == "dryrun":
@@ -256,28 +292,16 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
 
-    if args.vfat is None:
-        print (Colors.YELLOW + "Enter VFAT number" + Colors.ENDC)
+    if args.vfats is None:
+        print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
-    vfat = int(args.vfat)
-    if vfat not in range(0,12):
-        print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
-        sys.exit()
-        
-    if args.channels is None:
-        print (Colors.YELLOW + "Enter Channel numbers" + Colors.ENDC)
-        sys.exit()
-    channel_list = []
-    if args.channels == ["all"]:
-        for i in range(0,128):
-            channel_list.append(i)
-    else:
-        for c in args.channels:
-            c_int = int(c)
-            if c_int not in range(0,128):
-                print (Colors.YELLOW + "Invalid Channel number, only allowed 0-127" + Colors.ENDC)
-                sys.exit()
-            channel_list.append(c_int)
+    vfat_list = []
+    for v in args.vfats:
+        v_int = int(v)
+        if v_int not in range(0,12):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+            sys.exit()
+        vfat_list.append(v_int)
 
     nl1a = 0
     if args.nl1a is not None:
@@ -304,10 +328,13 @@ if __name__ == '__main__':
     else:
         print ("Gap between consecutive L1A or CalPulses = %d BX = %.2f us" %(l1a_bxgap, l1a_timegap))
 
+    if args.calpulse:
+        print ("Calpulsing enabled for all channels for given VFATs")
+
     if args.addr:
         print ("Enabling VFAT addressing for plugin cards")
         write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
-
+        
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
@@ -319,7 +346,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_vfat_sbit(args.system, vfat, channel_list, nl1a, runtime, l1a_bxgap)
+        lpgbt_vfat_bert(args.system, vfat_list, nl1a, runtime, l1a_bxgap, args.calpulse)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

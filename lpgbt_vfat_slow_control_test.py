@@ -1,0 +1,335 @@
+from rw_reg_lpgbt import *
+from time import sleep, time
+import sys
+import argparse
+import random
+
+# VFAT number: boss/sub, ohid, gbtid, elink 
+# For GE2/1 GEB + Pizza
+VFAT_TO_ELINK_GE21 = {
+        0  : ("sub"  , 0, 1, 6),
+        1  : ("sub"  , 0, 1, 24),
+        2  : ("sub"  , 0, 1, 11),
+        3  : ("boss" , 0, 0, 3),
+        4  : ("boss" , 0, 0, 27),
+        5  : ("boss" , 0, 0, 25),
+        6  : ("boss" , 1, 0, 6),
+        7  : ("boss" , 1, 0, 16),
+        8  : ("sub"  , 1, 1, 18),
+        9  : ("boss" , 1, 0, 15),
+        10 : ("sub"  , 1, 1, 3),
+        11 : ("sub"  , 1, 1, 17)
+}
+
+# For ME0 GEB
+VFAT_TO_ELINK_ME0 = {
+        0  : ("sub"  , 0, 1, 6),
+        1  : ("sub"  , 0, 1, 24),
+        2  : ("sub"  , 0, 1, 11),
+        3  : ("boss" , 0, 0, 3),
+        4  : ("boss" , 0, 0, 27),
+        5  : ("boss" , 0, 0, 25),
+        6  : ("sub"  , 1, 1, 6),
+        7  : ("sub"  , 1, 1, 24),
+        8  : ("sub"  , 1, 1, 11),
+        9  : ("boss" , 1, 0, 3),
+        10  : ("boss" , 1, 0, 27),
+        11  : ("boss" , 1, 0, 25),
+}
+
+VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
+
+# Register to read/write
+vfat_registers = {
+        "HW_ID": "r",
+        "HW_ID_VER": "r",
+        "TEST_REG": "rw",
+        "HW_CHIP_ID": "r"
+}
+
+def vfat_to_oh_gbt_elink(vfat):
+    lpgbt = VFAT_TO_ELINK[vfat][0]
+    ohid  = VFAT_TO_ELINK[vfat][1]
+    gbtid = VFAT_TO_ELINK[vfat][2]
+    elink = VFAT_TO_ELINK[vfat][3]
+    return lpgbt, ohid, gbtid, elink
+        
+def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
+    if niter!=0:
+        print ("LPGBT VFAT Bit Error Ratio Test with %d transactions\n" % (niter))
+    elif runtime!=0:
+        print ("LPGBT VFAT Bit Error Ratio Test for %.2f minutes\n" % (runtime))
+    errors = {}
+    error_rates = {}
+    bus_errors = {}
+
+    vfat_oh_link_reset()
+    sleep(0.1)
+
+    link_good_node = {}
+    sync_error_node = {}
+    reg_node = {}
+    sc_transactions_node = get_rwreg_node('GEM_AMC.SLOW_CONTROL.VFAT3.TRANSACTION_CNT')
+    sc_crc_error_node = get_rwreg_node('GEM_AMC.SLOW_CONTROL.VFAT3.CRC_ERROR_CNT')
+    initial_sc_transaction_count = read_backend_reg(sc_transactions_node)
+    initial_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
+
+    # Check ready and get nodes
+    for vfat in vfat_list:
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        check_lpgbt_link_ready(oh_select, gbt_select)
+
+        link_good_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
+        sync_error_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
+        link_good = read_backend_reg(link_good_node[vfat])
+        sync_err = read_backend_reg(sync_error_node[vfat])
+        if system!="dryrun" and (link_good == 0 or sync_err > 0):
+            print (Colors.RED + "Link is bad for VFAT# %02d"%(vfat) + Colors.ENDC)
+            rw_terminate()
+
+        reg_node[vfat] = {}
+        for reg in reg_list:
+            reg_node[vfat][reg] = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (oh_select, vfat-6*oh_select, reg))
+
+    # Loop over registers
+    for reg in reg_list:
+        print ("Using register: " + reg)
+        write_perm = 0
+        if vfat_registers[reg] == "r":
+            print ("Operation: READ Only\n")
+            if niter!=0:
+                print ("Testing VFATs with %d transactions (read): "%(niter))
+            elif runtime!=0:
+                print ("Testing VFATs for %.2f minutes (read): "%(runtime))
+        elif vfat_registers[reg] == "rw":
+            print ("Operation: READ & WRITE\n")
+            if niter!=0:
+                print ("Testing VFATs with %d transactions (read+write): "%(niter))
+            elif runtime!=0:
+                print ("Testing VFATs for %.2f minutes (read+write): "%(runtime))
+            write_perm = 1
+        print (vfat_list)
+        print ("")
+
+        errors[reg] = 12*[0]
+        error_rates[reg] = 12*[0]
+        bus_errors[reg] = 12*[0]
+        t0 = time()
+        t00 = t0
+        n=0
+        continue_iteration = 1
+
+        # Nr. of iterations
+        while continue_iteration:
+            if write_perm:
+                data_write = random.randint(0, (2**32 - 1)) # random number to write (32 bit)
+
+            # Loop over VFATs
+            for vfat in vfat_list:
+                # Writing to the register
+                if write_perm:
+                    data_write_output = simple_write_backend_reg(reg_node[vfat][reg], data_write, -9999)
+                    if data_write_output == -9999:
+                        bus_errorsp[reg][vfat] += 1
+                    if verbose:
+                        print ("Register value written to VFAT# %02d: "%(vfat) + hex(data_write))
+                
+                # Reading the register
+                data_read = simple_read_backend_reg(reg_node[vfat][reg], -9999)
+                if data_read == -9999:
+                    bus_errorsp[reg][vfat] += 1
+                if write_perm:
+                    if verbose:
+                        if data_read == data_write:
+                            print (Colors.GREEN + "Register value after writing for VFAT# %02d: "%(vfat) + hex(data_read) + "\n" + Colors.ENDC)
+                        else:
+                            print (Colors.RED + "Register value after writing for VFAT# %02d: "%(vfat) + hex(data_read) + "\n" + Colors.ENDC)
+                else:
+                    print ("Register value read for VFAT# %02d: "%(vfat) + hex(data_read))
+
+                if write_perm and data_read!=data_write:
+                    errors[reg][vfat] += 1
+            if not write_perm:
+                print ("")
+
+            # Print % completed every 1 minute
+            if (time()-t0)>60:
+                if niter!=0:
+                    per_completed = "{:.4f}".format(100 * float(n)/float(niter))
+                elif runtime!=0:
+                    per_completed = "{:.4f}".format(100 * float(time()-t00)/float(runtime*60))
+                time_elapsed_min = "{:.2f}".format(float(time()-t00)/60.00) # in minutes
+                print ("\nIteration completed: " + per_completed + "% , Time elapsed: " + time_elapsed_min + " (min)")
+                t0 = time()
+
+            n+=1
+            continue_iteration = (n<niter) or ((time()-t00)<(runtime*60.0))
+
+        if niter==0:
+            niter = n
+        time_taken = (time() - t00)/60.00 # in minutes
+        if write_perm:
+            for vfat in vfat_list:
+                print ("VFAT#: %02d, number of transactions: %d, number of mismatch errors: %d \n" %(vfat, niter, errors[reg][vfat]))
+                error_rates[reg][vfat] = float(errors[reg][vfat])/float(niter)
+            print ("%d Operations (read+write) for register %s completed, Time taken: %.2f minutes \n" % (niter, reg, time_taken))
+        else:
+            print ("")
+            print ("%d Operations (read) for register %s completed, Time taken: %.2f minutes \n" % (niter, reg, time_taken))
+
+    final_sc_transaction_count = read_backend_reg(sc_transactions_node)
+    final_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
+    total_sc_transactions = final_sc_transaction_count - initial_sc_transaction_count
+    total_sc_crc_errors = final_sc_crc_error_count - initial_sc_crc_error_count
+    if system=="dryrun":
+        total_sc_transactions = niter
+    sc_transactions_per_vfat_per_reg = (float(total_sc_transactions)/len(vfat_list))/(len(reg_list))
+    sc_crc_errors_per_vfat_per_reg = (float(total_sc_crc_errors)/len(vfat_list))/(len(reg_list))
+    sc_crc_error_ratio = sc_crc_errors_per_vfat_per_reg / sc_transactions_per_vfat_per_reg
+    sc_crc_error_ratio_ul = 1.0 / sc_transactions_per_vfat_per_reg
+
+    for reg in reg_list:
+        print ("Error test results for register: " + reg)
+        if vfat_registers[reg] == "rw":
+            print ("Nr. of transactions (read+write): %d"%(niter))
+        else:
+            print ("Nr. of transactions (read): %d"%(niter))
+        for vfat in vfat_list:
+            link_good = read_backend_reg(link_good_node[vfat])
+            sync_err = read_backend_reg(sync_error_node[vfat])
+            if link_good == 1:
+                print (Colors.GREEN + "VFAT#: %02d, link is GOOD"%(vfat) + Colors.ENDC)
+            else:
+                print (Colors.RED + "VFAT#: %02d, link is BAD"%(vfat) + Colors.ENDC)
+            if sync_err==0:
+                print (Colors.GREEN + "VFAT#: %02d, nr. of sync errors: %d"%(vfat, sync_err) + Colors.ENDC)
+            else:
+                print (Colors.RED + "VFAT#: %02d, nr. of sync errors: %d"%(vfat, sync_err) + Colors.ENDC)
+
+            n_sc_opr = 0
+            if vfat_registers[reg] == "rw":
+                n_sc_opr = niter*2;
+            else:
+                n_sc_opr = niter;
+            n_bus_error = bus_errors[reg][vfat]
+            n_bus_error_ratio = float(n_bus_error)/n_sc_opr
+            n_bus_error_ratio_ul = 1.0/n_sc_opr
+
+            if n_bus_error == 0:
+                print (Colors.GREEN + "VFAT#: %02d, nr. of bus errors: %d, bus error ratio < %s"%(vfat, n_bus_error, "{:.2e}".format(n_bus_error_ratio_ul)) + Colors.ENDC)
+            else:
+                print (Colors.YELLO+ "VFAT#: %02d, nr. of bus errors: %d, bus error ratio: %s"%(vfat, n_bus_error, "{:.2e}".format(n_bus_error_ratio)) + Colors.ENDC)
+
+            if vfat_registers[reg] == "rw":
+                result_string = ""
+                error_rate_ul = 1.0/niter
+                if error_rates[reg][vfat]==0:
+                    result_string += Colors.GREEN
+                    result_string += "VFAT#: %02d, nr. of register mismatch errors: %d, mismatch error ratio < %s" %(vfat, errors[reg][vfat],  "{:.2e}".format(error_rate_ul))
+                else:
+                    result_string += Colors.YELLOW
+                    result_string += "VFAT#: %02d, nr. of register mismatch errors: %d, mismatch error ratio: %s" %(vfat, errors[reg][vfat],  "{:.2e}".format(error_rates[reg][vfat]))
+                result_string += Colors.ENDC
+                print (result_string)
+
+            if sc_crc_errors_per_vfat_per_reg == 0:
+                print (Colors.GREEN + "VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) < %.2e"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio_ul) + Colors.ENDC)
+            else:
+                print (Colors.YELLOW + "VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER): %.2e"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio) + Colors.ENDC)
+            print ("")
+        print ("")
+if __name__ == '__main__':
+
+    # Parsing arguments
+    parser = argparse.ArgumentParser(description='LpGBT VFAT Slow Control Error Ratio Test')
+    parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
+    #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
+    parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")
+    #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
+    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-r", "--reg", action="store", dest="reg", nargs='+', help="reg = register names to read/write: HW_ID (read), HW_ID_VER (read), TEST_REG (read/write), HW_CHIP_ID (read)")
+    parser.add_argument("-n", "--niter", action="store", dest="niter", help="niter = number of times to perform the read/write")
+    parser.add_argument("-t", "--runtime", action="store", dest="runtime", help="runtime = time (in minutes) to perform the read/write")
+    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-z", "--verbose", action="store_true", dest="verbose", default=False, help="Set for more verbosity")
+    args = parser.parse_args()
+
+    if args.system == "chc":
+        #print ("Using Rpi CHeeseCake for configuration")
+        print (Colors.YELLOW + "Only Backend or dryrun supported" + Colors.ENDC)
+        sys.exit()
+    elif args.system == "backend":
+        print ("Using Backend for configuration")
+        #print ("Only chc (Rpi Cheesecake) or dryrun supported at the moment")
+        #sys.exit()
+    elif args.system == "dongle":
+        #print ("Using USB Dongle for configuration")
+        print (Colors.YELLOW + "Only Backend or dryrun supported" + Colors.ENDC)
+        sys.exit()
+    elif args.system == "dryrun":
+        print ("Dry Run - not actually running vfat bert")
+    else:
+        print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
+        sys.exit()
+
+    if args.vfats is None:
+        print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
+        sys.exit()
+    vfat_list = []
+    for v in args.vfats:
+        v_int = int(v)
+        if v_int not in range(0,12):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+            sys.exit()
+        vfat_list.append(v_int)
+
+    if args.reg is None:
+        print ("Enter list of registers to read/write on VFAT")
+        sys.exit()
+    else:
+        for r in args.reg:
+            if r not in vfat_registers:
+                print (Colors.YELLOW + "Only valid options: HW_ID (read), HW_ID_VER (read), TEST_REG (read/write), HW_CHIP_ID (read)" + Colors.ENDC)  
+                sys.exit()  
+
+    niter = 0
+    runtime = 0
+    if args.niter is None and args.runtime is None:
+        niter = 1
+    elif args.niter is not None and args.runtime is not None:
+        print (Colors.YELLOW + "Only enter either nr. of iterations or run time" + Colors.ENDC)
+        sys.exit()
+    elif args.niter is None and args.runtime is not None:
+        runtime = float(args.runtime)
+    elif args.niter is not None and args.runtime is None:
+        niter = int(args.niter)
+
+    if args.addr:
+        print ("Enabling VFAT addressing for plugin cards")
+        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+        
+    # Parsing Registers XML File
+    print("Parsing xml file...")
+    parseXML()
+    print("Parsing complete...")
+
+    # Initialization (for CHeeseCake: reset and config_select)
+    rw_initialize(args.system)
+    print("Initialization Done\n")
+    
+    # Running Phase Scan
+    try:
+        lpgbt_vfat_bert(args.system, vfat_list, args.reg, niter, runtime, args.verbose)
+    except KeyboardInterrupt:
+        print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
+        rw_terminate()
+    except EOFError:
+        print (Colors.RED + "\nEOF Error" + Colors.ENDC)
+        rw_terminate()
+
+    # Termination
+    rw_terminate()
+
+
+
+
