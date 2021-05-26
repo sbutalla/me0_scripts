@@ -2,6 +2,7 @@ from rw_reg_lpgbt import *
 from time import sleep, time
 import sys
 import argparse
+from lpgbt_vfat_config import configureVfat
 
 config_boss_filename = "config_boss.txt"
 config_sub_filename = "config_sub.txt"
@@ -82,7 +83,18 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
     link_good    = [[0 for phase in range(16)] for vfat in range(12)]
     sync_err_cnt = [[0 for phase in range(16)] for vfat in range(12)]
     cfg_run      = [[0 for phase in range(16)] for vfat in range(12)]
+    daq_crc_error      = [[0 for phase in range(16)] for vfat in range(12)]
     errs         = [[0 for phase in range(16)] for vfat in range(12)]
+
+    for vfat in vfat_list:
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        check_lpgbt_link_ready(oh_select, gbt_select)
+
+        print("Configuring VFAT %d for all channels" % (vfat))
+        enable_channel = 1
+        configureVfat(1, vfat-6*oh_select, oh_select, enable_channel, None, 0)
+
+    cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
 
     for phase in range(0, 16):
         print('Scanning phase %d' % phase)
@@ -94,39 +106,62 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         # Reset the link, give some time to accumulate any sync errors and then check VFAT comms
         sleep(0.1)
         vfat_oh_link_reset()
-        sleep(0.001)
+        sleep(0.1)
+
+        # Send L1A to get DAQ events from VFATs
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.ENABLE"), 1)
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_GAP"), 500)
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 50) # 50 BX between Calpulse and L1A
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_COUNT"), 200)
+
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_START"), 1)
+        cyclic_running = 1
+        while cyclic_running:
+            cyclic_running = read_backend_reg(cyclic_running_node)
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
 
         # read cfg_run some number of times, check link good status and sync errors
         print ("Checking errors: ")
         for vfat in vfat_list:
             lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-            
-            check_lpgbt_link_ready(oh_select, gbt_select)   
-            cfg_node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
+
+            # Check Slow Control
+            cfg_node = get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN" % (oh_select, vfat-6*oh_select))
             for iread in range(depth):
                 vfat_cfg_run = simple_read_backend_reg(cfg_node, 9999)
                 cfg_run[vfat][phase] += (vfat_cfg_run != 0 and vfat_cfg_run != 1)
-            
-            link_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
-            sync_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
+
+            # Check Link Good and Sync Errors
+            link_node = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select))
+            sync_node = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select))
             link_good[vfat][phase]    = simple_read_backend_reg(link_node, 0)
             sync_err_cnt[vfat][phase] = simple_read_backend_reg(sync_node, 9999)
 
+            # Check DAQ event counter with L1A
+            daq_crc_error[vfat][phase] = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_CRC_ERROR_CNT" % (oh_select, vfat-6*oh_select)))
+
             result_str = ""
-            if link_good[vfat][phase]==1 and sync_err_cnt[vfat][phase]==0 and cfg_run[vfat][phase]==0:
+            if link_good[vfat][phase]==1 and sync_err_cnt[vfat][phase]==0 and cfg_run[vfat][phase]==0 and daq_crc_error[vfat][phase]==0:
                 result_str += Colors.GREEN
             else:
                 result_str += Colors.RED
-            result_str += "\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%02d, cfg_run_errs=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase])
+            result_str += "\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%d, cfg_run_errs=%d, daq_crc_error=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase], daq_crc_error[vfat][phase])
             result_str += Colors.ENDC
             print(result_str)
+
+    # Disable channels on VFATs
+    for vfat in vfat_list:
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        enable_channel = 0
+        configureVfat(1, vfat-6*oh_select, oh_select, enable_channel, None, 0)
 
     centers = 12*[0]
     widths  = 12*[0]
 
     for vfat in vfat_list:
         for phase in range(0, 16):
-            errs[vfat][phase] = (not 1==link_good[vfat][phase]) + sync_err_cnt[vfat][phase] + cfg_run[vfat][phase]
+            errs[vfat][phase] = (not 1==link_good[vfat][phase]) + sync_err_cnt[vfat][phase] + cfg_run[vfat][phase] + daq_crc_error[vfat][phase]
         centers[vfat], widths[vfat] = find_phase_center(errs[vfat])
 
     print ("phase : 0123456789ABCDEF")
