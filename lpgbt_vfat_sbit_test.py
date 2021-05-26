@@ -86,7 +86,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, nl1a, runtime, l1a_b
         enable_channel = 1
         configureVfat(1, vfat-6*oh_select, oh_select, enable_channel, channel_list[elink], 0)
 
-        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_SBIT_ME0"), elink) # Select Elink (16 channels) for reading S-bits
+        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_ELINK_SBIT_ME0"), elink) # Select Elink (16 channels) for reading S-bits
         s_bit_counter_initial = read_backend_reg(counter_node)
         l1a_counter_initial = read_backend_reg(l1a_node)
         calpulse_counter_initial = read_backend_reg(calpulse_node)
