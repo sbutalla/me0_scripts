@@ -171,6 +171,8 @@ Use -h option for any script to check usage
 
 ```lpgbt_vfat_slow_control_test.py```: error tests by read/write on VFAT registers using slow control
 
+```lpgbt_vfat_slow_control_timing_test.py```: timing tests for read/write on VFAT registers using slow control
+
 ```lpgbt_vtrx.py```: enable/disable TX channels or registers on VTRX+
 
 ```reg_interface.py```: interactive tool to communicate with lpGBT registers

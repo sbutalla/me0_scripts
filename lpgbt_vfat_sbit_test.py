@@ -172,7 +172,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, nl1a, runtime, l1a_b
 
         # Configure TTC generator
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.ENABLE"), 1)
-        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 50) # 50 BX between Calpulse and L1A
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 25) # 25 BX between Calpulse and L1A
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_GAP"), l1a_bxgap)
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_COUNT"), nl1a)
 
@@ -203,11 +203,14 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, nl1a, runtime, l1a_b
                     print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d,  S-bit counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, s_bit_counter))
                     time_prev = time()
 
+        # Disable channels for ELINK
+        configureVfatForPulsing(vfat-6*oh_select, oh_select, None)
+
         # Stop the cyclic generator
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
 
         total_time = time() - t0
-        print ("ELINK# %02d: L1A and Calpulsing cycle completed in %.2f minutes \n"%(elink, total_time/60.0))
+        print ("ELINK# %02d: L1A and Calpulsing cycle completed in %.2f seconds (%.2f minutes) \n"%(elink, total_time, total_time/60.0))
         s_bit_counter = read_backend_reg(counter_node) - s_bit_counter_initial
         l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
         calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
@@ -219,22 +222,35 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, nl1a, runtime, l1a_b
 
     print ("S-Bit Error Test Results for VFAT %02d: \n"%(vfat))
     l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
+
+    n_trigger_pads = 8*[0]
     for elink in elink_list:
+        for channel in channel_list[elink]:
+            if channel%2==0:
+                n_trigger_pads[elink] += 1
+            else:
+                if (channel-1) not in channel_list[elink]:
+                    n_trigger_pads[elink] += 1
+
         s_bit_expected = 0
         if system != "dryrun":
-            s_bit_expected = 0.5 * len(channel_list[elink]) * l1a_counter_list[elink]
-            print ("ELINK# %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %d,  Nr. of Calpulses: %d,  S-bits expected: %d,  S-bit counter: %d" %(elink, total_time/60.0, l1a_rate/1000.0, l1a_counter_list[elink], calpulse_counter_list[elink], s_bit_expected, s_bit_counter_list[elink]))
+            s_bit_expected = n_trigger_pads[elink] * calpulse_counter_list[elink]
+            print ("ELINK# %02d, Time: %.2f seconds (%.2f minutes),  L1A rate: %.2f kHz, Nr. of L1A's: %d,  Nr. of Calpulses: %d,  S-bits expected: %d,  S-bit counter: %d" %(elink, total_time, total_time/60.0, l1a_rate/1000.0, l1a_counter_list[elink], calpulse_counter_list[elink], s_bit_expected, s_bit_counter_list[elink]))
         else:
             if nl1a != 0:
-                s_bit_expected = 0.5 * len(channel_list[elink]) * nl1a
+                s_bit_expected = n_trigger_pads[elink] * nl1a
                 print ("ELINK# %02d, Number of L1A cycles: %d,  S-bits expected: %d,  S-bit counter: %d" %(elink, nl1a, s_bit_expected, s_bit_counter_list[elink]))
             else:
-                s_bit_expected = 0.5 * len(channel_list[elink]) * l1a_rate * runtime
+                s_bit_expected = n_trigger_pads[elink] * l1a_rate * runtime
                 print ("ELINK# %02d, Time: %.2f minutes,  L1A rate: %.2f kHz,  Nr. of L1A cycles: %.2f,  S-bits expected: %d,  S-bit counter: %d" %(elink, runtime, l1a_rate/1000.0, l1a_rate * runtime, s_bit_expected, s_bit_counter_list[elink]))
 
         n_err = s_bit_expected - s_bit_counter_list[elink]
-        ber = float(n_err)/s_bit_expected
-        ber_ul = 1.0/s_bit_expected
+        if s_bit_expected == 0:
+            ber = 0
+            ber_ul = 0
+        else:
+            ber = float(n_err)/s_bit_expected
+            ber_ul = 1.0/s_bit_expected
         if ber==0:
             print (Colors.GREEN + "ELINK# %02d, Errors = %d,  Bit Error Ratio (BER) < "%(elink, n_err) + "{:.2e}".format(ber_ul) + Colors.ENDC)
         else:

@@ -73,6 +73,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
     sc_crc_error_node = get_rwreg_node('GEM_AMC.SLOW_CONTROL.VFAT3.CRC_ERROR_CNT')
     initial_sc_transaction_count = read_backend_reg(sc_transactions_node)
     initial_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
+    total_sc_transactions_alt = {}
 
     # Check ready and get nodes
     for vfat in vfat_list:
@@ -111,6 +112,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
         print (vfat_list)
         print ("")
 
+        total_sc_transactions_alt[reg] = 0
         errors[reg] = 12*[0]
         error_rates[reg] = 12*[0]
         bus_errors[reg] = 12*[0]
@@ -129,6 +131,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
                 # Writing to the register
                 if write_perm:
                     data_write_output = simple_write_backend_reg(reg_node[vfat][reg], data_write, -9999)
+                    total_sc_transactions_alt[reg] += 1
                     if data_write_output == -9999:
                         bus_errorsp[reg][vfat] += 1
                     if verbose:
@@ -136,6 +139,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
                 
                 # Reading the register
                 data_read = simple_read_backend_reg(reg_node[vfat][reg], -9999)
+                total_sc_transactions_alt[reg] += 1
                 if data_read == -9999:
                     bus_errorsp[reg][vfat] += 1
                 if write_perm:
@@ -181,19 +185,33 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
     final_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
     total_sc_transactions = final_sc_transaction_count - initial_sc_transaction_count
     total_sc_crc_errors = final_sc_crc_error_count - initial_sc_crc_error_count
-    if system=="dryrun":
-        total_sc_transactions = niter
-    sc_transactions_per_vfat_per_reg = (float(total_sc_transactions)/len(vfat_list))/(len(reg_list))
-    sc_crc_errors_per_vfat_per_reg = (float(total_sc_crc_errors)/len(vfat_list))/(len(reg_list))
-    sc_crc_error_ratio = sc_crc_errors_per_vfat_per_reg / sc_transactions_per_vfat_per_reg
-    sc_crc_error_ratio_ul = 1.0 / sc_transactions_per_vfat_per_reg
+    daq_data_packet_size = 192 # 192 bits
+
+    total_transaction_index = 0
+    for reg in reg_list:
+        if vfat_registers[reg] == "rw":
+            total_transaction_index += 2
+        else:
+            total_transaction_index += 1
 
     for reg in reg_list:
         print ("Error test results for register: " + reg)
+        weight = 0
         if vfat_registers[reg] == "rw":
             print ("Nr. of transactions (read+write): %d"%(niter))
+            weight = 2.0/total_transaction_index
         else:
             print ("Nr. of transactions (read): %d"%(niter))
+            weight = 1.0/total_transaction_index
+
+        print (total_sc_transactions_alt[reg])
+        total_sc_transactions = total_sc_transactions_alt[reg] # since TRANSACTION_CNT is a 16-bit rolling register
+        #sc_transactions_per_vfat_per_reg = (float(total_sc_transactions)/len(vfat_list)) * weight # only required when using the TRANSACTION_CNT register
+        sc_transactions_per_vfat_per_reg = (float(total_sc_transactions)/len(vfat_list)) # when using the alternate counter
+        sc_crc_errors_per_vfat_per_reg = (float(total_sc_crc_errors)/len(vfat_list)) * weight
+        sc_crc_error_ratio = sc_crc_errors_per_vfat_per_reg / (sc_transactions_per_vfat_per_reg * daq_data_packet_size)
+        sc_crc_error_ratio_ul = 1.0 / (sc_transactions_per_vfat_per_reg * daq_data_packet_size)
+
         for vfat in vfat_list:
             link_good = read_backend_reg(link_good_node[vfat])
             sync_err = read_backend_reg(sync_error_node[vfat])

@@ -55,7 +55,7 @@ def vfat_to_oh_gbt_elink(vfat):
     return lpgbt, ohid, gbtid, elink
         
 def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
-    print ("LPGBT VFAT Bit Error Rate Test with %s transactions\n" % (str(niter)))
+    print ("LPGBT VFAT Slow Control Timing Measurements\n" % (str(niter)))
     errors = {}
     error_rates = {}
     link_bad_errors = {}
@@ -94,29 +94,27 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
         #    n+=1
 
         t0 = time()
+        print ("Start time %f microseconds"%((time() - t0)*1e6))
         for vfat in vfat_list:
             n=0
             while n < niter:
-                print ("New loop %f"%((time() - t0)*1e6))
+                print ("New loop %f microseconds"%((time() - t0)*1e6))
                 write_backend_reg(node[vfat], 0x111222)
-                print ("Reading done %f"%((time() - t0)*1e6))
+                print ("Reading done %f microseconds"%((time() - t0)*1e6))
                 data_read_after = read_backend_reg(node[vfat])
-                print ("Writing done %f"%((time() - t0)*1e6))
+                print ("Writing done %f microseconds"%((time() - t0)*1e6))
                 print ("")
                 n+=1
 
-        print ((time()-t0)*1e6)
+        print ("Stop time %f microseconds"%((time() - t0)*1e6))
 
-
-          
         print ("Operations for register %s completed \n" % (reg))      
-
 
 
 if __name__ == '__main__':
 
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='LpGBT VFAT Error Rate Test')
+    parser = argparse.ArgumentParser(description='LpGBT VFAT Slow Control Timing Test')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")

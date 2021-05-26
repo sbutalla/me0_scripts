@@ -164,7 +164,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_L1A_COUNT"), nl1a)
 
     if calpulse:
-        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 25) # 50 BX between Calpulse and L1A
+        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 25) # 25 BX between Calpulse and L1A
     else:
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 0) # Disable Calpulsing
 
@@ -237,7 +237,11 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         daq_crc_error_count_diff[vfat] = daq_crc_error_count_final[vfat] - daq_crc_error_count_initial[vfat]
 
         l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
-        if system == "dryrun":
+        if system != "dryrun":
+            if daq_event_count_diff[vfat] != l1a_counter%256:
+                print (Colors.YELLOW + "Mismatch between DAQ_EVENT_CNT and L1A counter" + Colors.ENDC)
+            daq_event_count_diff[vfat] = l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
+        else:
             if nl1a != 0:
                 daq_event_count_diff[vfat] = nl1a
                 l1a_counter = nl1a
