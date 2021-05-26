@@ -184,7 +184,7 @@ def configureVfat(configure, vfatN, ohN, enable_channel=0, channel_list=None, lo
         write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(ohN,vfatN)), 0)
 
 
-def lpgbt_vfat_config(system, vfat_list, low_thresh):
+def lpgbt_vfat_config(system, vfat_list, low_thresh, configure):
     print ("LPGBT VFAT Configuration\n")
     
     vfat_oh_link_reset()
@@ -192,8 +192,11 @@ def lpgbt_vfat_config(system, vfat_list, low_thresh):
 
     for vfat in vfat_list:
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-        print ("Configuring VFAT#: %02d" %(vfat))
-        configureVfat(1, vfat-6*oh_select, oh_select, 0, None, low_thresh)
+        if configure:
+            print ("Configuring VFAT#: %02d" %(vfat))
+        else:
+            print ("Unconfiguring VFAT#: %02d" %(vfat))
+        configureVfat(configure, vfat-6*oh_select, oh_select, 0, None, low_thresh)
         print ("")
 
     print ("\nVFAT configuration done\n")
@@ -209,6 +212,7 @@ if __name__ == '__main__':
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-lt", "--low_thresh", action="store_true", dest="low_thresh", help="low_thresh = to set low threshold for channels")
     parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-c", "--config", action="store", dest="config", help="config = 1 for configure, 0 for unconfigure")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -244,6 +248,11 @@ if __name__ == '__main__':
         print ("Enabling VFAT addressing for plugin cards")
         write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
 
+    if args.config not in ["0", "1"]:
+        print (Colors.YELLOW + "Only allowed options: 0 and 1" + Colors.ENDC)
+        sys.exit()
+    configure = int(args.config)
+
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
@@ -255,7 +264,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_vfat_config(args.system, vfat_list, args.low_thresh)
+        lpgbt_vfat_config(args.system, vfat_list, args.low_thresh, configure)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

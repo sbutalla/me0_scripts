@@ -133,7 +133,7 @@ Use -h option for any script to check usage
 
 ```lpgbt_bias_rssi_scan.py```: scan VTRX+ bias current vs RSSI
 
-```lpgbt_config.py```: configure lpGBT
+```lpgbt_config.py```: configure or unconfigure lpGBT
 
 ```lpgbt_efuse.py```: fuse registers on lpGBT
 
