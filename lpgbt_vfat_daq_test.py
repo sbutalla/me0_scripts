@@ -134,7 +134,12 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
             if time_passed >= 1:
                 l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                 calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d,  S-bit counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, s_bit_counter))
+                print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter))
+                vfat_results_string = ""
+                for vfat in vfat_list:
+                    daq_error_count_temp = read_backend_reg(daq_crc_error_node[vfat]) - daq_event_count_initial[vfat]
+                    vfat_results_string += "VFAT %02d DAQ Errors: %d, "%(vfat, daq_error_count_temp)
+                print (vfat_results_string + "\n")
                 time_prev = time()
     else:
         while ((time()-t0)/60.0) < runtime:
@@ -142,7 +147,12 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
             if time_passed >= 1:
                 l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                 calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d,  S-bit counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, s_bit_counter))
+                print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter))
+                vfat_results_string = ""
+                for vfat in vfat_list:
+                    daq_error_count_temp = read_backend_reg(daq_crc_error_node[vfat]) - daq_event_count_initial[vfat]
+                    vfat_results_string += "VFAT %02d DAQ Errors: %d, "%(vfat, daq_error_count_temp)
+                print (vfat_results_string + "\n")
                 time_prev = time()
 
     # Stop the cyclic generator
