@@ -56,10 +56,14 @@ def vfat_to_oh_gbt_elink(vfat):
     return lpgbt, ohid, gbtid, elink
 
 def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
+    file_out = open("vfat_daq_test_output.txt", "w+")
+
     if nl1a!=0:
         print ("LPGBT VFAT Bit Error Ratio Test with %d L1A's\n" % (nl1a))
+        file_out.write("LPGBT VFAT Bit Error Ratio Test with %d L1A's\n\n" % (nl1a))
     elif runtime!=0:
         print ("LPGBT VFAT Bit Error Ratio Test for %.2f minutes\n" % (runtime))
+        file_out.write("LPGBT VFAT Bit Error Ratio Test for %.2f minutes\n\n" % (runtime))
     errors = {}
     error_rates = {}
 
@@ -83,6 +87,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         check_lpgbt_link_ready(oh_select, gbt_select)
 
         print("Configuring VFAT %d" % (vfat))
+        file_out.write("Configuring VFAT %d\n" % (vfat))
         configureVfat(1, vfat-6*oh_select, oh_select, 0)
         if calpulse:
             enableVfatchannel(vfat, oh_select, 0, 0, 1) # enable calpulsing on channel 0 for this VFAT
@@ -112,10 +117,16 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
 
     if nl1a != 0:
         print ("\nRunning for %d L1A cycles for VFATs:" % (nl1a))
+        file_out.write("\nRunning for %d L1A cycles for VFATs:\n" % (nl1a))
     else:
         print ("\nRunning for %f minutes for VFATs:" %(runtime))
+        file_out.write("\nRunning for %f minutes for VFATs:\n" %(runtime))
     print (vfat_list)
+    for vfat in vfat_list:
+        file_out.write(str(vfat) + "  ")
+    file_out.write("\n")
     print ("")
+    file_out.write("\n")
     cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
     l1a_node = get_rwreg_node("GEM_AMC.TTC.CMD_COUNTERS.L1A")
     calpulse_node = get_rwreg_node("GEM_AMC.TTC.CMD_COUNTERS.CALPULSE")
@@ -138,11 +149,13 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
                 #daq_event_count_temp = read_backend_reg(daq_event_count_node[vfat]) - daq_event_count_initial[vfat]
                 daq_event_count_temp = l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
                 print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, daq_event_count_temp))
+                file_out.write("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e\n" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, daq_event_count_temp))
                 vfat_results_string = ""
                 for vfat in vfat_list:
                     daq_error_count_temp = read_backend_reg(daq_crc_error_node[vfat]) - daq_event_count_initial[vfat]
                     vfat_results_string += "VFAT %02d DAQ Errors: %d, "%(vfat, daq_error_count_temp)
                 print (vfat_results_string + "\n")
+                file_out.write(vfat_results_string + "\n\n")
                 time_prev = time()
     else:
         while ((time()-t0)/60.0) < runtime:
@@ -153,11 +166,13 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
                 #daq_event_count_temp = read_backend_reg(daq_event_count_node[vfat]) - daq_event_count_initial[vfat]
                 daq_event_count_temp = l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
                 print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, daq_event_count_temp))
+                file_out.write("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e\n" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, daq_event_count_temp))
                 vfat_results_string = ""
                 for vfat in vfat_list:
                     daq_error_count_temp = read_backend_reg(daq_crc_error_node[vfat]) - daq_event_count_initial[vfat]
                     vfat_results_string += "VFAT %02d DAQ Errors: %d, "%(vfat, daq_error_count_temp)
                 print (vfat_results_string + "\n")
+                file_out.write(vfat_results_string + "\n\n")
                 time_prev = time()
 
     # Stop the cyclic generator
@@ -168,28 +183,36 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
         enable_channel = 0
         print("Unconfiguring VFAT %d" % (vfat))
+        file_out.write("Unconfiguring VFAT %d\n" % (vfat))
         if calpulse:
             enableVfatchannel(vfat, oh_select, 0, 0, 0) # disable calpulsing on channel 0 for this VFAT
         configureVfat(0, vfat-6*oh_select, oh_select, 0)
 
     print ("")
+    file_out.write("\n")
     total_time = time() - t0
     print ("L1A and Calpulsing cycle completed in %.2f seconds (%.2f minutes) \n"%(total_time, total_time/60.0))
+    file_out.write("L1A and Calpulsing cycle completed in %.2f seconds (%.2f minutes) \n\n"%(total_time, total_time/60.0))
     l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
     calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
 
     print ("Error test results for DAQ elinks")
+    file_out.write("Error test results for DAQ elinks\n")
     for vfat in vfat_list:
         link_good = read_backend_reg(link_good_node[vfat])
         sync_err = read_backend_reg(sync_error_node[vfat])
         if link_good == 1:
             print (Colors.GREEN + "VFAT#: %02d, link is GOOD"%(vfat) + Colors.ENDC)
+            file_out.write("VFAT#: %02d, link is GOOD\n"%(vfat))
         else:
             print (Colors.RED + "VFAT#: %02d, link is BAD"%(vfat) + Colors.ENDC)
+            file_out.write("VFAT#: %02d, link is BAD\n"%(vfat))
         if sync_err==0:
             print (Colors.GREEN + "VFAT#: %02d, nr. of sync errors: %d"%(vfat, sync_err) + Colors.ENDC)
+            file_out.write("VFAT#: %02d, nr. of sync errors: %d\n"%(vfat, sync_err))
         else:
             print (Colors.RED + "VFAT#: %02d, nr. of sync errors: %d"%(vfat, sync_err) + Colors.ENDC)
+            file_out.write("VFAT#: %02d, nr. of sync errors: %d\n"%(vfat, sync_err))
 
         daq_event_count_final[vfat] = read_backend_reg(daq_event_count_node[vfat])
         daq_crc_error_count_final[vfat] = read_backend_reg(daq_crc_error_node[vfat])
@@ -199,7 +222,8 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
         if system != "dryrun":
             if daq_event_count_diff[vfat] != l1a_counter%256:
-                print (Colors.YELLOW + "Mismatch between DAQ_EVENT_CNT and L1A counter" + Colors.ENDC)
+                print (Colors.YELLOW + "Mismatch between DAQ_EVENT_CNT and L1A counter: %d"%(daq_event_count_diff[vfat] - l1a_counter%256) + Colors.ENDC)
+                file_out.write("Mismatch between DAQ_EVENT_CNT and L1A counter: %d\n"%(daq_event_count_diff[vfat] - l1a_counter%256))
             daq_event_count_diff[vfat] = l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
         else:
             if nl1a != 0:
@@ -217,6 +241,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
                 else:
                     calpulse_counter = 0
         print ("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e,  DAQ Events: %.2e,  DAQ CRC Errors: %d" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
+        file_out.write("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e,  DAQ Events: %.2e,  DAQ CRC Errors: %d\n" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
 
         daq_data_packet_size = 192 # 192 bits
         if daq_event_count_diff[vfat]==0:
@@ -226,11 +251,16 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         ber_ul = 1.0/(daq_event_count_diff[vfat] * daq_data_packet_size)
         if ber==0:
             print (Colors.GREEN + "VFAT#: %02d, Errors = %d,  Bit Error Ratio (BER) < "%(vfat, daq_crc_error_count_diff[vfat]) + "{:.2e}".format(ber_ul) + Colors.ENDC)
+            file_out.write("VFAT#: %02d, Errors = %d,  Bit Error Ratio (BER) < "%(vfat, daq_crc_error_count_diff[vfat]) + "{:.2e}\n".format(ber_ul))
         else:
             print (Colors.YELLOW + "VFAT#: %02d, Errors = %d,  Bit Error Ratio (BER) = "%(vfat, daq_crc_error_count_diff[vfat]) + "{:.2e}".format(ber) + Colors.ENDC)
+            file_out.write("VFAT#: %02d, Errors = %d,  Bit Error Ratio (BER) = "%(vfat, daq_crc_error_count_diff[vfat]) + "{:.2e}\n".format(ber))
 
             print ("")
+            file_out.write("\n")
         print ("")
+        file_out.write("\n")
+    file_out.close()
 if __name__ == '__main__':
 
     # Parsing arguments

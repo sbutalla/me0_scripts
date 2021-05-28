@@ -55,10 +55,13 @@ def vfat_to_oh_gbt_elink(vfat):
     return lpgbt, ohid, gbtid, elink
         
 def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
+    file_out = open("vfat_slow_control_test_output.txt", "w")
     if niter!=0:
         print ("LPGBT VFAT Bit Error Ratio Test with %d transactions\n" % (niter))
+        file_out.write("LPGBT VFAT Bit Error Ratio Test with %d transactions\n\n" % (niter))
     elif runtime!=0:
         print ("LPGBT VFAT Bit Error Ratio Test for %.2f minutes\n" % (runtime))
+        file_out.write("LPGBT VFAT Bit Error Ratio Test for %.2f minutes\n\n" % (runtime))
     errors = {}
     error_rates = {}
     bus_errors = {}
@@ -95,22 +98,33 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
     # Loop over registers
     for reg in reg_list:
         print ("Using register: " + reg)
+        file_out.write("Using register: \n" + reg)
         write_perm = 0
         if vfat_registers[reg] == "r":
             print ("Operation: READ Only\n")
+            file_out.write("Operation: READ Only\n\n")
             if niter!=0:
                 print ("Testing VFATs with %d transactions (read): "%(niter))
+                file_out.write("Testing VFATs with %d transactions (read): \n"%(niter))
             elif runtime!=0:
                 print ("Testing VFATs for %.2f minutes (read): "%(runtime))
+                file_out.write("Testing VFATs for %.2f minutes (read): \n"%(runtime))
         elif vfat_registers[reg] == "rw":
             print ("Operation: READ & WRITE\n")
+            file_out.write("Operation: READ & WRITE\n\n")
             if niter!=0:
                 print ("Testing VFATs with %d transactions (read+write): "%(niter))
+                file_out.write("Testing VFATs with %d transactions (read+write): \n"%(niter))
             elif runtime!=0:
                 print ("Testing VFATs for %.2f minutes (read+write): "%(runtime))
+                file_out.write("Testing VFATs for %.2f minutes (read+write): \n"%(runtime))
             write_perm = 1
         print (vfat_list)
+        for vfat in vfat_list:
+            file_out.write(str(vfat) + "  ")
+        file_out.write("\n")
         print ("")
+        file_out.write("\n")
 
         total_sc_transactions_alt[reg] = 0
         errors[reg] = 12*[0]
@@ -136,6 +150,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
                         bus_errors[reg][vfat] += 1
                     if verbose:
                         print ("Register value written to VFAT# %02d: "%(vfat) + hex(data_write))
+                        file_out.write("Register value written to VFAT# %02d: "%(vfat) + hex(data_write) + "\n")
                 
                 # Reading the register
                 data_read = simple_read_backend_reg(reg_node[vfat][reg], -9999)
@@ -146,15 +161,19 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
                     if verbose:
                         if data_read == data_write:
                             print (Colors.GREEN + "Register value after writing for VFAT# %02d: "%(vfat) + hex(data_read) + "\n" + Colors.ENDC)
+                            file_out.write("Register value after writing for VFAT# %02d: "%(vfat) + hex(data_read) + "\n\n")
                         else:
                             print (Colors.RED + "Register value after writing for VFAT# %02d: "%(vfat) + hex(data_read) + "\n" + Colors.ENDC)
+                            file_out.write("Register value after writing for VFAT# %02d: "%(vfat) + hex(data_read) + "\n\n")
                 else:
                     print ("Register value read for VFAT# %02d: "%(vfat) + hex(data_read))
+                    file_out.write("Register value read for VFAT# %02d: "%(vfat) + hex(data_read) + "\n")
 
                 if write_perm and data_read!=data_write:
                     errors[reg][vfat] += 1
             if not write_perm:
                 print ("")
+                file_out.write("\n")
 
             # Print % completed every 1 minute
             if (time()-t0)>60:
@@ -164,6 +183,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
                     per_completed = "{:.4f}".format(100 * float(time()-t00)/float(runtime*60))
                 time_elapsed_min = "{:.2f}".format(float(time()-t00)/60.00) # in minutes
                 print ("\nIteration completed: " + per_completed + "% , Time elapsed: " + time_elapsed_min + " (min)")
+                file_out.write("\nIteration completed: " + per_completed + "% , Time elapsed: " + time_elapsed_min + " (min)\n")
                 t0 = time()
 
             n+=1
@@ -175,11 +195,15 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
         if write_perm:
             for vfat in vfat_list:
                 print ("VFAT#: %02d, number of transactions: %.2e, number of mismatch errors: %d \n" %(vfat, niter, errors[reg][vfat]))
+                file_out.write("VFAT#: %02d, number of transactions: %.2e, number of mismatch errors: %d \n\n" %(vfat, niter, errors[reg][vfat]))
                 error_rates[reg][vfat] = float(errors[reg][vfat])/float(niter)
             print ("%.2e Operations (read+write) for register %s completed, Time taken: %.2f minutes \n" % (niter, reg, time_taken))
+            file_out.write("%.2e Operations (read+write) for register %s completed, Time taken: %.2f minutes \n\n" % (niter, reg, time_taken))
         else:
             print ("")
+            file_out.write("\n")
             print ("%.2e Operations (read) for register %s completed, Time taken: %.2f minutes \n" % (niter, reg, time_taken))
+            file_out.write("%.2e Operations (read) for register %s completed, Time taken: %.2f minutes \n\n" % (niter, reg, time_taken))
 
     final_sc_transaction_count = read_backend_reg(sc_transactions_node)
     final_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
@@ -196,12 +220,15 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
 
     for reg in reg_list:
         print ("Error test results for register: " + reg)
+        file_out.write("Error test results for register: " + reg + "\n")
         weight = 0
         if vfat_registers[reg] == "rw":
-            print ("Nr. of transactions (read+write): %.2e"%(niter))
+            print ("Nr. of transactions (read+write): %.2e\n"%(niter))
+            file_out.write("Nr. of transactions (read+write): %.2e\n\n"%(niter))
             weight = 2.0/total_transaction_index
         else:
-            print ("Nr. of transactions (read): %.2e"%(niter))
+            print ("Nr. of transactions (read): %.2e\n"%(niter))
+            file_out.write("Nr. of transactions (read): %.2e\n\n"%(niter))
             weight = 1.0/total_transaction_index
 
         total_sc_transactions = total_sc_transactions_alt[reg] # since TRANSACTION_CNT is a 16-bit rolling register
@@ -216,12 +243,16 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
             sync_err = read_backend_reg(sync_error_node[vfat])
             if link_good == 1:
                 print (Colors.GREEN + "VFAT#: %02d, link is GOOD"%(vfat) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, link is GOOD\n"%(vfat))
             else:
                 print (Colors.RED + "VFAT#: %02d, link is BAD"%(vfat) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, link is BAD\n"%(vfat))
             if sync_err==0:
                 print (Colors.GREEN + "VFAT#: %02d, nr. of sync errors: %d"%(vfat, sync_err) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of sync errors: %d\n"%(vfat, sync_err))
             else:
                 print (Colors.RED + "VFAT#: %02d, nr. of sync errors: %d"%(vfat, sync_err) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of sync errors: %d\n"%(vfat, sync_err))
 
             n_sc_opr = 0
             if vfat_registers[reg] == "rw":
@@ -234,27 +265,38 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
 
             if n_bus_error == 0:
                 print (Colors.GREEN + "VFAT#: %02d, nr. of bus errors: %d, bus error ratio < %s"%(vfat, n_bus_error, "{:.2e}".format(n_bus_error_ratio_ul)) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of bus errors: %d, bus error ratio < %s"%(vfat, n_bus_error, "{:.2e}\n".format(n_bus_error_ratio_ul)))
             else:
                 print (Colors.YELLOW + "VFAT#: %02d, nr. of bus errors: %d, bus error ratio: %s"%(vfat, n_bus_error, "{:.2e}".format(n_bus_error_ratio)) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of bus errors: %d, bus error ratio: %s"%(vfat, n_bus_error, "{:.2e}\n".format(n_bus_error_ratio)))
 
             if vfat_registers[reg] == "rw":
                 result_string = ""
+                result_write_string = ""
                 error_rate_ul = 1.0/niter
                 if error_rates[reg][vfat]==0:
                     result_string += Colors.GREEN
                     result_string += "VFAT#: %02d, nr. of register mismatch errors: %d, mismatch error ratio < %s" %(vfat, errors[reg][vfat],  "{:.2e}".format(error_rate_ul))
+                    result_write_string += "VFAT#: %02d, nr. of register mismatch errors: %d, mismatch error ratio < %s" %(vfat, errors[reg][vfat],  "{:.2e}".format(error_rate_ul))
                 else:
                     result_string += Colors.YELLOW
                     result_string += "VFAT#: %02d, nr. of register mismatch errors: %d, mismatch error ratio: %s" %(vfat, errors[reg][vfat],  "{:.2e}".format(error_rates[reg][vfat]))
+                    result_write_string += "VFAT#: %02d, nr. of register mismatch errors: %d, mismatch error ratio: %s" %(vfat, errors[reg][vfat],  "{:.2e}".format(error_rates[reg][vfat]))
                 result_string += Colors.ENDC
                 print (result_string)
+                file_out.write(result_write_string + "\n")
 
             if sc_crc_errors_per_vfat_per_reg == 0:
                 print (Colors.GREEN + "VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) < %.2e"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio_ul) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) < %.2e\n"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio_ul))
             else:
                 print (Colors.YELLOW + "VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER): %.2e"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER): %.2e\n"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio))
             print ("")
+            file_out.write("\n")
         print ("")
+        file_out.write("\n")
+    file_out.close()
 if __name__ == '__main__':
 
     # Parsing arguments

@@ -56,8 +56,9 @@ def vfat_to_oh_gbt_elink(vfat):
 
 
 def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, verbose):
-
+    file_out = open("optical_link_bert_fec_test_output.txt", "w")
     print ("Checking FEC Errors for: " + path)
+    file_out.write("Checking FEC Errors for: \n" + path)
     fec_errors = 0
 
     if opr in ["start", "run"]:
@@ -74,13 +75,16 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
         if opr == "read":
             read_fec_errors = read_backend_reg(fec_node)
             read_fec_error_print = ""
+            read_fec_error_write = ""
             if read_fec_errors==0:
                 read_fec_error_print += Colors.GREEN
             else:
                 read_fec_error_print += Colors.RED
             read_fec_error_print += "\nNumber of FEC Errors = %d\n" %(read_fec_errors)
+            read_fec_error_write += "\nNumber of FEC Errors = %d\n" %(read_fec_errors)
             read_fec_error_print += Colors.ENDC
             print (read_fec_error_print)
+            file_out.write(read_fec_error_write + "\n")
             return
 
         # Reset the error counters
@@ -94,7 +98,9 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
         # start error counting loop
         start_fec_errors = read_backend_reg(fec_node)
         print ("Start Error Counting for time = %f minutes" % (runtime))
+        file_out.write("Start Error Counting for time = %f minutes\n" % (runtime))
         print ("Starting with number of FEC Errors = %d\n" % (start_fec_errors))
+        file_out.write("Starting with number of FEC Errors = %d\n\n" % (start_fec_errors))
         t0 = time()
         time_prev = t0
         
@@ -106,6 +112,7 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
                 if system=="backend":
                     if data_read!=data_write:
                         print (Colors.RED + "Register value mismatch\n" + Colors.ENDC)
+                        file_out.write("Register value mismatch\n\n")
                         rw_terminate()
 
             time_passed = (time()-time_prev)/60.0
@@ -113,10 +120,12 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
                 curr_fec_errors = read_backend_reg(fec_node)
                 if verbose:
                     print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, curr_fec_errors))
+                    file_out.write("Time passed: %f minutes, number of FEC errors accumulated = %d\n" % ((time()-t0)/60.0, curr_fec_errors))
                 time_prev = time()
         
         end_fec_errors = read_backend_reg(fec_node)
         print ("\nEnd Error Counting with number of FEC Errors = %d\n" %(end_fec_errors))
+        file_out.write("\nEnd Error Counting with number of FEC Errors = %d\n\n" %(end_fec_errors))
         fec_errors = end_fec_errors - start_fec_errors
         
     elif path == "downlink": # check FEC errors on lpGBT
@@ -128,8 +137,10 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
         start_fec_errors = lpgbt_fec_error_counter()
         if opr == "run":
             print ("Start Error Counting for time = %f minutes" % (runtime))
+            file_out.write("Start Error Counting for time = %f minutes\n" % (runtime))
         if opr in ["start", "run"]:
             print ("Starting with number of FEC Errors = %d\n" % (start_fec_errors))
+            file_out.write("Starting with number of FEC Errors = %d\n\n" % (start_fec_errors))
         t0 = time()
         time_prev = t0
 
@@ -140,24 +151,31 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
                     curr_fec_errors = lpgbt_fec_error_counter()
                     if verbose:
                         print ("Time passed: %f minutes, number of FEC errors accumulated = %d" % ((time()-t0)/60.0, curr_fec_errors))
+                        file_out.write("Time passed: %f minutes, number of FEC errors accumulated = %d\n" % ((time()-t0)/60.0, curr_fec_errors))
                     time_prev = time()
         
         end_fec_errors = lpgbt_fec_error_counter()
         end_fec_error_print = ""
+        end_fec_error_write = ""
         if end_fec_errors==0:
             end_fec_error_print += Colors.GREEN
         else:
             end_fec_error_print += Colors.RED
         if opr == "read":
             end_fec_error_print += "\nNumber of FEC Errors = %d\n" %(end_fec_errors)
+            end_fec_error_write += "\nNumber of FEC Errors = %d\n" %(end_fec_errors)
             end_fec_error_print += Colors.ENDC
             print (end_fec_error_print)
+            file_out.write(end_fec_error_write + "\n")
         elif opr == "stop":
             end_fec_error_print += "\nEnd Error Counting with number of FEC Errors = %d\n" %(end_fec_errors)
+            end_fec_error_write += "\nEnd Error Counting with number of FEC Errors = %d\n" %(end_fec_errors)
             end_fec_error_print += Colors.ENDC
             print (end_fec_error_print)
+            file_out.write(end_fec_error_write + "\n")
         elif opr == "run":
             print ("\nEnd Error Counting with number of FEC Errors = %d\n" %(end_fec_errors))
+            file_out.write("\nEnd Error Counting with number of FEC Errors = %d\n\n" %(end_fec_errors))
         fec_errors = end_fec_errors - start_fec_errors
         
         # Disable the counter
@@ -170,9 +188,11 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
     data_rate=0
     if path=="uplink":
         print ("For Uplink:")
+        file_out.write("For Uplink:\n")
         data_rate = 10.24 * 1e9
     elif path=="downlink":
         print ("For Downlink:")
+        file_out.write("For Downlink:\n")
         data_rate = 2.56 * 1e9
     ber = float(fec_errors) / (data_rate * runtime * 60)
     ber_ul = 1.0/ (data_rate * runtime * 60)
@@ -182,14 +202,18 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
     else:
         ber_str = "< {:.2e}".format(ber_ul)
     result_string = ""
+    result_string_write = ""
     if fec_errors == 0:
         result_string += Colors.GREEN 
     else:
         result_string += Colors.YELLOW
     result_string += "Number of FEC errors in " + str(runtime) + " minutes: " + str(fec_errors) + "\n"
     result_string += "Bit Error Ratio (BER) " + ber_str + Colors.ENDC + "\n"
+    result_string_write += "Number of FEC errors in " + str(runtime) + " minutes: " + str(fec_errors) + "\n"
+    result_string_write += "Bit Error Ratio (BER) " + ber_str + "\n"
     print (result_string)
-    
+    file_out.write(result_string_write + "\n")
+    file_out.close()
     
 def lpgbt_fec_error_counter():
     error_counter_h = readReg(getNode("LPGBT.RO.FEC.DLDPFECCORRECTIONCOUNT_H"))
