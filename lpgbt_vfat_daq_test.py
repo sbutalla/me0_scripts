@@ -3,7 +3,7 @@ from time import sleep, time
 import sys
 import argparse
 import random
-from lpgbt_vfat_config import configureVfat
+from lpgbt_vfat_config import configureVfat, enableVfatchannel
 
 # VFAT number: boss/sub, ohid, gbtid, elink 
 # For GE2/1 GEB + Pizza
@@ -82,9 +82,10 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
         check_lpgbt_link_ready(oh_select, gbt_select)
 
-        print("Configuring VFAT %d for all channels" % (vfat))
-        enable_channel = 1
-        configureVfat(1, vfat-6*oh_select, oh_select, enable_channel, None, 0)
+        print("Configuring VFAT %d" % (vfat))
+        configureVfat(1, vfat-6*oh_select, oh_select, 0)
+        if calpulse:
+            enableVfatchannel(vfat, oh_select, 0, 0, 1) # enable calpulsing on channel 0 for this VFAT
 
         link_good_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select))
         sync_error_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select))
@@ -134,7 +135,9 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
             if time_passed >= 1:
                 l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                 calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter))
+                #daq_event_count_temp = read_backend_reg(daq_event_count_node[vfat]) - daq_event_count_initial[vfat]
+                daq_event_count_temp = l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
+                print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, daq_event_count_temp))
                 vfat_results_string = ""
                 for vfat in vfat_list:
                     daq_error_count_temp = read_backend_reg(daq_crc_error_node[vfat]) - daq_event_count_initial[vfat]
@@ -147,7 +150,9 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
             if time_passed >= 1:
                 l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                 calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                print ("Time passed: %.2f minutes, L1A counter = %d,  Calpulse counter = %d" % ((time()-t0)/60.0, l1a_counter, calpulse_counter))
+                #daq_event_count_temp = read_backend_reg(daq_event_count_node[vfat]) - daq_event_count_initial[vfat]
+                daq_event_count_temp = l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
+                print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, daq_event_count_temp))
                 vfat_results_string = ""
                 for vfat in vfat_list:
                     daq_error_count_temp = read_backend_reg(daq_crc_error_node[vfat]) - daq_event_count_initial[vfat]
@@ -162,8 +167,12 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     for vfat in vfat_list:
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
         enable_channel = 0
-        configureVfat(1, vfat-6*oh_select, oh_select, enable_channel, None, 0)
+        print("Unconfiguring VFAT %d" % (vfat))
+        if calpulse:
+            enableVfatchannel(vfat, oh_select, 0, 0, 0) # disable calpulsing on channel 0 for this VFAT
+        configureVfat(0, vfat-6*oh_select, oh_select, 0)
 
+    print ("")
     total_time = time() - t0
     print ("L1A and Calpulsing cycle completed in %.2f seconds (%.2f minutes) \n"%(total_time, total_time/60.0))
     l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
@@ -207,7 +216,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
                     calpulse_counter = l1a_rate * runtime
                 else:
                     calpulse_counter = 0
-        print ("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %d,  Nr. of Calpulses: %d,  DAQ Events: %d,  DAQ CRC Errors: %d" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
+        print ("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e,  DAQ Events: %.2e,  DAQ CRC Errors: %d" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
 
         daq_data_packet_size = 192 # 192 bits
         if daq_event_count_diff[vfat]==0:

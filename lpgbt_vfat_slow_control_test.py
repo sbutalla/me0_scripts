@@ -69,8 +69,8 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
     link_good_node = {}
     sync_error_node = {}
     reg_node = {}
-    sc_transactions_node = get_rwreg_node('GEM_AMC.SLOW_CONTROL.VFAT3.TRANSACTION_CNT')
-    sc_crc_error_node = get_rwreg_node('GEM_AMC.SLOW_CONTROL.VFAT3.CRC_ERROR_CNT')
+    sc_transactions_node = get_rwreg_node("GEM_AMC.SLOW_CONTROL.VFAT3.TRANSACTION_CNT")
+    sc_crc_error_node = get_rwreg_node("GEM_AMC.SLOW_CONTROL.VFAT3.CRC_ERROR_CNT")
     initial_sc_transaction_count = read_backend_reg(sc_transactions_node)
     initial_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
     total_sc_transactions_alt = {}
@@ -80,8 +80,8 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
         check_lpgbt_link_ready(oh_select, gbt_select)
 
-        link_good_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD' % (oh_select, vfat-6*oh_select))
-        sync_error_node[vfat] = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT' % (oh_select, vfat-6*oh_select))
+        link_good_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select))
+        sync_error_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select))
         link_good = read_backend_reg(link_good_node[vfat])
         sync_err = read_backend_reg(sync_error_node[vfat])
         if system!="dryrun" and (link_good == 0 or sync_err > 0):
@@ -90,7 +90,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
 
         reg_node[vfat] = {}
         for reg in reg_list:
-            reg_node[vfat][reg] = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (oh_select, vfat-6*oh_select, reg))
+            reg_node[vfat][reg] = get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.%s" % (oh_select, vfat-6*oh_select, reg))
 
     # Loop over registers
     for reg in reg_list:
@@ -133,7 +133,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
                     data_write_output = simple_write_backend_reg(reg_node[vfat][reg], data_write, -9999)
                     total_sc_transactions_alt[reg] += 1
                     if data_write_output == -9999:
-                        bus_errorsp[reg][vfat] += 1
+                        bus_errors[reg][vfat] += 1
                     if verbose:
                         print ("Register value written to VFAT# %02d: "%(vfat) + hex(data_write))
                 
@@ -141,7 +141,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
                 data_read = simple_read_backend_reg(reg_node[vfat][reg], -9999)
                 total_sc_transactions_alt[reg] += 1
                 if data_read == -9999:
-                    bus_errorsp[reg][vfat] += 1
+                    bus_errors[reg][vfat] += 1
                 if write_perm:
                     if verbose:
                         if data_read == data_write:
@@ -174,12 +174,12 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
         time_taken = (time() - t00)/60.00 # in minutes
         if write_perm:
             for vfat in vfat_list:
-                print ("VFAT#: %02d, number of transactions: %d, number of mismatch errors: %d \n" %(vfat, niter, errors[reg][vfat]))
+                print ("VFAT#: %02d, number of transactions: %.2e, number of mismatch errors: %d \n" %(vfat, niter, errors[reg][vfat]))
                 error_rates[reg][vfat] = float(errors[reg][vfat])/float(niter)
-            print ("%d Operations (read+write) for register %s completed, Time taken: %.2f minutes \n" % (niter, reg, time_taken))
+            print ("%.2e Operations (read+write) for register %s completed, Time taken: %.2f minutes \n" % (niter, reg, time_taken))
         else:
             print ("")
-            print ("%d Operations (read) for register %s completed, Time taken: %.2f minutes \n" % (niter, reg, time_taken))
+            print ("%.2e Operations (read) for register %s completed, Time taken: %.2f minutes \n" % (niter, reg, time_taken))
 
     final_sc_transaction_count = read_backend_reg(sc_transactions_node)
     final_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
@@ -198,13 +198,12 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
         print ("Error test results for register: " + reg)
         weight = 0
         if vfat_registers[reg] == "rw":
-            print ("Nr. of transactions (read+write): %d"%(niter))
+            print ("Nr. of transactions (read+write): %.2e"%(niter))
             weight = 2.0/total_transaction_index
         else:
-            print ("Nr. of transactions (read): %d"%(niter))
+            print ("Nr. of transactions (read): %.2e"%(niter))
             weight = 1.0/total_transaction_index
 
-        print (total_sc_transactions_alt[reg])
         total_sc_transactions = total_sc_transactions_alt[reg] # since TRANSACTION_CNT is a 16-bit rolling register
         #sc_transactions_per_vfat_per_reg = (float(total_sc_transactions)/len(vfat_list)) * weight # only required when using the TRANSACTION_CNT register
         sc_transactions_per_vfat_per_reg = (float(total_sc_transactions)/len(vfat_list)) # when using the alternate counter
@@ -236,7 +235,7 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
             if n_bus_error == 0:
                 print (Colors.GREEN + "VFAT#: %02d, nr. of bus errors: %d, bus error ratio < %s"%(vfat, n_bus_error, "{:.2e}".format(n_bus_error_ratio_ul)) + Colors.ENDC)
             else:
-                print (Colors.YELLO+ "VFAT#: %02d, nr. of bus errors: %d, bus error ratio: %s"%(vfat, n_bus_error, "{:.2e}".format(n_bus_error_ratio)) + Colors.ENDC)
+                print (Colors.YELLOW + "VFAT#: %02d, nr. of bus errors: %d, bus error ratio: %s"%(vfat, n_bus_error, "{:.2e}".format(n_bus_error_ratio)) + Colors.ENDC)
 
             if vfat_registers[reg] == "rw":
                 result_string = ""

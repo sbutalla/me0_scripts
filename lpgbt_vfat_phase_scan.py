@@ -2,7 +2,7 @@ from rw_reg_lpgbt import *
 from time import sleep, time
 import sys
 import argparse
-from lpgbt_vfat_config import configureVfat
+from lpgbt_vfat_config import configureVfat, enableVfatchannel
 
 config_boss_filename = "config_boss.txt"
 config_sub_filename = "config_sub.txt"
@@ -77,12 +77,13 @@ def lpgbt_communication_test(system, vfat_list, depth):
         print ("\nVFAT#%02d: reads=%d, errs=%d" % (vfat, depth, cfg_run[vfat]))
     print ("")
 
-def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
+def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
     print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
 
     link_good    = [[0 for phase in range(16)] for vfat in range(12)]
     sync_err_cnt = [[0 for phase in range(16)] for vfat in range(12)]
     cfg_run      = [[0 for phase in range(16)] for vfat in range(12)]
+    daq_evt_count      = [[0 for phase in range(16)] for vfat in range(12)]
     daq_crc_error      = [[0 for phase in range(16)] for vfat in range(12)]
     errs         = [[0 for phase in range(16)] for vfat in range(12)]
 
@@ -90,9 +91,11 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
         check_lpgbt_link_ready(oh_select, gbt_select)
 
-        print("Configuring VFAT %d for all channels" % (vfat))
-        enable_channel = 1
-        configureVfat(1, vfat-6*oh_select, oh_select, enable_channel, None, 0)
+        if config:
+            print("Configuring VFAT %d" % (vfat))
+            configureVfat(1, vfat-6*oh_select, oh_select, 0)
+        for i in range(128):
+            enableVfatchannel(vfat, oh_select, i, 0, 0) # unmask all channels and disable calpulsing
 
     cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
 
@@ -138,7 +141,8 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
             link_good[vfat][phase]    = simple_read_backend_reg(link_node, 0)
             sync_err_cnt[vfat][phase] = simple_read_backend_reg(sync_node, 9999)
 
-            # Check DAQ event counter with L1A
+            # Check DAQ event counter and CRC errors with L1A
+            daq_evt_count[vfat][phase] = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_EVENT_CNT" % (oh_select, vfat-6*oh_select)))
             daq_crc_error[vfat][phase] = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_CRC_ERROR_CNT" % (oh_select, vfat-6*oh_select)))
 
             result_str = ""
@@ -146,15 +150,16 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
                 result_str += Colors.GREEN
             else:
                 result_str += Colors.RED
-            result_str += "\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%d, cfg_run_errs=%d, daq_crc_error=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase], daq_crc_error[vfat][phase])
+            result_str += "\tResults of VFAT#%02d: link_good=%d, sync_err_cnt=%d, cfg_run_errs=%d, daq_crc_error (daq_events=%d)=%d" % (vfat, link_good[vfat][phase], sync_err_cnt[vfat][phase], cfg_run[vfat][phase], daq_evt_count[vfat][phase], daq_crc_error[vfat][phase])
             result_str += Colors.ENDC
             print(result_str)
 
-    # Disable channels on VFATs
+    # Unconfigure VFATs
     for vfat in vfat_list:
         lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-        enable_channel = 0
-        configureVfat(1, vfat-6*oh_select, oh_select, enable_channel, None, 0)
+        if config:
+            print("Unconfiguring VFAT %d" % (vfat))
+            configureVfat(0, vfat-6*oh_select, oh_select, 0)
 
     centers = 12*[0]
     widths  = 12*[0]
@@ -164,7 +169,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
             errs[vfat][phase] = (not 1==link_good[vfat][phase]) + sync_err_cnt[vfat][phase] + cfg_run[vfat][phase] + daq_crc_error[vfat][phase]
         centers[vfat], widths[vfat] = find_phase_center(errs[vfat])
 
-    print ("phase : 0123456789ABCDEF")
+    print ("\nphase : 0123456789ABCDEF")
     bestphase_vfat = 12*[0]
     for vfat in vfat_list:
         sys.stdout.write("VFAT%02d: " % (vfat))
@@ -180,11 +185,16 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
 
             sys.stdout.write("%s" % char)
             sys.stdout.flush()
-        sys.stdout.write(" (center=%d, width=%d)\n" % (centers[vfat], widths[vfat]))
+        if widths[vfat]<3:
+            sys.stdout.write(Colors.RED + " (center=%d, width=%d (BAD))\n" % (centers[vfat], widths[vfat]) + Colors.ENDC)
+        elif widths[vfat]<5:
+            sys.stdout.write(Colors.YELLOW + " (center=%d, width=%d (WARNING))\n" % (centers[vfat], widths[vfat]) + Colors.ENDC)
+        else:
+            sys.stdout.write(" (center=%d, width=%d (WARNING))\n" % (centers[vfat], widths[vfat]))
         sys.stdout.flush()
 
     # set phases for all vfats under test
-    print ("Setting all VFAT phases to best phases: ")
+    print ("\nSetting all VFAT phases to best phases: ")
     for vfat in vfat_list:
         set_bestphase = 0
         if best_phase is None:
@@ -195,6 +205,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         print ("Phase set for VFAT#%02d to: %s" % (vfat, hex(set_bestphase)))
     sleep(0.1)
     vfat_oh_link_reset()
+    print ("")
 
 def find_phase_center(err_list):
     # find the centers
@@ -290,6 +301,7 @@ if __name__ == '__main__':
     parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", help="bestphase = Best value of the elinkRX phase (in hex), calculated from phase scan by default")
     parser.add_argument("-t", "--test", action="store", dest="test", default="0", help="test = enter 1 for only testing vfat communication, default is 0")
     parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-c", "--config", action="store_true", dest="config", help="if you want to configure VFATs for phase scan (first phase scan should always be done with vfat configuration)")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -362,7 +374,7 @@ if __name__ == '__main__':
         if args.test == "1":
             lpgbt_communication_test(args.system, vfat_list, int(args.depth))
         else:
-            lpgbt_phase_scan(args.system, vfat_list, int(args.depth), args.bestphase)
+            lpgbt_phase_scan(args.system, vfat_list, int(args.depth), args.bestphase, args.config)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

@@ -65,18 +65,31 @@ def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, v
     sleep(0.1)
 
     if path == "uplink": # check FEC errors on backend
-        if opr != "run":
-            print (Colors.YELLOW + "Only run operation allowed forr uplink" + Colors.ENDC)
+        if opr != "run" and opr != "read":
+            print (Colors.YELLOW + "Only run and read operation allowed for uplink" + Colors.ENDC)
             rw_terminate()
 
+        fec_node = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.GBT%d_FEC_ERR_CNT" % (ohid, gbtid))
+
+        if opr == "read":
+            read_fec_errors = read_backend_reg(fec_node)
+            read_fec_error_print = ""
+            if read_fec_errors==0:
+                read_fec_error_print += Colors.GREEN
+            else:
+                read_fec_error_print += Colors.RED
+            read_fec_error_print += "\nNumber of FEC Errors = %d\n" %(read_fec_errors)
+            read_fec_error_print += Colors.ENDC
+            print (read_fec_error_print)
+            return
+
         # Reset the error counters
-        node = get_rwreg_node('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET')
+        node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET")
         write_backend_reg(node, 0x001)
-        
-        fec_node = get_rwreg_node('GEM_AMC.OH_LINKS.OH%d.GBT%d_FEC_ERR_CNT' % (ohid, gbtid))
+
         vfat_node = []
         for vfat in vfat_list:
-            vfat_node.append(get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (ohid, vfat-6*ohid, "TEST_REG")))
+            vfat_node.append(get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.%s" % (ohid, vfat-6*ohid, "TEST_REG")))
         
         # start error counting loop
         start_fec_errors = read_backend_reg(fec_node)
@@ -193,7 +206,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend/dryrun)")
     parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend/dryrun)")
     parser.add_argument("-p", "--path", action="store", dest="path", help="path = uplink, downlink")
-    parser.add_argument("-r", "--opr", action="store", dest="opr", default="run", help="opr = start, run, read, stop (only run allowed for uplink)")
+    parser.add_argument("-r", "--opr", action="store", dest="opr", default="run", help="opr = start, run, read, stop (only run, read allowed for uplink)")
     parser.add_argument("-t", "--time", action="store", dest="time", help="TIME = measurement time in minutes")
     parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11) for read/write TEST_REG")
     parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugiin card addressing needs should be enabled")
@@ -260,8 +273,8 @@ if __name__ == '__main__':
         if args.system == "chc":
             print (Colors.YELLOW + "For uplink, cheesecake not possible" + Colors.ENDC)
             sys.exit()
-        if args.opr != "run":
-            print (Colors.YELLOW + "For uplink, only run operation allowed" + Colors.ENDC)
+        if args.opr != "run" and args.opr != "read":
+            print (Colors.YELLOW + "For uplink, only run and read operation allowed" + Colors.ENDC)
             sys.exit()
     elif args.path == "downlink":
         if args.opr not in ["start", "run", "read", "stop"]:
@@ -273,7 +286,7 @@ if __name__ == '__main__':
             print (Colors.YELLOW + "Only uplink can be checked for sub lpGBT" + Colors.ENDC)
             sys.exit()
 
-    if args.path == "uplink" or (args.path == "downlink" and args.opr == "run"):
+    if (args.path == "uplink" and args.opr == "run") or (args.path == "downlink" and args.opr == "run"):
         if args.time is None:
             print (Colors.YELLOW + "BERT measurement time required" + Colors.ENDC)
             sys.exit()
