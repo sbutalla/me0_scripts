@@ -94,8 +94,8 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
         if config:
             print("Configuring VFAT %d" % (vfat))
             configureVfat(1, vfat-6*oh_select, oh_select, 0)
-        for i in range(128):
-            enableVfatchannel(vfat, oh_select, i, 0, 0) # unmask all channels and disable calpulsing
+            for i in range(128):
+                enableVfatchannel(vfat, oh_select, i, 0, 0) # unmask all channels and disable calpulsing
 
     cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
 
