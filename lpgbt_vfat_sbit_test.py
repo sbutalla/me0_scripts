@@ -53,6 +53,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     file_out.write("LPGBT VFAT S-Bit Test\n\n")
 
     vfat_oh_link_reset()
+    global_reset()
     sleep(0.1)
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 1)
 

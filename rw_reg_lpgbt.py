@@ -289,10 +289,20 @@ def check_rom_readback():
 
 def vfat_oh_link_reset():
     if system=="backend":
-        output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 0x1)
+        output = rw_reg.writeReg(rw_reg.getNode("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET"), 0x1)
         if output=="Bus Error":
             print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
-            output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET'), 0x1)
+            output = rw_reg.writeReg(rw_reg.getNode("GEM_AMC.GEM_SYSTEM.CTRL.LINK_RESET"), 0x1)
+            if output=="Bus Error":
+                print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
+                rw_terminate()
+
+def global_reset():
+    if system=="backend":
+        output = rw_reg.writeReg(rw_reg.getNode("GEM_AMC.GEM_SYSTEM.CTRL.GLOBAL_RESET"), 0x1)
+        if output=="Bus Error":
+            print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
+            output = rw_reg.writeReg(rw_reg.getNode("GEM_AMC.GEM_SYSTEM.CTRL.GLOBAL_RESET"), 0x1)
             if output=="Bus Error":
                 print (Colors.RED + "ERROR: Bus Error" + Colors.ENDC)
                 rw_terminate()

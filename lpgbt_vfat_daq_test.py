@@ -68,6 +68,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     error_rates = {}
 
     vfat_oh_link_reset()
+    global_reset()
     sleep(0.1)
 
     link_good_node = {}
@@ -116,8 +117,8 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_CALPULSE_TO_L1A_GAP"), 0) # Disable Calpulsing
 
     if nl1a != 0:
-        print ("\nRunning for %d L1A cycles for VFATs:" % (nl1a))
-        file_out.write("\nRunning for %d L1A cycles for VFATs:\n" % (nl1a))
+        print ("\nRunning for %.2e L1A cycles for VFATs:" % (nl1a))
+        file_out.write("\nRunning for %.2e L1A cycles for VFATs:\n" % (nl1a))
     else:
         print ("\nRunning for %f minutes for VFATs:" %(runtime))
         file_out.write("\nRunning for %f minutes for VFATs:\n" %(runtime))
