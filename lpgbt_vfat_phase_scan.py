@@ -134,7 +134,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
         cyclic_running = 1
         while cyclic_running:
             cyclic_running = read_backend_reg(cyclic_running_node)
-        write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
+        #write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
 
         # read cfg_run some number of times, check link good status and sync errors
         print ("Checking errors: ")
@@ -191,11 +191,11 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
             sys.stdout.write("%s" % char)
             sys.stdout.flush()
         if widths[vfat]<3:
-            sys.stdout.write(Colors.RED + " (center=%d, width=%d (BAD))\n" % (centers[vfat], widths[vfat]) + Colors.ENDC)
+            sys.stdout.write(Colors.RED + " (center=%d, width=%d) BAD\n" % (centers[vfat], widths[vfat]) + Colors.ENDC)
         elif widths[vfat]<5:
-            sys.stdout.write(Colors.YELLOW + " (center=%d, width=%d (WARNING))\n" % (centers[vfat], widths[vfat]) + Colors.ENDC)
+            sys.stdout.write(Colors.YELLOW + " (center=%d, width=%d) WARNING\n" % (centers[vfat], widths[vfat]) + Colors.ENDC)
         else:
-            sys.stdout.write(" (center=%d, width=%d)\n" % (centers[vfat], widths[vfat]))
+            sys.stdout.write(Colors.GREEN + " (center=%d, width=%d) GOOD\n" % (centers[vfat], widths[vfat]) + Colors.ENDC)
         sys.stdout.flush()
 
     # set phases for all vfats under test
