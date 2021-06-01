@@ -178,16 +178,6 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     # Stop the cyclic generator
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
 
-    # Disable channels on VFATs
-    for vfat in vfat_list:
-        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-        enable_channel = 0
-        print("Unconfiguring VFAT %d" % (vfat))
-        file_out.write("Unconfiguring VFAT %d\n" % (vfat))
-        if calpulse:
-            enableVfatchannel(vfat-6*oh_select, oh_select, 0, 0, 0) # disable calpulsing on channel 0 for this VFAT
-        configureVfat(0, vfat-6*oh_select, oh_select, 0)
-
     print ("")
     file_out.write("\n")
     total_time = time() - t0
@@ -260,6 +250,17 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
             file_out.write("\n")
         print ("")
         file_out.write("\n")
+
+    # Disable channels on VFATs
+    for vfat in vfat_list:
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        enable_channel = 0
+        print("Unconfiguring VFAT %d" % (vfat))
+        file_out.write("Unconfiguring VFAT %d\n" % (vfat))
+        if calpulse:
+            enableVfatchannel(vfat-6*oh_select, oh_select, 0, 0, 0) # disable calpulsing on channel 0 for this VFAT
+        configureVfat(0, vfat-6*oh_select, oh_select, 0)
+
     file_out.close()
 if __name__ == '__main__':
 
