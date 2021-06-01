@@ -74,8 +74,10 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
     reg_node = {}
     sc_transactions_node = get_rwreg_node("GEM_AMC.SLOW_CONTROL.VFAT3.TRANSACTION_CNT")
     sc_crc_error_node = get_rwreg_node("GEM_AMC.SLOW_CONTROL.VFAT3.CRC_ERROR_CNT")
+    sc_timeout_error_node = get_rwreg_node("GEM_AMC.SLOW_CONTROL.VFAT3.TIMEOUT_ERROR_CNT")
     initial_sc_transaction_count = read_backend_reg(sc_transactions_node)
     initial_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
+    initial_sc_timeout_error_count = read_backend_reg(sc_timeout_error_node)
     total_sc_transactions_alt = {}
 
     # Check ready and get nodes
@@ -207,9 +209,12 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
 
     final_sc_transaction_count = read_backend_reg(sc_transactions_node)
     final_sc_crc_error_count = read_backend_reg(sc_crc_error_node)
+    final_sc_timeout_error_count = read_backend_reg(sc_timeout_error_node)
     total_sc_transactions = final_sc_transaction_count - initial_sc_transaction_count
     total_sc_crc_errors = final_sc_crc_error_count - initial_sc_crc_error_count
-    daq_data_packet_size = 192 # 192 bits
+    total_sc_timeout_errors = final_sc_crc_error_count - initial_sc_timeout_error_count
+    daq_downlink_data_packet_size = 904 # 113*8 bits
+    daq_uplink_data_packet_size = 840 # 105*8 bits
 
     total_transaction_index = 0
     for reg in reg_list:
@@ -235,8 +240,11 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
         #sc_transactions_per_vfat_per_reg = (float(total_sc_transactions)/len(vfat_list)) * weight # only required when using the TRANSACTION_CNT register
         sc_transactions_per_vfat_per_reg = (float(total_sc_transactions)/len(vfat_list)) # when using the alternate counter
         sc_crc_errors_per_vfat_per_reg = (float(total_sc_crc_errors)/len(vfat_list)) * weight
-        sc_crc_error_ratio = sc_crc_errors_per_vfat_per_reg / (sc_transactions_per_vfat_per_reg * daq_data_packet_size)
-        sc_crc_error_ratio_ul = 1.0 / (sc_transactions_per_vfat_per_reg * daq_data_packet_size)
+        sc_crc_error_ratio = sc_crc_errors_per_vfat_per_reg / (sc_transactions_per_vfat_per_reg * daq_uplink_data_packet_size)
+        sc_crc_error_ratio_ul = 1.0 / (sc_transactions_per_vfat_per_reg * daq_uplink_data_packet_size)
+        sc_timeout_errors_per_vfat_per_reg = (float(total_sc_timeout_errors)/len(vfat_list)) * weight
+        sc_timeout_error_ratio = sc_timeout_errors_per_vfat_per_reg / (sc_transactions_per_vfat_per_reg * daq_downlink_data_packet_size)
+        sc_timeout_error_ratio_ul = 1.0 / (sc_transactions_per_vfat_per_reg * daq_downlink_data_packet_size)
 
         for vfat in vfat_list:
             link_good = read_backend_reg(link_good_node[vfat])
@@ -287,11 +295,17 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, runtime, verbose):
                 file_out.write(result_write_string + "\n")
 
             if sc_crc_errors_per_vfat_per_reg == 0:
-                print (Colors.GREEN + "VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) < %.2e"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio_ul) + Colors.ENDC)
-                file_out.write("VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) < %.2e\n"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio_ul))
+                print (Colors.GREEN + "VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) for Uplink < %.2e"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio_ul) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) for Uplink < %.2e\n"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio_ul))
             else:
-                print (Colors.YELLOW + "VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER): %.2e"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio) + Colors.ENDC)
-                file_out.write("VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER): %.2e\n"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio))
+                print (Colors.YELLOW + "VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) for Uplink: %.2e"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of CRC errors in slow control: %d, Bit Error Ratio (BER) for Uplink: %.2e\n"%(vfat, sc_crc_errors_per_vfat_per_reg, sc_crc_error_ratio))
+            if sc_timeout_errors_per_vfat_per_reg == 0:
+                print (Colors.GREEN + "VFAT#: %02d, nr. of Timeout errors in slow control: %d, Bit Error Ratio (BER) for Downlink < %.2e"%(vfat, sc_timeout_errors_per_vfat_per_reg, sc_timeout_error_ratio_ul) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of Timeout errors in slow control: %d, Bit Error Ratio (BER) for Downlink < %.2e\n"%(vfat, sc_timeout_errors_per_vfat_per_reg, sc_timeout_error_ratio_ul))
+            else:
+                print (Colors.YELLOW + "VFAT#: %02d, nr. of Timeout errors in slow control: %d, Bit Error Ratio (BER) for Downlink: %.2e"%(vfat, sc_timeout_errors_per_vfat_per_reg, sc_timeout_error_ratio) + Colors.ENDC)
+                file_out.write("VFAT#: %02d, nr. of Timeout errors in slow control: %d, Bit Error Ratio (BER) for Downlink: %.2e\n"%(vfat, sc_timeout_errors_per_vfat_per_reg, sc_timeout_error_ratio))
             print ("")
             file_out.write("\n")
         print ("")

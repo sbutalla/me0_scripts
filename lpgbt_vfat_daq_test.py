@@ -243,7 +243,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         print ("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e,  DAQ Events: %.2e,  DAQ CRC Errors: %d" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
         file_out.write("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e,  DAQ Events: %.2e,  DAQ CRC Errors: %d\n" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
 
-        daq_data_packet_size = 192 # 192 bits
+        daq_data_packet_size = 176 # 176 bits
         if daq_event_count_diff[vfat]==0:
             ber = 0
         else:
