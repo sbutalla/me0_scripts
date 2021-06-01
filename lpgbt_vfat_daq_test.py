@@ -90,7 +90,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         file_out.write("Configuring VFAT %d\n" % (vfat))
         configureVfat(1, vfat-6*oh_select, oh_select, 0)
         if calpulse:
-            enableVfatchannel(vfat, oh_select, 0, 0, 1) # enable calpulsing on channel 0 for this VFAT
+            enableVfatchannel(vfat-6*oh_select, oh_select, 0, 0, 1) # enable calpulsing on channel 0 for this VFAT
 
         link_good_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select))
         sync_error_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select))
@@ -185,7 +185,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         print("Unconfiguring VFAT %d" % (vfat))
         file_out.write("Unconfiguring VFAT %d\n" % (vfat))
         if calpulse:
-            enableVfatchannel(vfat, oh_select, 0, 0, 0) # disable calpulsing on channel 0 for this VFAT
+            enableVfatchannel(vfat-6*oh_select, oh_select, 0, 0, 0) # disable calpulsing on channel 0 for this VFAT
         configureVfat(0, vfat-6*oh_select, oh_select, 0)
 
     print ("")

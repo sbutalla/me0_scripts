@@ -93,9 +93,21 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
 
         if config:
             print("Configuring VFAT %d" % (vfat))
+            hwid_node = get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.HW_ID" % (oh_select, vfat-6*oh_select))
+            output = simple_read_backend_reg(hwid_node, -9999)
+            if output = -9999:
+                setVfatRxPhase(system, vfat, 6)
+                output = simple_read_backend_reg(hwid_node, -9999)
+                if output = -9999:
+                    setVfatRxPhase(system, vfat, 12)
+                    output = simple_read_backend_reg(hwid_node, -9999)
+                    if output = -9999:
+                        setVfatRxPhase(system, vfat, 0)
+                        print (Colors.RED + "Cannot configure VFAT %d"%(vfat) + Colors.ENDC)
+                        rw_terminate()
             configureVfat(1, vfat-6*oh_select, oh_select, 0)
             for i in range(128):
-                enableVfatchannel(vfat, oh_select, i, 0, 0) # unmask all channels and disable calpulsing
+                enableVfatchannel(vfat-6*oh_select, oh_select, i, 0, 0) # unmask all channels and disable calpulsing
 
     cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
 
@@ -154,13 +166,6 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
             result_str += Colors.ENDC
             print(result_str)
 
-    # Unconfigure VFATs
-    for vfat in vfat_list:
-        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-        if config:
-            print("Unconfiguring VFAT %d" % (vfat))
-            configureVfat(0, vfat-6*oh_select, oh_select, 0)
-
     centers = 12*[0]
     widths  = 12*[0]
 
@@ -190,7 +195,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
         elif widths[vfat]<5:
             sys.stdout.write(Colors.YELLOW + " (center=%d, width=%d (WARNING))\n" % (centers[vfat], widths[vfat]) + Colors.ENDC)
         else:
-            sys.stdout.write(" (center=%d, width=%d (WARNING))\n" % (centers[vfat], widths[vfat]))
+            sys.stdout.write(" (center=%d, width=%d)\n" % (centers[vfat], widths[vfat]))
         sys.stdout.flush()
 
     # set phases for all vfats under test
@@ -206,6 +211,13 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
     sleep(0.1)
     vfat_oh_link_reset()
     print ("")
+
+    # Unconfigure VFATs
+    for vfat in vfat_list:
+        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        if config:
+            print("Unconfiguring VFAT %d" % (vfat))
+            configureVfat(0, vfat-6*oh_select, oh_select, 0)
 
 def find_phase_center(err_list):
     # find the centers
@@ -297,11 +309,11 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")
     #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
     #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-c", "--config", action="store_true", dest="config", help="if you want to configure VFATs for phase scan (first phase scan should always be done with vfat configuration)")
     parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
     parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", help="bestphase = Best value of the elinkRX phase (in hex), calculated from phase scan by default")
     parser.add_argument("-t", "--test", action="store", dest="test", default="0", help="test = enter 1 for only testing vfat communication, default is 0")
     parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
-    parser.add_argument("-c", "--config", action="store_true", dest="config", help="if you want to configure VFATs for phase scan (first phase scan should always be done with vfat configuration)")
     args = parser.parse_args()
 
     if args.system == "chc":

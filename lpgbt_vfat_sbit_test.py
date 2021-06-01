@@ -67,7 +67,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     # Reset TTC generator
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
 
-    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+    lpgbt, oh_select, gbt_select, rx_elink = vfat_to_oh_gbt_elink(vfat)
     print ("Testing VFAT#: %02d\n" %(vfat))
     file_out.write("Testing VFAT#: %02d\n\n")
 
@@ -124,8 +124,8 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
             print("Enabling pulsing on channel %02d in ELINK# %02d:" % (channel, elink))
             file_out.write("Enabling pulsing on channel %02d in ELINK# %02d:\n" % (channel, elink))
             for i in range(128):
-                enableVfatchannel(vfat, oh_select, i, 1, 0) # mask all channels and disable calpulsing
-            enableVfatchannel(vfat, oh_select, channel, 0, 1) # unmask this channel and enable calpulsing
+                enableVfatchannel(vfat-6*oh_select, oh_select, i, 1, 0) # mask all channels and disable calpulsing
+            enableVfatchannel(vfat-6*oh_select, oh_select, channel, 0, 1) # unmask this channel and enable calpulsing
 
             write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_ELINK_SBIT_ME0"), elink) # Select elink for S-bit counter
             write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_SBIT_ME0"), sbit_read) # Select S-bit for S-bit counter
@@ -182,7 +182,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
             # Disabling the pulsing channels
             print("Disabling pulsing on channel %02d in ELINK# %02d:\n" % (channel, elink))
             file_out.write("Disabling pulsing on channel %02d in ELINK# %02d:\n\n" % (channel, elink))
-            enableVfatchannel(vfat, oh_select, channel, 1, 0) # mask this channel and disable calpulsing
+            enableVfatchannel(vfat-6*oh_select, oh_select, channel, 1, 0) # mask this channel and disable calpulsing
 
             elink_sbit_counter = read_backend_reg(elink_sbit_counter_node) - elink_sbit_counter_initial
             channel_sbit_counter = read_backend_reg(channel_sbit_counter_node) - channel_sbit_counter_initial
