@@ -95,13 +95,13 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase, config):
             print("Configuring VFAT %d" % (vfat))
             hwid_node = get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.HW_ID" % (oh_select, vfat-6*oh_select))
             output = simple_read_backend_reg(hwid_node, -9999)
-            if output = -9999:
+            if output == -9999:
                 setVfatRxPhase(system, vfat, 6)
                 output = simple_read_backend_reg(hwid_node, -9999)
-                if output = -9999:
+                if output == -9999:
                     setVfatRxPhase(system, vfat, 12)
                     output = simple_read_backend_reg(hwid_node, -9999)
-                    if output = -9999:
+                    if output == -9999:
                         setVfatRxPhase(system, vfat, 0)
                         print (Colors.RED + "Cannot configure VFAT %d"%(vfat) + Colors.ENDC)
                         rw_terminate()
