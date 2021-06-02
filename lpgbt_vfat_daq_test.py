@@ -206,8 +206,8 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
     calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
 
-    print ("Error test results for DAQ elinks")
-    file_out.write("Error test results for DAQ elinks\n")
+    print ("Error test results for DAQ elinks\n")
+    file_out.write("Error test results for DAQ elinks\n\n")
     for vfat in vfat_list:
         link_good = read_backend_reg(link_good_node[vfat])
         sync_err = read_backend_reg(sync_error_node[vfat])
@@ -240,7 +240,10 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         if system != "dryrun":
             nl1a_reg_cycles = int(expected_l1a/(2**32))
             real_l1a_counter = nl1a_reg_cycles*(2**32) + l1a_counter
-            real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
+            if calpulse:
+                real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
+            else:
+                real_calpulse_counter = calpulse_counter
             if daq_event_count_diff[vfat] != real_l1a_counter%256:
                 print (Colors.YELLOW + "Mismatch between DAQ_EVENT_CNT and L1A counter: %d"%(daq_event_count_diff[vfat] - real_l1a_counter%256) + Colors.ENDC)
                 file_out.write("Mismatch between DAQ_EVENT_CNT and L1A counter: %d\n"%(daq_event_count_diff[vfat] - real_l1a_counter%256))
