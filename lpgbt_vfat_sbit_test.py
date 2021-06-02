@@ -94,6 +94,11 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     l1a_counter_list = {}
     calpulse_counter_list = {}
 
+    l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
+    efficiency = 1
+    if l1a_rate > 1e6 * 0.5:
+        efficiency = 0.977
+
     # Configure the pulsing VFAT
     print("Configuring VFAT %02d" % (vfat))
     file_out.write("Configuring VFAT %02d\n" % (vfat))
@@ -121,6 +126,9 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
         calpulse_counter_list[elink]  = {}
 
         for channel, sbit_read in zip(channel_list[elink], sbit_list[elink]):
+            # Reset L1A and CalPulse counters
+            global_reset()
+
             # Enabling the pulsing channel
             print("Enabling pulsing on channel %02d in ELINK# %02d:" % (channel, elink))
             file_out.write("Enabling pulsing on channel %02d in ELINK# %02d:\n" % (channel, elink))
@@ -159,8 +167,12 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
                         channel_sbit_counter = read_backend_reg(channel_sbit_counter_node) - channel_sbit_counter_initial
                         l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                         calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                        print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e,  S-bit counter for Elink %02d = %.2e,  S-bit counter for Channel %02d = %.2e" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, elink, elink_sbit_counter, channel, channel_sbit_counter))
-                        file_out.write("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e,  S-bit counter for Elink %02d = %.2e,  S-bit counter for Channel %02d = %.2e\n" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, elink, elink_sbit_counter, channel, channel_sbit_counter))
+                        expected_l1a = int(l1a_rate * (time()-t0) * 60 * efficiency)
+                        nl1a_reg_cycles = int(expected_l1a/(2**32))
+                        real_l1a_counter = nl1a_reg_cycles*(2**32) + l1a_counter
+                        real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
+                        print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e,  S-bit counter for Elink %02d = %.2e,  S-bit counter for Channel %02d = %.2e" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, elink, elink_sbit_counter, channel, channel_sbit_counter))
+                        file_out.write("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e,  S-bit counter for Elink %02d = %.2e,  S-bit counter for Channel %02d = %.2e" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, elink, elink_sbit_counter, channel, channel_sbit_counter))
                         time_prev = time()
             else:
                 while ((time()-t0)/60.0) < runtime:
@@ -170,8 +182,12 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
                         channel_sbit_counter = read_backend_reg(channel_sbit_counter_node) - channel_sbit_counter_initial
                         l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                         calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                        print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e,  S-bit counter for Elink %02d = %.2e,  S-bit counter for Channel %02d = %.2e" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, elink, elink_sbit_counter, channel, channel_sbit_counter))
-                        file_out.write("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e,  S-bit counter for Elink %02d = %.2e,  S-bit counter for Channel %02d = %.2e\n" % ((time()-t0)/60.0, l1a_counter, calpulse_counter, elink, elink_sbit_counter, channel, channel_sbit_counter))
+                        expected_l1a = int(l1a_rate * (time()-t0) * 60 * efficiency)
+                        nl1a_reg_cycles = int(expected_l1a/(2**32))
+                        real_l1a_counter = nl1a_reg_cycles*(2**32) + l1a_counter
+                        real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
+                        print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e,  S-bit counter for Elink %02d = %.2e,  S-bit counter for Channel %02d = %.2e" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, elink, elink_sbit_counter, channel, channel_sbit_counter))
+                        file_out.write("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e,  S-bit counter for Elink %02d = %.2e,  S-bit counter for Channel %02d = %.2e\n" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, elink, elink_sbit_counter, channel, channel_sbit_counter))
                         time_prev = time()
 
             # Stop the cyclic generator
@@ -207,10 +223,6 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     print ("\nS-Bit Error Test Results for VFAT %02d: \n"%(vfat))
     file_out.write("\nS-Bit Error Test Results for VFAT %02d: \n\n"%(vfat))
 
-    l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
-    efficiency = 1
-    if l1a_rate > 1e6 * 0.5:
-        efficiency = 0.977
     expected_l1a = 0
     if nl1a != 0:
         expected_l1a = nl1a
