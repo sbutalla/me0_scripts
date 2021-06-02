@@ -59,8 +59,8 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     file_out = open("vfat_daq_test_output.txt", "w+")
 
     if nl1a!=0:
-        print ("LPGBT VFAT Bit Error Ratio Test with %d L1A's\n" % (nl1a))
-        file_out.write("LPGBT VFAT Bit Error Ratio Test with %d L1A's\n\n" % (nl1a))
+        print ("LPGBT VFAT Bit Error Ratio Test with %.2e L1A's\n" % (nl1a))
+        file_out.write("LPGBT VFAT Bit Error Ratio Test with %.2e L1A's\n\n" % (nl1a))
     elif runtime!=0:
         print ("LPGBT VFAT Bit Error Ratio Test for %.2f minutes\n" % (runtime))
         file_out.write("LPGBT VFAT Bit Error Ratio Test for %.2f minutes\n\n" % (runtime))
@@ -211,28 +211,42 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
         daq_crc_error_count_diff[vfat] = daq_crc_error_count_final[vfat] - daq_crc_error_count_initial[vfat]
 
         l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
+        efficiency = 1
+        if l1a_rate > 1e6 * 0.5:
+            efficiency = 0.977
+        expected_l1a = 0
+        if nl1a != 0:
+            expected_l1a = nl1a
+        else:
+            expected_l1a = int(l1a_rate * runtime * 60 * efficiency)
+        real_l1a_counter = 0
+
         if system != "dryrun":
-            if daq_event_count_diff[vfat] != l1a_counter%256:
-                print (Colors.YELLOW + "Mismatch between DAQ_EVENT_CNT and L1A counter: %d"%(daq_event_count_diff[vfat] - l1a_counter%256) + Colors.ENDC)
-                file_out.write("Mismatch between DAQ_EVENT_CNT and L1A counter: %d\n"%(daq_event_count_diff[vfat] - l1a_counter%256))
-            daq_event_count_diff[vfat] = l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
+            nl1a_reg_cycles = int(expected_l1a/(2**32))
+            real_l1a_counter = nl1a_reg_cycles*(2**32) + l1a_counter
+            if daq_event_count_diff[vfat] != real_l1a_counter%256:
+                print (Colors.YELLOW + "Mismatch between DAQ_EVENT_CNT and L1A counter: %d"%(daq_event_count_diff[vfat] - real_l1a_counter%256) + Colors.ENDC)
+                file_out.write("Mismatch between DAQ_EVENT_CNT and L1A counter: %d\n"%(daq_event_count_diff[vfat] - real_l1a_counter%256))
+            daq_event_count_diff[vfat] = real_l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
         else:
             if nl1a != 0:
                 daq_event_count_diff[vfat] = nl1a
                 l1a_counter = nl1a
+                real_l1a_counter = nl1a
                 if calpulse:
                     calpulse_counter = nl1a
                 else:
                     calpulse_counter = 0
             else:
-                daq_event_count_diff[vfat] = l1a_rate * runtime
-                l1a_counter = l1a_rate * runtime
+                daq_event_count_diff[vfat] = expected_l1a
+                l1a_counter = expected_l1a
+                real_l1a_counter = expected_l1a
                 if calpulse:
-                    calpulse_counter = l1a_rate * runtime
+                    calpulse_counter = expected_l1a
                 else:
                     calpulse_counter = 0
-        print ("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e,  DAQ Events: %.2e,  DAQ CRC Errors: %d" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
-        file_out.write("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e,  DAQ Events: %.2e,  DAQ CRC Errors: %d\n" %(vfat, total_time/60.0, l1a_rate/1000.0, l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
+        print ("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Expected L1A's (effi=%.3f): %.2e, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e  \nDAQ Events: %.2e,  DAQ CRC Errors: %d" %(vfat, total_time/60.0, l1a_rate/1000.0, efficiency, expected_l1a, real_l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
+        file_out.write("VFAT#: %02d, Time: %.2f minutes,  L1A rate: %.2f kHz, Expected L1A's (effi=%.3f): %.2e, Nr. of L1A's: %.2e,  Nr. of Calpulses: %.2e  \nDAQ Events: %.2e,  DAQ CRC Errors: %d\n" %(vfat, total_time/60.0, l1a_rate/1000.0, efficiency, expected_l1a, real_l1a_counter, calpulse_counter, daq_event_count_diff[vfat], daq_crc_error_count_diff[vfat]))
 
         daq_data_packet_size = 176 # 176 bits
         if daq_event_count_diff[vfat]==0:
@@ -313,6 +327,9 @@ if __name__ == '__main__':
         nl1a = int(args.nl1a)
         if args.time is not None:
             print (Colors.YELLOW + "Cannot give both time and number of L1A cycles" + Colors.ENDC)
+            sys.exit()
+        if nl1a > (2**24 - 1):
+            print (Colors.YELLOW + "Number of L1A cycles can be maximum 1.68e7. Using time option for longer tests" + Colors.ENDC)
             sys.exit()
     runtime = 0
     if args.time is not None:
