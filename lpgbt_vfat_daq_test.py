@@ -152,10 +152,13 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
             if time_passed >= 1:
                 l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                 calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                expected_l1a = int(l1a_rate * (time()-t0) * 60 * efficiency)
+                expected_l1a = int(l1a_rate * (time()-t0) * efficiency)
                 nl1a_reg_cycles = int(expected_l1a/(2**32))
                 real_l1a_counter = nl1a_reg_cycles*(2**32) + l1a_counter
-                real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
+                if calpulse:
+                    real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
+                else:
+                    real_calpulse_counter = calpulse_counter
                 #daq_event_count_temp = read_backend_reg(daq_event_count_node[vfat]) - daq_event_count_initial[vfat]
                 daq_event_count_temp = real_l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
                 print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, daq_event_count_temp))
@@ -173,10 +176,13 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
             if time_passed >= 1:
                 l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                 calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                expected_l1a = int(l1a_rate * (time()-t0) * 60 * efficiency)
+                expected_l1a = int(l1a_rate * (time()-t0) * efficiency)
                 nl1a_reg_cycles = int(expected_l1a/(2**32))
                 real_l1a_counter = nl1a_reg_cycles*(2**32) + l1a_counter
-                real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
+                if calpulse:
+                    real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
+                else:
+                    real_calpulse_counter = calpulse_counter
                 #daq_event_count_temp = read_backend_reg(daq_event_count_node[vfat]) - daq_event_count_initial[vfat]
                 daq_event_count_temp = real_l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
                 print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, daq_event_count_temp))

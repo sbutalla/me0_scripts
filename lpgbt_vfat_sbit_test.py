@@ -167,7 +167,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
                         channel_sbit_counter = read_backend_reg(channel_sbit_counter_node) - channel_sbit_counter_initial
                         l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                         calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                        expected_l1a = int(l1a_rate * (time()-t0) * 60 * efficiency)
+                        expected_l1a = int(l1a_rate * (time()-t0) * efficiency)
                         nl1a_reg_cycles = int(expected_l1a/(2**32))
                         real_l1a_counter = nl1a_reg_cycles*(2**32) + l1a_counter
                         real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
@@ -182,7 +182,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
                         channel_sbit_counter = read_backend_reg(channel_sbit_counter_node) - channel_sbit_counter_initial
                         l1a_counter = read_backend_reg(l1a_node) - l1a_counter_initial
                         calpulse_counter = read_backend_reg(calpulse_node) - calpulse_counter_initial
-                        expected_l1a = int(l1a_rate * (time()-t0) * 60 * efficiency)
+                        expected_l1a = int(l1a_rate * (time()-t0) * efficiency)
                         nl1a_reg_cycles = int(expected_l1a/(2**32))
                         real_l1a_counter = nl1a_reg_cycles*(2**32) + l1a_counter
                         real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
