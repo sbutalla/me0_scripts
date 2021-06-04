@@ -167,7 +167,9 @@ Use -h option for any script to check usage
 
 ```lpgbt_vfat_reset.py```: reset VFAT
 
-```lpgbt_vfat_sbit_test.py```: S-bit testing for VFATs
+```lpgbt_vfat_sbit_phase_scan.py```: S-bit phase scan for VFATs (only works with test firmware)
+
+```lpgbt_vfat_sbit_test.py```: S-bit testing for VFATs (only works with test firmware)
 
 ```lpgbt_vfat_slow_control_test.py```: error tests by read/write on VFAT registers using slow control
 
