@@ -3,6 +3,8 @@ from time import sleep, time
 import sys
 import argparse
 import random
+import glob
+import json
 from lpgbt_vfat_config import configureVfat, enableVfatchannel
 
 # VFAT number: boss/sub, ohid, gbtid, elink
@@ -57,7 +59,10 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     sleep(0.1)
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 1)
 
-    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+    lpgbt, oh_select, gbt_select, rx_elink = vfat_to_oh_gbt_elink(vfat)
+    print ("Testing VFAT#: %02d\n" %(vfat))
+    file_out.write("Testing VFAT#: %02d\n\n")
+    
     check_lpgbt_link_ready(oh_select, gbt_select)
     link_good = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select)))
     sync_err = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select)))
@@ -67,10 +72,6 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
 
     # Reset TTC generator
     write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
-
-    lpgbt, oh_select, gbt_select, rx_elink = vfat_to_oh_gbt_elink(vfat)
-    print ("Testing VFAT#: %02d\n" %(vfat))
-    file_out.write("Testing VFAT#: %02d\n\n")
 
     # Reading S-bit counter
     if nl1a != 0:
@@ -84,8 +85,11 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     calpulse_node = get_rwreg_node("GEM_AMC.TTC.CMD_COUNTERS.CALPULSE")
 
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_VFAT_SBIT_ME0"), vfat) # Select VFAT for reading S-bits
+    elink_sbit_select_node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_ELINK_SBIT_ME0") # Node for selecting Elink to count
+    channel_sbit_select_node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_SBIT_ME0") # Node for selecting S-bit to count
     elink_sbit_counter_node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SBIT0XE_COUNT_ME0") # S-bit counter for elink
     channel_sbit_counter_node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SBIT0XS_COUNT_ME0") # S-bit counter for specific channel
+    reset_sbit_counter_node = get_rwreg_node("GEM_AMC.GEM_SYSTEM.SBIT_TEST_RESET")  # To reset all S-bit counters
 
     elink_sbit_counter = 0
     channel_sbit_counter = 0
@@ -126,8 +130,9 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
         calpulse_counter_list[elink]  = {}
 
         for channel, sbit_read in zip(channel_list[elink], sbit_list[elink]):
-            # Reset L1A and CalPulse counters
+            # Reset L1A, CalPulse and S-bit counters
             global_reset()
+            write_backend_reg(reset_sbit_counter_node, 1)
 
             # Enabling the pulsing channel
             print("Enabling pulsing on channel %02d in ELINK# %02d:" % (channel, elink))
@@ -136,8 +141,8 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
                 enableVfatchannel(vfat-6*oh_select, oh_select, i, 1, 0) # mask all channels and disable calpulsing
             enableVfatchannel(vfat-6*oh_select, oh_select, channel, 0, 1) # unmask this channel and enable calpulsing
 
-            write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_ELINK_SBIT_ME0"), elink) # Select elink for S-bit counter
-            write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.TEST_SEL_SBIT_ME0"), sbit_read) # Select S-bit for S-bit counter
+            write_backend_reg(elink_sbit_select_node, elink) # Select elink for S-bit counter
+            write_backend_reg(channel_sbit_select_node, sbit_read) # Select S-bit for S-bit counter
 
             elink_sbit_counter_initial = read_backend_reg(elink_sbit_counter_node)
             channel_sbit_counter_initial = read_backend_reg(channel_sbit_counter_node)
@@ -336,6 +341,21 @@ if __name__ == '__main__':
     elink_list = []
     channel_list ={}
     sbit_list = {}
+    s_bit_channel_mapping = {}
+
+    if args.sbits is None:
+        print ("")
+        if not os.path.isdir("sbit_phase_scan_results"):
+            print (Colors.YELLOW + "Run the S-bit phase scan first" + Colors.ENDC)
+            sys.exit()
+        list_of_files = glob.glob("sbit_phase_scan_results/*.py")
+        if len(list_of_files)>1:
+            print ("Mutliple S-bit phase scan results found, using latest file")
+        latest_file = max(list_of_files, key=os.path.getctime)
+        print ("Using S-bit phase scan file: %s\n"%(latest_file.split("sbit_phase_scan_results/")[1]))
+        with open(latest_file) as input_file:
+            s_bit_channel_mapping = json.load(input_file)
+
     for e in args.elink:
         elink = int(e)
         if elink not in range(0,7):
@@ -347,8 +367,13 @@ if __name__ == '__main__':
 
         if args.channels is None:
             for c in range(0,16):
+                sbit_input_file = s_bit_channel_mapping[str(vfat)][str(elink)][str(elink*16 + c)]
+                if sbit_input_file == -9999:
+                    print (Colors.YELLOW + "Channel %02d is bad, skipping"%(elink*16 + c) + Colors.ENDC)
+                    continue
                 channel_list[elink].append(elink*16 + c)
-                sbit_list[elink].append(elink*8 + int(c/2))
+                #sbit_list[elink].append(elink*8 + int(c/2))
+                sbit_list[elink].append(sbit_input_file)
         else:
             for c in args.channels:
                 c_int = int(c)
@@ -357,7 +382,12 @@ if __name__ == '__main__':
                     sys.exit()
                 channel_list[elink].append(c_int)
                 if args.sbits is None:
-                    sbit_list[elink].append(int(c_int/2))
+                    #sbit_list[elink].append(int(c_int/2))
+                    sbit_input_file = s_bit_channel_mapping[str(vfat)][str(elink)][str(c_int)]
+                    if sbit_input_file == -9999:
+                        print (Colors.YELLOW + "Channel %02d is bad (from S-bit phase scan)"%(c_int) + Colors.ENDC)
+                        sys.exit()
+                    sbit_list[elink].append(sbit_input_file)
             if args.sbits is not None:
                 for sbit in args.sbits:
                     sbit_int = int(sbit)
