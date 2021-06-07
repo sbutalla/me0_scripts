@@ -358,7 +358,7 @@ if __name__ == '__main__':
 
     for e in args.elink:
         elink = int(e)
-        if elink not in range(0,7):
+        if elink not in range(0,8):
             print (Colors.YELLOW + "Invalid ELINK number, only allowed 0-7" + Colors.ENDC)
             sys.exit()
         elink_list.append(elink)
