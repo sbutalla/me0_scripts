@@ -147,9 +147,9 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
                     if system!="dryrun" and l1a_counter != nl1a:
                         print (Colors.RED + "ERROR: Number of L1A's incorrect" + Colors.ENDC)
                         rw_terminate()
-                    #if system!="dryrun" and (elink_sbit_counter_final - elink_sbit_counter_initial) == 0:
-                    #    print (Colors.RED + "ERROR: Elink %02d did not register any S-bit for calpulse on channel %02d"%(elink, channel) + Colors.ENDC)
-                    #    rw_terminate()
+                    if system!="dryrun" and (elink_sbit_counter_final - elink_sbit_counter_initial) == 0:
+                        print (Colors.YELLOW + "WARNING: Elink %02d did not register any S-bit for calpulse on channel %02d"%(elink, channel) + Colors.ENDC)
+                        rw_terminate()
 
                     channel_sbit_counter_final[sbit] = read_backend_reg(channel_sbit_counter_node)
 
