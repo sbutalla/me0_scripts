@@ -149,7 +149,7 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
                         rw_terminate()
                     if system!="dryrun" and (elink_sbit_counter_final - elink_sbit_counter_initial) == 0:
                         print (Colors.YELLOW + "WARNING: Elink %02d did not register any S-bit for calpulse on channel %02d"%(elink, channel) + Colors.ENDC)
-
+                        break
                     channel_sbit_counter_final[sbit] = read_backend_reg(channel_sbit_counter_node)
 
                     if (channel_sbit_counter_final[sbit] - channel_sbit_counter_initial[sbit]) > 0:
@@ -192,6 +192,18 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
     filename = "sbit_phase_scan_results/sbit_phase_scan_results_"+now+".py"
     with open(filename, 'w') as file:
         file.write(json.dumps(s_bit_channel_mapping))
+
+    print ("S-bit Phase Scan Results: \n")
+    for vfat in s_bit_channel_mapping:
+        print ("VFAT %02d: "%(vfat))
+        for elink in s_bit_channel_mapping[vfat]:
+            print ("  ELINK %02d: "%(elink))
+            for channel in s_bit_channel_mapping[vfat][elink]:
+                if s_bit_channel_mapping[vfat][elink][channel] == -9999:
+                    print (Colors.RED + "    Channel %02d:  S-bit %02d"%(channel, s_bit_channel_mapping[vfat][elink][channel]) + Colors.ENDC)
+                else:
+                    print (Colors.GREEN + "    Channel %02d:  S-bit %02d"%(channel, s_bit_channel_mapping[vfat][elink][channel]) + Colors.ENDC)
+        print ("")
 
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 0)
     print ("\nS-bit phase scan done\n")
