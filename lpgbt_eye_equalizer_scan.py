@@ -64,8 +64,7 @@ def main(system, count, eq_attn, eq_cap, eq_res3, eq_res2, eq_res1, eq_res0, bos
                             print ("Scanning EQRES1 = " + eq_res1_setting)
                             print ("Scanning EQRES0 = " + eq_res0_setting)
 
-                            #eyeimage = [[0 for y in range(32)] for x in range(64)]
-                            eyeimage = [[0 for y in range(31)] for x in range(64)]
+                            eyeimage = [[0 for y in range(32)] for x in range(64)]
                             cntvalmax = 0
                             cntvalmin = 2**20
 

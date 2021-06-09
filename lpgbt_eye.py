@@ -17,8 +17,7 @@ def main(system, count, boss):
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES2"), 0x1, 0)
     writeReg(getNode("LPGBT.RWF.EQUALIZER.EQRES3"), 0x1, 0)
 
-    #eyeimage = [[0 for y in range(32)] for x in range(64)]
-    eyeimage = [[0 for y in range(31)] for x in range(64)]
+    eyeimage = [[0 for y in range(32)] for x in range(64)]
 
     datavalregh = getNode("LPGBT.RO.EOM.EOMCOUNTERVALUEH")
     datavalregl = getNode("LPGBT.RO.EOM.EOMCOUNTERVALUEL")
