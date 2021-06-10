@@ -155,8 +155,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RSSI Monitor for ME0 Optohybrid')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss")
-    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
     parser.add_argument("-m", "--minutes", action="store", dest="minutes", help="minutes = int. # of minutes you want to run")
     parser.add_argument("-a", "--gain", action="store", dest="gain", default = "2", help="gain = Gain for RSSI ADC: 2, 8, 16, 32")
     args = parser.parse_args()
@@ -201,11 +201,11 @@ if __name__ == '__main__':
         if args.gbtid is None:
             print(Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
             sys.exit()
-        if int(args.ohid) > 7:
-            print(Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
+        if int(args.ohid) > 1:
+            print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
             sys.exit()
-        if int(args.gbtid) > 1:
-            print(Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
+        if int(args.gbtid) > 7:
+            print(Colors.YELLOW + "Only GBTID 0-7 allowed" + Colors.ENDC)
             sys.exit()
     else:
         if args.ohid is not None or args.gbtid is not None:

@@ -12,6 +12,93 @@ n_rw_reg = (0x13C+1) # number of registers in LPGBT rwf + rw block
 
 TOP_NODE_NAME = "LPGBT"
 
+# VFAT number: boss/sub, gbtid, elink
+# For GE2/1 GEB + Pizza
+#VFAT_TO_OH_GBT_ELINK_GPIO_GE21 = {
+#        0  : ("sub"  , 0, 1, 6, 10),
+#        1  : ("sub"  , 0, 1, 24, 9),
+#        2  : ("sub"  , 0, 1, 11, 11),
+#        3  : ("boss" , 0, 0, 3, 0),
+#        4  : ("boss" , 0, 0, 27, 2),
+#        5  : ("boss" , 0, 0, 25, 8),
+#        6  : ("boss" , 1, 0, 6, 0),
+#        7  : ("boss" , 1, 0, 16, 8),
+#        8  : ("sub"  , 1, 1, 18, 9),
+#        9  : ("boss" , 1, 0, 15, 2),
+#        10 : ("sub"  , 1, 1, 3, 10),
+#        11 : ("sub"  , 1, 1, 17, 11)
+#}
+#}
+
+# For ME0 GEB
+VFAT_TO_GBT_ELINK_GPIO_ME0 = {
+        17 : ("sub"  , 1, 6,  10),
+        16 : ("sub"  , 1, 24, 9),
+        9  : ("sub"  , 1, 11, 11),
+        8  : ("boss" , 0, 3,  0),
+        1  : ("boss" , 0, 27, 2),
+        0  : ("boss" , 0, 25, 8),
+
+        19 : ("sub"  , 3, 6,  10),
+        18 : ("sub"  , 3, 24, 9),
+        11 : ("sub"  , 3, 11, 11),
+        10 : ("boss" , 2, 3,  0),
+        3  : ("boss" , 2, 27, 2),
+        2  : ("boss" , 2, 25, 8),
+
+        21 : ("sub"  , 5, 6,  10),
+        20 : ("sub"  , 5, 24, 9),
+        13 : ("sub"  , 5, 11, 11),
+        4  : ("boss" , 4, 3,  0),
+        5  : ("boss" , 4, 27, 2),
+        12 : ("boss" , 4, 25),
+
+        23 : ("sub"  , 7, 6,  10),
+        22 : ("sub"  , 7, 24, 9),
+        15 : ("sub"  , 7, 11, 11),
+        6  : ("boss" , 6, 3,  0),
+        7  : ("boss" , 6, 27, 2),
+        14 : ("boss" , 6, 25, 8),
+}
+
+VFAT_TO_GBT_ELINK_GPIO = VFAT_TO_GBT_ELINK_GPIO_ME0
+
+# Registers to read/write
+vfat_registers = {
+        "HW_ID": "r",
+        "HW_ID_VER": "r",
+        "TEST_REG": "rw",
+        "HW_CHIP_ID": "r"
+}
+
+hdlc_address_map = {
+    0 : 0x4,
+    1 : 0x3,
+    2 : 0xa,
+    3 : 0x9,
+    4 : 0x1,
+    5 : 0x3,
+    6 : 0x7,
+    7 : 0x9,
+    8 : 0x1,
+    9 : 0x5,
+    10: 0x7,
+    11: 0xb,
+    12: 0x4,
+    13: 0x5,
+    14: 0xa,
+    15: 0xb,
+    16: 0x2,
+    17: 0x6,
+    18: 0x8,
+    19: 0xc,
+    20: 0x2,
+    21: 0x6,
+    22: 0x8,
+    23: 0xc
+}
+
+
 class Node:
     name = ''
     vhdlname = ''
@@ -189,7 +276,7 @@ def select_ic_link(ohIdx, gbtIdx):
         if ohIdx not in range(0,8) or gbtIdx not in [0,1]:
             print (Colors.RED + "ERROR: Invalid ohIdx or gbtIdx" + Colors.ENDC)
             rw_terminate()
-        linkIdx = ohIdx * 2 + gbtIdx
+        linkIdx = ohIdx * 8 + gbtIdx
         output = rw_reg.writeReg(rw_reg.getNode('GEM_AMC.SLOW_CONTROL.IC.GBTX_LINK_SELECT'), linkIdx)
         if output=="Bus Error":
             print (Colors.YELLOW + "ERROR: Bus Error, Trying again" + Colors.ENDC)
@@ -230,7 +317,20 @@ def check_lpgbt_ready(ohIdx=None, gbtIdx=None):
     if system=="backend":
         if ohIdx is not None and gbtIdx is not None:
             check_lpgbt_link_ready(ohIdx, gbtIdx)
-        
+
+def vfat_to_gbt_elink_gpio(vfat):
+    lpgbt = VFAT_TO_GBT_ELINK_GPIO[vfat][0]
+    gbtid = VFAT_TO_GBT_ELINK_GPIO[vfat][1]
+    elink = VFAT_TO_GBT_ELINK_GPIO[vfat][2]
+    gpio = VFAT_TO_GBT_ELINK_GPIO[vfat][3]
+    return lpgbt, gbtid, elink, gpio
+
+def enable_hdlc_addressing(addr_list):
+    for vfat in addr_list:
+        reg_name = "GEM_AMC.GEM_SYSTEM.VFAT3.VFAT%d_HDLC_ADDRESS"%(vfat)
+        address = hdlc_address_map[vfat]
+        write_backend_reg(get_rwreg_node(reg_name), address)
+
 def lpgbt_efuse(boss, enable):
     fuse_success = 1
     if boss:

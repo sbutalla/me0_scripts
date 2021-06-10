@@ -115,7 +115,7 @@ def prbs_generate(system, boss, path, ohid, gbtid):
             # Loopback from downlink to uplink at 10.24 Gbps
             writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DLFRAME_10G24"], 0)
 
-        mgt_channel = int(ohid) * 2 + int(gbtid)
+        mgt_channel = int(ohid) * 8 + int(gbtid)
 
         # PRBS7 for the entire data frame
         node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
@@ -140,7 +140,7 @@ def prbs_stop(system, boss, path, ohid, gbtid):
             # Stop loopback from downlink to uplink
             writeReg(getNode("LPGBT.RW.TESTING.ULSERTESTPATTERN"), PRBS_generator_serializer["DATA"], 0)
             
-        mgt_channel = int(ohid) * 2 + int(gbtid)
+        mgt_channel = int(ohid) * 8 + int(gbtid)
         
         # Stopping PRBS7 for the entire data frame
         node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.TX_PRBS_SEL' % (mgt_channel))
@@ -157,7 +157,7 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
     print ("Measuring PRBS errors for: " + path)
 
     if path == "uplink" or path == "loopback": # checking PRBS on backend 
-        mgt_channel = int(ohid) * 2 + int(gbtid)
+        mgt_channel = int(ohid) * 8 + int(gbtid)
 
         # Reading PRBS7
         rx_select_node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.CTRL.RX_PRBS_SEL' % (mgt_channel))
@@ -325,8 +325,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LPGBT Bit Error Rate Test (BERT)')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss/sub")
-    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)") 
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
     parser.add_argument("-p", "--path", action="store", dest="path", help="path = uplink, downlink, loopback")
     parser.add_argument("-f", "--func", action="store", dest="func", help="func = generate, check, all, stop")
     parser.add_argument("-b", "--bert_source", action="store", nargs='+', dest="bert_source", help="COURSE BERT SOURCE = See lpGBT manual Table 14.4 for options, default = DLFRAME")
@@ -372,12 +372,12 @@ if __name__ == '__main__':
         if args.gbtid is None:
             print (Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
             sys.exit()
-        if int(args.ohid)>7:
-            print (Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
+        if int(args.ohid) > 1:
+            print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
             sys.exit()
-        if int(args.gbtid)>1:
-            print (Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
-            sys.exit() 
+        if int(args.gbtid) > 7:
+            print(Colors.YELLOW + "Only GBTID 0-7 allowed" + Colors.ENDC)
+            sys.exit()
     else:
         if args.ohid is not None or args.gbtid is not None:
             print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)

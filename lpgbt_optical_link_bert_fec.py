@@ -4,56 +4,6 @@ import sys
 import argparse
 import random
 
-# VFAT number: boss/sub, ohid, gbtid, elink
-# For GE2/1 GEB + Pizza
-VFAT_TO_ELINK_GE21 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("boss" , 1, 0, 6),
-        7  : ("boss" , 1, 0, 16),
-        8  : ("sub"  , 1, 1, 18),
-        9  : ("boss" , 1, 0, 15),
-        10 : ("sub"  , 1, 1, 3),
-        11 : ("sub"  , 1, 1, 17)
-}
-
-# For ME0 GEB
-VFAT_TO_ELINK_ME0 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("sub"  , 1, 1, 6),
-        7  : ("sub"  , 1, 1, 24),
-        8  : ("sub"  , 1, 1, 11),
-        9  : ("boss" , 1, 0, 3),
-        10  : ("boss" , 1, 0, 27),
-        11  : ("boss" , 1, 0, 25),
-}
-
-VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
-
-# Register to read/write
-vfat_registers = {
-        "HW_ID": "r",
-        "HW_ID_VER": "r",
-        "TEST_REG": "rw",
-        "HW_CHIP_ID": "r"
-}
-
-def vfat_to_oh_gbt_elink(vfat):
-    lpgbt = VFAT_TO_ELINK[vfat][0]
-    ohid  = VFAT_TO_ELINK[vfat][1]
-    gbtid = VFAT_TO_ELINK[vfat][2]
-    elink = VFAT_TO_ELINK[vfat][3]
-    return lpgbt, ohid, gbtid, elink
-
 
 def check_fec_errors(system, boss, path, opr, ohid, gbtid, runtime, vfat_list, verbose):
     file_out = open("optical_link_bert_fec_test_output.txt", "w")
@@ -227,13 +177,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LPGBT Bit Error Ratio Test (BERT) using FEC Error Counters')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss/sub")
-    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend/dryrun)")
-    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend/dryrun)")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1 (only needed for backend/dryrun)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend/dryrun)")
     parser.add_argument("-p", "--path", action="store", dest="path", help="path = uplink, downlink")
     parser.add_argument("-r", "--opr", action="store", dest="opr", default="run", help="opr = start, run, read, stop (only run, read allowed for uplink)")
     parser.add_argument("-t", "--time", action="store", dest="time", help="TIME = measurement time in minutes")
-    parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11) for read/write TEST_REG")
-    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugiin card addressing needs should be enabled")
+    parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-23) for read/write TEST_REG")
+    parser.add_argument("-a", "--addr", action="store", nargs='+', dest="addr", help="addr = list of VFATs to enable HDLC addressing")
     parser.add_argument("-z", "--verbose", action="store_true", dest="verbose", help="VERBOSE")
     args = parser.parse_args()
 
@@ -276,12 +226,12 @@ if __name__ == '__main__':
         if args.gbtid is None:
             print (Colors.YELLOW + "Need GBTID for backend/dryrun" + Colors.ENDC)
             sys.exit()
-        if int(args.ohid)>7:
-            print (Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
+        if int(args.ohid) > 1:
+            print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
             sys.exit()
-        if int(args.gbtid)>1:
-            print (Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
-            sys.exit() 
+        if int(args.gbtid) > 7:
+            print(Colors.YELLOW + "Only GBTID 0-7 allowed" + Colors.ENDC)
+            sys.exit()
     else:
         if args.ohid is not None or args.gbtid is not None:
             print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)
@@ -327,18 +277,26 @@ if __name__ == '__main__':
             sys.exit()
         for v in args.vfats:
             v_int = int(v)
-            if v_int not in range(0,12):
-                print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+            if v_int not in range(0,23):
+                print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-23" + Colors.ENDC)
                 sys.exit()
-            lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(v_int)
-            if lpgbt!=args.lpgbt or oh_select!=int(args.ohid) or gbt_select!=int(args.gbtid):
+            lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
+            if lpgbt!=args.lpgbt or gbt_select!=int(args.gbtid):
                 print (Colors.YELLOW + "Invalid VFAT number for selected lpGBT" + Colors.ENDC)
                 sys.exit()
             vfat_list.append(v_int)
 
-    if args.addr:
-        print ("Enabling VFAT addressing for plugin cards")
-        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+    if args.addr is not None:
+        print ("Enabling VFAT addressing for plugin cards on slots: ")
+        print (args.addr)
+        addr_list = []
+        for a in args.addr:
+        a_int = int(a)
+        if a_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number for HDLC addressing, only allowed 0-23" + Colors.ENDC)
+            sys.exit()
+        addr_list.append(a_int)
+        enable_hdlc_addressing(addr_list)
 
     # Parsing Registers XML File
     print("Parsing xml file...")

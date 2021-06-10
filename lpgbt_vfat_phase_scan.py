@@ -9,41 +9,6 @@ config_sub_filename = "config_sub.txt"
 config_boss = {}
 config_sub = {}
 
-# VFAT number: boss/sub, ohid, gbtid, elink
-# For GE2/1 GEB + Pizza
-VFAT_TO_ELINK_GE21 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("boss" , 1, 0, 6),
-        7  : ("boss" , 1, 0, 16),
-        8  : ("sub"  , 1, 1, 18),
-        9  : ("boss" , 1, 0, 15),
-        10 : ("sub"  , 1, 1, 3),
-        11 : ("sub"  , 1, 1, 17)
-}
-
-# For ME0 GEB
-VFAT_TO_ELINK_ME0 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("sub"  , 1, 1, 6),
-        7  : ("sub"  , 1, 1, 24),
-        8  : ("sub"  , 1, 1, 11),
-        9  : ("boss" , 1, 0, 3),
-        10  : ("boss" , 1, 0, 27),
-        11  : ("boss" , 1, 0, 25),
-}
-
-VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
-
 def getConfig (filename):
     f = open(filename, 'r')
     reg_map = {}
@@ -53,31 +18,24 @@ def getConfig (filename):
         reg_map[reg] = data
     f.close()
     return reg_map
-
-def vfat_to_oh_gbt_elink(vfat):
-    lpgbt = VFAT_TO_ELINK[vfat][0]
-    ohid  = VFAT_TO_ELINK[vfat][1]
-    gbtid = VFAT_TO_ELINK[vfat][2]
-    elink = VFAT_TO_ELINK[vfat][3]
-    return lpgbt, ohid, gbtid, elink
         
-def lpgbt_communication_test(system, vfat_list, depth):
+def lpgbt_communication_test(system, oh_select, vfat_list, depth):
     print ("LPGBT VFAT Communication Check depth=%s transactions" % (str(depth)))
     
     vfat_oh_link_reset()
     cfg_run = 12*[0]
     for vfat in vfat_list:
-        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
            
         check_lpgbt_link_ready(oh_select, gbt_select)
-        cfg_node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat-6*oh_select))
+        cfg_node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN' % (oh_select, vfat))
         for iread in range(depth):
             vfat_cfg_run = read_backend_reg(cfg_node)
             cfg_run[vfat] += (vfat_cfg_run != 0 and vfat_cfg_run != 1)
         print ("\nVFAT#%02d: reads=%d, errs=%d" % (vfat, depth, cfg_run[vfat]))
     print ("")
 
-def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
+def lpgbt_phase_scan(system, oh_select, vfat_list, depth, best_phase):
     print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
 
     link_good    = [[0 for phase in range(16)] for vfat in range(12)]
@@ -87,26 +45,26 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
     errs         = [[0 for phase in range(16)] for vfat in range(12)]
 
     for vfat in vfat_list:
-        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
         check_lpgbt_link_ready(oh_select, gbt_select)
 
         #print("Configuring VFAT %d" % (vfat))
-        #hwid_node = get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.HW_ID" % (oh_select, vfat-6*oh_select))
+        #hwid_node = get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.HW_ID" % (oh_select, vfat))
         #output = simple_read_backend_reg(hwid_node, -9999)
         #if output == -9999:
-        #    setVfatRxPhase(system, vfat, 6)
+        #    setVfatRxPhase(system, oh_select, vfat, 6)
         #    output = simple_read_backend_reg(hwid_node, -9999)
         #    if output == -9999:
-        #        setVfatRxPhase(system, vfat, 12)
+        #        setVfatRxPhase(system, oh_select, vfat, 12)
         #        output = simple_read_backend_reg(hwid_node, -9999)
         #        if output == -9999:
-        #            setVfatRxPhase(system, vfat, 0)
+        #            setVfatRxPhase(system, oh_select, vfat, 0)
         #            print (Colors.RED + "Cannot configure VFAT %d"%(vfat) + Colors.ENDC)
         #            rw_terminate()
-        #configureVfat(1, vfat-6*oh_select, oh_select, 0)
+        #configureVfat(1, vfat, oh_select, 0)
         #for i in range(128):
-        #    enableVfatchannel(vfat-6*oh_select, oh_select, i, 0, 0) # unmask all channels and disable calpulsing
-        #write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(oh_select,vfat-6*oh_select)), 0)
+        #    enableVfatchannel(vfat, oh_select, i, 0, 0) # unmask all channels and disable calpulsing
+        #write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(oh_select,vfat)), 0)
 
     cyclic_running_node = get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_RUNNING")
 
@@ -115,7 +73,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
 
         # set phases for all vfats under test
         for vfat in vfat_list:
-            setVfatRxPhase(system, vfat, phase)
+            setVfatRxPhase(system, oh_select, vfat, phase)
 
         # Configure TTC Generator
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
@@ -127,29 +85,29 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
         # read cfg_run some number of times, check link good status and sync errors
         print ("Checking errors: ")
         for vfat in vfat_list:
-            lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+            lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
             # Reset the link, give some time to accumulate any sync errors and then check VFAT comms
             sleep(0.1)
             vfat_oh_link_reset()
             sleep(0.1)
 
             # Check Slow Control
-            cfg_node = get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN" % (oh_select, vfat-6*oh_select))
+            cfg_node = get_rwreg_node("GEM_AMC.OH.OH%d.GEB.VFAT%d.CFG_RUN" % (oh_select, vfat))
             for iread in range(depth):
                 vfat_cfg_run = simple_read_backend_reg(cfg_node, 9999)
                 cfg_run[vfat][phase] += (vfat_cfg_run != 0 and vfat_cfg_run != 1)
 
             # Check Link Good and Sync Errors
-            link_node = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select))
-            sync_node = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select))
+            link_node = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat))
+            sync_node = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat))
             link_good[vfat][phase]    = simple_read_backend_reg(link_node, 0)
             sync_err_cnt[vfat][phase] = simple_read_backend_reg(sync_node, 9999)
 
             daq_crc_error[vfat][phase] = -1
             # Check DAQ event counter and CRC errors with L1A if link and slow control good
             if system == "dryrun" or (link_good[vfat][phase]==1 and sync_err_cnt[vfat][phase]==0 and cfg_run[vfat][phase]==0):
-                write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_THR_ARM_DAC"%(oh_select,vfat-6*oh_select)), 0) # low threshold for random data
-                write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(oh_select,vfat-6*oh_select)), 1)
+                write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_THR_ARM_DAC"%(oh_select,vfat)), 0) # low threshold for random data
+                write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(oh_select,vfat)), 1)
 
                 # Send L1A to get DAQ events from VFATs
                 write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.CYCLIC_START"), 1)
@@ -157,10 +115,10 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
                 while cyclic_running:
                     cyclic_running = read_backend_reg(cyclic_running_node)
 
-                daq_event_counter = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_EVENT_CNT" % (oh_select, vfat-6*oh_select)))
-                if system == "dryrun" or daq_event_counter == 1000000%256:
-                    daq_crc_error[vfat][phase] = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_CRC_ERROR_CNT" % (oh_select, vfat-6*oh_select)))
-                write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(oh_select,vfat-6*oh_select)), 0)
+                daq_event_counter = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_EVENT_CNT" % (oh_select, vfat)))
+                if system == "dryrun" or daq_event_counter == 1000000%(2**16):
+                    daq_crc_error[vfat][phase] = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_CRC_ERROR_CNT" % (oh_select, vfat)))
+                write_backend_reg(get_rwreg_node("GEM_AMC.OH.OH%i.GEB.VFAT%i.CFG_RUN"%(oh_select,vfat)), 0)
 
             result_str = ""
             if link_good[vfat][phase]==1 and sync_err_cnt[vfat][phase]==0 and cfg_run[vfat][phase]==0 and daq_crc_error[vfat][phase]==0:
@@ -212,7 +170,7 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
             set_bestphase = bestphase_vfat[vfat]
         else:
             set_bestphase = int(best_phase,16)
-        setVfatRxPhase(system, vfat, set_bestphase)
+        setVfatRxPhase(system, oh_select, vfat, set_bestphase)
         print ("Phase set for VFAT#%02d to: %s" % (vfat, hex(set_bestphase)))
     sleep(0.1)
     vfat_oh_link_reset()
@@ -220,9 +178,9 @@ def lpgbt_phase_scan(system, vfat_list, depth, best_phase):
 
     # Unconfigure VFATs
     #for vfat in vfat_list:
-    #    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+    #    lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
     #    print("Unconfiguring VFAT %d" % (vfat))
-    #    configureVfat(0, vfat-6*oh_select, oh_select, 0)
+    #    configureVfat(0, vfat, oh_select, 0)
 
 def find_phase_center(err_list):
     # find the centers
@@ -269,10 +227,10 @@ def find_phase_center(err_list):
 
     return ngood_center, ngood_max
 
-def setVfatRxPhase(system, vfat, phase):
+def setVfatRxPhase(system, oh_select, vfat, phase):
 
     print ("Setting RX phase %s for VFAT%d" %(hex(phase), vfat))
-    lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+    lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
 
     if lpgbt == "boss":
         config = config_boss
@@ -311,13 +269,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LpGBT Phase Scan')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")
-    #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1")
+    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
+    parser.add_argument("-v", "--vfats", action="store", nargs='+', dest="vfats", help="vfats = list of VFAT numbers (0-23)")
     parser.add_argument("-d", "--depth", action="store", dest="depth", default="1000", help="depth = number of times to check for cfg_run error")
     parser.add_argument("-b", "--bestphase", action="store", dest="bestphase", help="bestphase = Best value of the elinkRX phase (in hex), calculated from phase scan by default")
     parser.add_argument("-t", "--test", action="store", dest="test", default="0", help="test = enter 1 for only testing vfat communication, default is 0")
-    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-a", "--addr", action="store", nargs='+', dest="addr", help="addr = list of VFATs to enable HDLC addressing")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -338,14 +296,21 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
     
+    if args.ohid is None:
+        print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
+        sys.exit()
+    if int(args.ohid) > 1:
+        print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
+        sys.exit()
+
     if args.vfats is None:
         print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
     vfat_list = []
     for v in args.vfats:
         v_int = int(v)
-        if v_int not in range(0,12):
-            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+        if v_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-23" + Colors.ENDC)
             sys.exit()
         vfat_list.append(v_int)
     
@@ -361,9 +326,17 @@ if __name__ == '__main__':
             print (Colors.YELLOW + "Phase can only be 4 bits" + Colors.ENDC)
             sys.exit()
 
-    if args.addr:
-        print ("Enabling VFAT addressing for plugin cards")
-        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+    if args.addr is not None:
+        print ("Enabling VFAT addressing for plugin cards on slots: ")
+        print (args.addr)
+        addr_list = []
+        for a in args.addr:
+        a_int = int(a)
+        if a_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number for HDLC addressing, only allowed 0-23" + Colors.ENDC)
+            sys.exit()
+        addr_list.append(a_int)
+        enable_hdlc_addressing(addr_list)
 
     # Parsing Registers XML File
     print("Parsing xml file...")
@@ -388,9 +361,9 @@ if __name__ == '__main__':
     # Running Phase Scan
     try:
         if args.test == "1":
-            lpgbt_communication_test(args.system, vfat_list, int(args.depth))
+            lpgbt_communication_test(args.system, int(args.ohid), vfat_list, int(args.depth))
         else:
-            lpgbt_phase_scan(args.system, vfat_list, int(args.depth), args.bestphase)
+            lpgbt_phase_scan(args.system, int(args.ohid), vfat_list, int(args.depth), args.bestphase)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

@@ -7,49 +7,8 @@ import glob
 import json
 from lpgbt_vfat_config import configureVfat, enableVfatchannel
 
-# VFAT number: boss/sub, ohid, gbtid, elink
-# For GE2/1 GEB + Pizza
-VFAT_TO_ELINK_GE21 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("boss" , 1, 0, 6),
-        7  : ("boss" , 1, 0, 16),
-        8  : ("sub"  , 1, 1, 18),
-        9  : ("boss" , 1, 0, 15),
-        10 : ("sub"  , 1, 1, 3),
-        11 : ("sub"  , 1, 1, 17)
-}
 
-# For ME0 GEB
-VFAT_TO_ELINK_ME0 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("sub"  , 1, 1, 6),
-        7  : ("sub"  , 1, 1, 24),
-        8  : ("sub"  , 1, 1, 11),
-        9  : ("boss" , 1, 0, 3),
-        10  : ("boss" , 1, 0, 27),
-        11  : ("boss" , 1, 0, 25),
-}
-
-VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
-
-def vfat_to_oh_gbt_elink(vfat):
-    lpgbt = VFAT_TO_ELINK[vfat][0]
-    ohid  = VFAT_TO_ELINK[vfat][1]
-    gbtid = VFAT_TO_ELINK[vfat][2]
-    elink = VFAT_TO_ELINK[vfat][3]
-    return lpgbt, ohid, gbtid, elink
-
-def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, runtime, l1a_bxgap):
+def lpgbt_vfat_sbit(system, oh_select, vfat, elink_list, channel_list, sbit_list, nl1a, runtime, l1a_bxgap):
     file_out = open("vfat_sbit_test_outtput.txt", "w")
     print ("LPGBT VFAT S-Bit Test\n")
     file_out.write("LPGBT VFAT S-Bit Test\n\n")
@@ -59,13 +18,13 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     sleep(0.1)
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 1)
 
-    lpgbt, oh_select, gbt_select, rx_elink = vfat_to_oh_gbt_elink(vfat)
+    lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
     print ("Testing VFAT#: %02d\n" %(vfat))
     file_out.write("Testing VFAT#: %02d\n\n")
     
     check_lpgbt_link_ready(oh_select, gbt_select)
-    link_good = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select)))
-    sync_err = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select)))
+    link_good = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat)))
+    sync_err = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat)))
     if system!="dryrun" and (link_good == 0 or sync_err > 0):
         print (Colors.RED + "Link is bad for VFAT# %02d"%(vfat) + Colors.ENDC)
         rw_terminate()
@@ -106,7 +65,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     # Configure the pulsing VFAT
     print("Configuring VFAT %02d" % (vfat))
     file_out.write("Configuring VFAT %02d\n" % (vfat))
-    configureVfat(1, vfat-6*oh_select, oh_select, 0)
+    configureVfat(1, vfat, oh_select, 0)
 
     for elink in elink_list:
         print ("Channel List in ELINK# %02d:" %(elink))
@@ -138,8 +97,8 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
             print("Enabling pulsing on channel %02d in ELINK# %02d:" % (channel, elink))
             file_out.write("Enabling pulsing on channel %02d in ELINK# %02d:\n" % (channel, elink))
             for i in range(128):
-                enableVfatchannel(vfat-6*oh_select, oh_select, i, 1, 0) # mask all channels and disable calpulsing
-            enableVfatchannel(vfat-6*oh_select, oh_select, channel, 0, 1) # unmask this channel and enable calpulsing
+                enableVfatchannel(vfat, oh_select, i, 1, 0) # mask all channels and disable calpulsing
+            enableVfatchannel(vfat, oh_select, channel, 0, 1) # unmask this channel and enable calpulsing
 
             write_backend_reg(elink_sbit_select_node, elink) # Select elink for S-bit counter
             write_backend_reg(channel_sbit_select_node, sbit_read) # Select S-bit for S-bit counter
@@ -204,7 +163,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
             # Disabling the pulsing channels
             print("Disabling pulsing on channel %02d in ELINK# %02d:\n" % (channel, elink))
             file_out.write("Disabling pulsing on channel %02d in ELINK# %02d:\n\n" % (channel, elink))
-            enableVfatchannel(vfat-6*oh_select, oh_select, channel, 1, 0) # mask this channel and disable calpulsing
+            enableVfatchannel(vfat, oh_select, channel, 1, 0) # mask this channel and disable calpulsing
 
             elink_sbit_counter = read_backend_reg(elink_sbit_counter_node) - elink_sbit_counter_initial
             channel_sbit_counter = read_backend_reg(channel_sbit_counter_node) - channel_sbit_counter_initial
@@ -221,7 +180,7 @@ def lpgbt_vfat_sbit(system, vfat, elink_list, channel_list, sbit_list, nl1a, run
     # Unconfigure the pulsing VFAT
     print("Unconfiguring VFAT %02d" % (vfat))
     file_out.write("Unconfiguring VFAT %02d\n" % (vfat))
-    configureVfat(0, vfat-6*oh_select, oh_select, 0)
+    configureVfat(0, vfat, oh_select, 0)
 
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 0)
 
@@ -283,16 +242,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LpGBT VFAT S-Bit Test')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfat", action="store", dest="vfat", help="vfat = VFAT number (0-11)")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1")
+    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
+    parser.add_argument("-v", "--vfat", action="store", dest="vfat", help="vfat = VFAT number (0-23)")
     parser.add_argument("-e", "--elink", action="store", dest="elink", nargs='+', help="elink = list of ELINKs (0-7) for S-bits")
     parser.add_argument("-c", "--channels", action="store", dest="channels", nargs='+', help="channels = list of channels for chosen VFAT and ELINK (list allowed only for 1 elink, by default all channels used for the elinks)")
     parser.add_argument("-x", "--sbits", action="store", dest="sbits", nargs='+', help="sbit = list of sbits to read for chosen VFAT and ELINK (list allowed only for 1 elink, by default all s-bits used for the elinks)")
-    #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
     parser.add_argument("-n", "--nl1a", action="store", dest="nl1a", help="nl1a = fixed number of L1A cycles")
     parser.add_argument("-t", "--time", action="store", dest="time", help="time = time for which to run the S-bit testing (in minutes)")
     parser.add_argument("-b", "--bxgap", action="store", dest="bxgap", default="500", help="bxgap = Nr. of BX between two L1A's (default = 500 i.e. 12.5 us)")
-    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-a", "--addr", action="store", nargs='+', dest="addr", help="addr = list of VFATs to enable HDLC addressing")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -313,12 +272,19 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
 
+    if args.ohid is None:
+        print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
+        sys.exit()
+    if int(args.ohid) > 1:
+        print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
+        sys.exit()
+
     if args.vfat is None:
         print (Colors.YELLOW + "Enter VFAT number" + Colors.ENDC)
         sys.exit()
     vfat = int(args.vfat)
-    if vfat not in range(0,12):
-        print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+    if vfat not in range(0,24):
+        print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-23" + Colors.ENDC)
         sys.exit()
 
     if args.elink is None:
@@ -399,8 +365,8 @@ if __name__ == '__main__':
         if args.time is not None:
             print (Colors.YELLOW + "Cannot give both time and number of L1A cycles" + Colors.ENDC)
             sys.exit()
-        if nl1a > (2**24 - 1):
-            print (Colors.YELLOW + "Number of L1A cycles can be maximum 1.68e7. Using time option for longer tests" + Colors.ENDC)
+        if nl1a > (2**32 - 1):
+            print (Colors.YELLOW + "Number of L1A cycles can be maximum 4.29e9. Using time option for longer tests" + Colors.ENDC)
             sys.exit()
     runtime = 0
     if args.time is not None:
@@ -421,9 +387,17 @@ if __name__ == '__main__':
     else:
         print ("Gap between consecutive L1A or CalPulses = %d BX = %.2f us" %(l1a_bxgap, l1a_timegap))
 
-    if args.addr:
-        print ("Enabling VFAT addressing for plugin cards")
-        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+    if args.addr is not None:
+        print ("Enabling VFAT addressing for plugin cards on slots: ")
+        print (args.addr)
+        addr_list = []
+        for a in args.addr:
+        a_int = int(a)
+        if a_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number for HDLC addressing, only allowed 0-23" + Colors.ENDC)
+            sys.exit()
+        addr_list.append(a_int)
+        enable_hdlc_addressing(addr_list)
 
     # Parsing Registers XML File
     print("Parsing xml file...")
@@ -436,7 +410,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_vfat_sbit(args.system, vfat, elink_list, channel_list, sbit_list, nl1a, runtime, l1a_bxgap)
+        lpgbt_vfat_sbit(args.system, int(args.ohid), vfat, elink_list, channel_list, sbit_list, nl1a, runtime, l1a_bxgap)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

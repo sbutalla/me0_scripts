@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import os
 import datetime
 
-def main(system, boss, oh, run_time_min, gain):
+def main(system, boss, gbt, run_time_min, gain):
 
     init_adc()
     print("ADC Readings:")
@@ -55,11 +55,11 @@ def main(system, boss, oh, run_time_min, gain):
             asense2.append(asense2_converted)
             asense3.append(asense3_converted)
             minutes.append(second/60)
-            live_plot_current(ax1, minutes, asense0, asense2, run_time_min, oh)
-            live_plot_temp(ax2, minutes, asense1, asense3, run_time_min, oh)
+            live_plot_current(ax1, minutes, asense0, asense2, run_time_min, gbt)
+            live_plot_temp(ax2, minutes, asense1, asense3, run_time_min, gbt)
 
             file.write(str(second) + "\t" + str(asense0_converted) + "\t" + str(asense1_converted) + "\t" + str(asense2_converted) + "\t" + str(asense3_converted) + "\n" )
-            if oh==0:
+            if gbt in [0,1]:
                 print("Time: " + "{:.2f}".format(second) + " s \t Asense0 (PG2.5V current): " + "{:.3f}".format(asense0_converted) + " A \t Asense1 (Rt2 voltage): " + "{:.3f}".format(asense1_converted) + " V \t Asense2 (PG1.2V current): " + "{:.3f}".format(asense2_converted) + " A \t Asense3 (Rt1 voltage): " + "{:.3f}".format(asense3_converted) + " V \n" )
             else:
                 print("Time: " + "{:.2f}".format(second) + " s \t Asense0 (PG1.2VD current): " + "{:.3f}".format(asense0_converted) + " A \t Asense1 (Rt3 voltage): " + "{:.3f}".format(asense1_converted) + " V \t Asense2 (PG1.2VA current): " + "{:.3f}".format(asense2_converted) + " A \t Asense3 (Rt4 voltage): " + "{:.3f}".format(asense3_converted) + " V \n" )
@@ -73,20 +73,20 @@ def main(system, boss, oh, run_time_min, gain):
 
     powerdown_adc()
 
-def live_plot_current(ax1, x, y0, y2, run_time_min, oh):
+def live_plot_current(ax1, x, y0, y2, run_time_min, gbt):
     line0, = ax1.plot(x, y0, "red")
     line2, = ax1.plot(x, y2, "black")
-    if oh==0:
+    if gbt in [0,1]:
         ax1.legend((line0, line2), ("PG2.5V current", "PG1.2V current"), loc="center right")
     else:
         ax1.legend((line0, line2), ("PG1.2VD current", "PG1.2VA current"), loc="center right")
     plt.draw()
     plt.pause(0.01)
 
-def live_plot_temp(ax2, x, y1, y3, run_time_min, oh):
+def live_plot_temp(ax2, x, y1, y3, run_time_min, gbt):
     line1, = ax2.plot(x, y1, "red")
     line3, = ax2.plot(x, y3, "black")
-    if oh==0:
+    if gbt in [0,1]:
         ax2.legend((line1, line3), ("Rt2 voltage", "Rt1 voltage"), loc="center right")
     else:
         ax2.legend((line1, line3), ("Rt3 voltage", "Rt4 voltage"), loc="center right")
@@ -191,8 +191,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Asense monitoring for ME0 Optohybrid')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = only boss")
-    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7")
-    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7")
     parser.add_argument("-m", "--minutes", action="store", dest="minutes", help="minutes = int. # of minutes you want to run")
     parser.add_argument("-a", "--gain", action="store", dest="gain", default = "2", help="gain = Gain for Asense ADCs: 2, 8, 16, 32")
     args = parser.parse_args()
@@ -230,24 +230,24 @@ if __name__ == '__main__':
     if boss is None:
         sys.exit()
 
-    if args.ohid is None:
-        print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
+    if args.gbtid is None:
+        print(Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
         sys.exit()
-    if int(args.ohid) > 7:
-        print(Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
+    if int(args.gbtid) > 7:
+        print(Colors.YELLOW + "Only GBTID 0-7 allowed" + Colors.ENDC)
         sys.exit()
-    oh = int(args.ohid)%2
+    gbt = int(args.gbtid)%4
 
     if args.system == "backend":
-        if args.gbtid is None:
-            print(Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
+        if args.ohid is None:
+            print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
             sys.exit()
-        if int(args.gbtid) > 1:
-            print(Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
+        if int(args.ohid) > 1:
+            print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
             sys.exit()
     else:
-        if args.gbtid is not None:
-            print(Colors.YELLOW + "GBTID only needed for backend" + Colors.ENDC)
+        if args.ohid is not None:
+            print(Colors.YELLOW + "OHID only needed for backend" + Colors.ENDC)
             sys.exit()
 
     if args.gain not in ["2", "8", "16", "32"]:
@@ -275,7 +275,7 @@ if __name__ == '__main__':
         check_lpgbt_ready()
 
     try:
-        main(args.system, boss, oh, args.minutes, gain)
+        main(args.system, boss, gbt, args.minutes, gain)
     except KeyboardInterrupt:
         print(Colors.RED + "\nKeyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

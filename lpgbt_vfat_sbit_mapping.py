@@ -7,49 +7,8 @@ import random
 import json
 from lpgbt_vfat_config import configureVfat, enableVfatchannel
 
-# VFAT number: boss/sub, ohid, gbtid, elink
-# For GE2/1 GEB + Pizza
-VFAT_TO_ELINK_GE21 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("boss" , 1, 0, 6),
-        7  : ("boss" , 1, 0, 16),
-        8  : ("sub"  , 1, 1, 18),
-        9  : ("boss" , 1, 0, 15),
-        10 : ("sub"  , 1, 1, 3),
-        11 : ("sub"  , 1, 1, 17)
-}
 
-# For ME0 GEB
-VFAT_TO_ELINK_ME0 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("sub"  , 1, 1, 6),
-        7  : ("sub"  , 1, 1, 24),
-        8  : ("sub"  , 1, 1, 11),
-        9  : ("boss" , 1, 0, 3),
-        10  : ("boss" , 1, 0, 27),
-        11  : ("boss" , 1, 0, 25),
-}
-
-VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
-
-def vfat_to_oh_gbt_elink(vfat):
-    lpgbt = VFAT_TO_ELINK[vfat][0]
-    ohid  = VFAT_TO_ELINK[vfat][1]
-    gbtid = VFAT_TO_ELINK[vfat][2]
-    elink = VFAT_TO_ELINK[vfat][3]
-    return lpgbt, ohid, gbtid, elink
-
-def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
+def lpgbt_vfat_sbit(system, oh_select, vfat_list, nl1a, l1a_bxgap):
     print ("LPGBT VFAT S-Bit Mapping\n")
 
     vfat_oh_link_reset()
@@ -62,11 +21,11 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
     for vfat in vfat_list:
         print ("Testing VFAT#: %02d" %(vfat))
         print ("")
-        lpgbt, oh_select, gbt_select, rx_elink = vfat_to_oh_gbt_elink(vfat)
+        lpgbt, gbt_select, elink_daq, gpio = vfat_to_gbt_elink_gpio(vfat)
         check_lpgbt_link_ready(oh_select, gbt_select)
 
-        link_good = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select)))
-        sync_err = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select)))
+        link_good = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat)))
+        sync_err = read_backend_reg(get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat)))
         if system!="dryrun" and (link_good == 0 or sync_err > 0):
             print (Colors.RED + "Link is bad for VFAT# %02d"%(vfat) + Colors.ENDC)
             rw_terminate()
@@ -88,9 +47,9 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
 
         # Configure the pulsing VFAT
         print("Configuring VFAT %02d" % (vfat))
-        configureVfat(1, vfat-6*oh_select, oh_select, 0)
+        configureVfat(1, vfat, oh_select, 0)
         for i in range(128):
-            enableVfatchannel(vfat-6*oh_select, oh_select, i, 1, 0) # mask all channels and disable calpulsing
+            enableVfatchannel(vfat, oh_select, i, 1, 0) # mask all channels and disable calpulsing
         print ("")
 
         s_bit_channel_mapping[vfat] = {}
@@ -104,7 +63,7 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
             # Looping over all channels in that elink
             for channel in range(elink*16,elink*16+16):
                 # Enabling the pulsing channel
-                enableVfatchannel(vfat-6*oh_select, oh_select, channel, 0, 1) # unmask this channel and enable calpulsing
+                enableVfatchannel(vfat, oh_select, channel, 0, 1) # unmask this channel and enable calpulsing
 
                 channel_sbit_counter_initial = {}
                 channel_sbit_counter_final = {}
@@ -172,7 +131,7 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
                     # End of S-bit loop for this channel
 
                 # Disabling the pulsing channels
-                enableVfatchannel(vfat-6*oh_select, oh_select, channel, 1, 0) # mask this channel and disable calpulsing
+                enableVfatchannel(vfat, oh_select, channel, 1, 0) # mask this channel and disable calpulsing
                 # End of Channel loop
 
             print ("")
@@ -180,7 +139,7 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
 
         # Unconfigure the pulsing VFAT
         print("Unconfiguring VFAT %02d" % (vfat))
-        configureVfat(0, vfat-6*oh_select, oh_select, 0)
+        configureVfat(0, vfat, oh_select, 0)
         print ("")
         # End of VFAT loop
 
@@ -214,10 +173,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LpGBT VFAT S-Bit Mapping')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfat", action="store", dest="vfat", nargs='+', help="vfat = list of VFATs (0-11)")
-    #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
-    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1")
+    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
+    parser.add_argument("-v", "--vfats", action="store", nargs='+', dest="vfats", help="vfats = list of VFAT numbers (0-23)")
+    parser.add_argument("-a", "--addr", action="store", nargs='+', dest="addr", help="addr = list of VFATs to enable HDLC addressing")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -238,24 +197,38 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
 
-    if args.vfat is None:
+    if args.ohid is None:
+        print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
+        sys.exit()
+    if int(args.ohid) > 1:
+        print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
+        sys.exit()
+
+    if args.vfats is None:
         print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
     vfat_list = []
-    for vfat in args.vfat:
-        v = int(vfat)
-        if v not in range(0,12):
-            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+    for v in args.vfats:
+        v_int = int(v)
+        if v_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-23" + Colors.ENDC)
             sys.exit()
-        vfat_list.append(v)
+        vfat_list.append(v_int)
 
     nl1a = 100 # Nr. of L1A's
     l1a_bxgap = 500 # Gap between 2 L1A's in nr. of BX's
 
-    if args.addr:
-        print ("Enabling VFAT addressing for plugin cards")
-        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
-
+    if args.addr is not None:
+        print ("Enabling VFAT addressing for plugin cards on slots: ")
+        print (args.addr)
+        addr_list = []
+        for a in args.addr:
+        a_int = int(a)
+        if a_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number for HDLC addressing, only allowed 0-23" + Colors.ENDC)
+            sys.exit()
+        addr_list.append(a_int)
+        enable_hdlc_addressing(addr_list)
     # Parsing Registers XML File
     print("Parsing xml file...")
     parseXML()
@@ -267,7 +240,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_vfat_sbit(args.system, vfat_list, nl1a, l1a_bxgap)
+        lpgbt_vfat_sbit(args.system, int(args.ohid), vfat_list, nl1a, l1a_bxgap)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

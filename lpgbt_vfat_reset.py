@@ -2,48 +2,6 @@ from rw_reg_lpgbt import *
 from time import sleep, time
 import sys
 import argparse
-
-# VFAT number: boss/sub, ohid, gbtid, elink
-# For GE2/1 GEB + Pizza
-VFAT_TO_GPIO_GE21 = {
-        0  : ("sub"  , 0, 1, 10),
-        1  : ("sub"  , 0, 1, 9),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 0),
-        4  : ("boss" , 0, 0, 2),
-        5  : ("boss" , 0, 0, 8),
-        6  : ("boss" , 1, 0, 0),
-        7  : ("boss" , 1, 0, 8),
-        8  : ("sub"  , 1, 1, 9),
-        9  : ("boss" , 1, 0, 2),
-        10 : ("sub"  , 1, 1, 10),
-        11 : ("sub"  , 1, 1, 11)
-}
-
-# For ME0 GEB
-VFAT_TO_GPIO_ME0 = {
-        0  : ("sub"  , 0, 1, 10),
-        1  : ("sub"  , 0, 1, 9),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 0),
-        4  : ("boss" , 0, 0, 2),
-        5  : ("boss" , 0, 0, 8),
-        6  : ("sub"  , 1, 1, 10),
-        7  : ("sub"  , 1, 1, 9),
-        8  : ("sub"  , 1, 1, 11),
-        9  : ("boss" , 1, 0, 0),
-        10  : ("boss" , 1, 0, 2),
-        11  : ("boss" , 1, 0, 8),
-}
-
-VFAT_TO_GPIO = VFAT_TO_GPIO_ME0
-
-def vfat_to_oh_gbt_gpio(vfat):
-    lpgbt = VFAT_TO_GPIO[vfat][0]
-    ohid  = VFAT_TO_GPIO[vfat][1]
-    gbtid = VFAT_TO_GPIO[vfat][2]
-    gpio = VFAT_TO_GPIO[vfat][3]
-    return lpgbt, ohid, gbtid, gpio
         
 def convert_gpio_reg(gpio):
     reg_data = 0
@@ -54,7 +12,7 @@ def convert_gpio_reg(gpio):
     reg_data |= (0x01 << bit)
     return reg_data
         
-def lpgbt_vfat_reset(system, vfat_list):
+def lpgbt_vfat_reset(system, oh_select, vfat_list):
     print ("LPGBT VFAT RESET\n")
     
     gpio_dirH_addr = 0x052
@@ -67,7 +25,7 @@ def lpgbt_vfat_reset(system, vfat_list):
     gpio_outL_node = getNode("LPGBT.RWF.PIO.PIOOUTL")
 
     for vfat in vfat_list:
-        lpgbt, oh_select, gbt_select, gpio = vfat_to_oh_gbt_gpio(vfat)
+        lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
         print ("VFAT#: %02d, lpGBT: %s, OH: %d, GBT: %d, GPIO: %d" %(vfat, lpgbt, oh_select, gbt_select, gpio))
         
         boss=0
@@ -146,10 +104,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='lpGBT VFAT RESET')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc, backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")
-    #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
-    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1")
+    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
+    parser.add_argument("-v", "--vfats", action="store", nargs='+', dest="vfats", help="vfats = list of VFAT numbers (0-23)")
+    parser.add_argument("-a", "--addr", action="store", nargs='+', dest="addr", help="addr = list of VFATs to enable HDLC addressing")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -168,20 +126,35 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
 
+    if args.ohid is None:
+        print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
+        sys.exit()
+    if int(args.ohid) > 1:
+        print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
+        sys.exit()
+
     if args.vfats is None:
         print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
     vfat_list = []
     for v in args.vfats:
         v_int = int(v)
-        if v_int not in range(0,12):
-            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+        if v_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-23" + Colors.ENDC)
             sys.exit()
         vfat_list.append(v_int)
 
-    if args.addr:
-        print ("Enabling VFAT addressing for plugin cards")
-        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+    if args.addr is not None:
+        print ("Enabling VFAT addressing for plugin cards on slots: ")
+        print (args.addr)
+        addr_list = []
+        for a in args.addr:
+        a_int = int(a)
+        if a_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number for HDLC addressing, only allowed 0-23" + Colors.ENDC)
+            sys.exit()
+        addr_list.append(a_int)
+        enable_hdlc_addressing(addr_list)
         
     # Parsing Registers XML File
     print("Parsing xml file...")
@@ -194,7 +167,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_vfat_reset(args.system, vfat_list)
+        lpgbt_vfat_reset(args.system, int(args.ohid), vfat_list)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

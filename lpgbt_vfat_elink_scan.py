@@ -8,41 +8,6 @@ config_sub_filename = "config_sub.txt"
 config_boss = {}
 config_sub = {}
 
-# VFAT number: boss/sub, ohid, gbtid
-# For GE2/1 GEB + Pizza
-VFAT_TO_ELINK_GE21 = {
-        0  : ("sub"  , 0, 1),
-        1  : ("sub"  , 0, 1),
-        2  : ("sub"  , 0, 1),
-        3  : ("boss" , 0, 0),
-        4  : ("boss" , 0, 0),
-        5  : ("boss" , 0, 0),
-        6  : ("boss" , 1, 0),
-        7  : ("boss" , 1, 0),
-        8  : ("sub"  , 1, 1),
-        9  : ("boss" , 1, 0),
-        10 : ("sub"  , 1, 1),
-        11 : ("sub"  , 1, 1)
-}
-
-# For ME0 GEB
-VFAT_TO_ELINK_ME0 = {
-        0  : ("sub"  , 0, 1),
-        1  : ("sub"  , 0, 1),
-        2  : ("sub"  , 0, 1),
-        3  : ("boss" , 0, 0),
-        4  : ("boss" , 0, 0),
-        5  : ("boss" , 0, 0),
-        6  : ("sub"  , 1, 1),
-        7  : ("sub"  , 1, 1),
-        8  : ("sub"  , 1, 1),
-        9  : ("boss" , 1, 0),
-        10 : ("boss" , 1, 0),
-        11 : ("boss" , 1, 0),
-}
-
-VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
-
 def getConfig (filename):
     f = open(filename, 'r')
     reg_map = {}
@@ -53,13 +18,7 @@ def getConfig (filename):
     f.close()
     return reg_map
 
-def vfat_to_oh_gbt(vfat):
-    lpgbt = VFAT_TO_ELINK[vfat][0]
-    ohid  = VFAT_TO_ELINK[vfat][1]
-    gbtid = VFAT_TO_ELINK[vfat][2]
-    return lpgbt, ohid, gbtid
-
-def lpgbt_elink_scan(system, vfat_list):
+def lpgbt_elink_scan(system, oh_select, vfat_list):
     print ("LPGBT Elink Scan")
 
     n_err_vfat_elink = {}
@@ -68,17 +27,17 @@ def lpgbt_elink_scan(system, vfat_list):
         for elink in range(0,28): # Loop for all 28 RX elinks
             print ("VFAT%02d , ELINK %02d" % (vfat, elink))
             # Disable RX elink under test
-            setVfatRxEnable(system, vfat, 0, elink)
+            setVfatRxEnable(system, oh_select, vfat, 0, elink)
 
             # Reset the link, give some time to accumulate any sync errors and then check VFAT comms
             sleep(0.1)
             vfat_oh_link_reset()
             sleep(0.001)
 
-            lpgbt, oh_select, gbt_select = vfat_to_oh_gbt(vfat)
+            lpgbt, gbt_select, elink_old, gpio = vfat_to_gbt_elink_gpio(vfat)
             check_lpgbt_link_ready(oh_select, gbt_select)
 
-            hwid_node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.HW_ID' % (oh_select, vfat-6*oh_select))
+            hwid_node = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.HW_ID' % (oh_select, vfat))
             n_err = 0
             for iread in range(10):
                 hwid = simple_read_backend_reg(hwid_node, -9999)
@@ -86,7 +45,7 @@ def lpgbt_elink_scan(system, vfat_list):
                     n_err+=1
             n_err_vfat_elink[vfat][elink] = n_err
 
-            setVfatRxEnable(system, vfat, 1, elink)
+            setVfatRxEnable(system, oh_select, vfat, 1, elink)
         print ("")
 
     sleep(0.1)
@@ -104,8 +63,8 @@ def lpgbt_elink_scan(system, vfat_list):
             sys.stdout.flush()
         print ("")
 
-def setVfatRxEnable(system, vfat, enable, elink):
-    lpgbt, oh_select, gbt_select = vfat_to_oh_gbt(vfat)
+def setVfatRxEnable(system, oh_select, vfat, enable, elink):
+    lpgbt, gbt_select, elink_old, gpio = vfat_to_gbt_elink_gpio(vfat)
 
     if lpgbt == "boss":
         config = config_boss
@@ -132,10 +91,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LpGBT Elink Scan for each VFAT')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")
-    #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
-    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1")
+    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
+    parser.add_argument("-v", "--vfats", action="store", nargs='+', dest="vfats", help="vfats = list of VFAT numbers (0-23)")
+    parser.add_argument("-a", "--addr", action="store", nargs='+', dest="addr", help="addr = list of VFATs to enable HDLC addressing")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -156,20 +115,35 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
 
+    if args.ohid is None:
+        print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
+        sys.exit()
+    if int(args.ohid) > 1:
+        print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
+        sys.exit()
+
     if args.vfats is None:
         print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
     vfat_list = []
     for v in args.vfats:
         v_int = int(v)
-        if v_int not in range(0,12):
-            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+        if v_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-23" + Colors.ENDC)
             sys.exit()
         vfat_list.append(v_int)
 
-    if args.addr:
-        print ("Enabling VFAT addressing for plugin cards")
-        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+    if args.addr is not None:
+        print ("Enabling VFAT addressing for plugin cards on slots: ")
+        print (args.addr)
+        addr_list = []
+        for a in args.addr:
+        a_int = int(a)
+        if a_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number for HDLC addressing, only allowed 0-23" + Colors.ENDC)
+            sys.exit()
+        addr_list.append(a_int)
+        enable_hdlc_addressing(addr_list)
 
     # Parsing Registers XML File
     print("Parsing xml file...")
@@ -193,7 +167,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_elink_scan(args.system, vfat_list)
+        lpgbt_elink_scan(args.system, int(args.ohid), vfat_list)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()

@@ -490,8 +490,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LpGBT Configuration for ME0 Optohybrid')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = chc or backend or dongle or dryrun")
     parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1 (only needed for backend)")
+    parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
     parser.add_argument("-i", "--input", action="store", dest="input_config_file", help="input_config_file = .txt or .xml file")
     parser.add_argument("-r", "--reset_before_config", action="store", dest="reset_before_config", default="0", help="reset_before_config = 1 or 0 (default)")
     parser.add_argument("-m", "--minimal", action="store", dest="minimal", default="0", help="minimal = Set 1 for a minimal configuration, 0 by default")
@@ -536,12 +536,12 @@ if __name__ == '__main__':
         if args.gbtid is None:
             print (Colors.YELLOW + "Need GBTID for backend" + Colors.ENDC)
             sys.exit()
-        if int(args.ohid)>7:
-            print (Colors.YELLOW + "Only OHID 0-7 allowed" + Colors.ENDC)
+        if int(args.ohid) > 1:
+            print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
             sys.exit()
-        if int(args.gbtid)>1:
-            print (Colors.YELLOW + "Only GBTID 0 and 1 allowed" + Colors.ENDC)
-            sys.exit() 
+        if int(args.gbtid) > 7:
+            print(Colors.YELLOW + "Only GBTID 0-7 allowed" + Colors.ENDC)
+            sys.exit()
     else:
         if args.ohid is not None or args.gbtid is not None:
             print (Colors.YELLOW + "OHID and GBTID only needed for backend" + Colors.ENDC)

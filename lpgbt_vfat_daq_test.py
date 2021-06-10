@@ -5,57 +5,8 @@ import argparse
 import random
 from lpgbt_vfat_config import configureVfat, enableVfatchannel
 
-# VFAT number: boss/sub, ohid, gbtid, elink 
-# For GE2/1 GEB + Pizza
-VFAT_TO_ELINK_GE21 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("boss" , 1, 0, 6),
-        7  : ("boss" , 1, 0, 16),
-        8  : ("sub"  , 1, 1, 18),
-        9  : ("boss" , 1, 0, 15),
-        10 : ("sub"  , 1, 1, 3),
-        11 : ("sub"  , 1, 1, 17)
-}
 
-# For ME0 GEB
-VFAT_TO_ELINK_ME0 = {
-        0  : ("sub"  , 0, 1, 6),
-        1  : ("sub"  , 0, 1, 24),
-        2  : ("sub"  , 0, 1, 11),
-        3  : ("boss" , 0, 0, 3),
-        4  : ("boss" , 0, 0, 27),
-        5  : ("boss" , 0, 0, 25),
-        6  : ("sub"  , 1, 1, 6),
-        7  : ("sub"  , 1, 1, 24),
-        8  : ("sub"  , 1, 1, 11),
-        9  : ("boss" , 1, 0, 3),
-        10  : ("boss" , 1, 0, 27),
-        11  : ("boss" , 1, 0, 25),
-}
-
-VFAT_TO_ELINK = VFAT_TO_ELINK_ME0
-
-# Register to read/write
-vfat_registers = {
-        "HW_ID": "r",
-        "HW_ID_VER": "r",
-        "TEST_REG": "rw",
-        "HW_CHIP_ID": "r"
-}
-
-def vfat_to_oh_gbt_elink(vfat):
-    lpgbt = VFAT_TO_ELINK[vfat][0]
-    ohid  = VFAT_TO_ELINK[vfat][1]
-    gbtid = VFAT_TO_ELINK[vfat][2]
-    elink = VFAT_TO_ELINK[vfat][3]
-    return lpgbt, ohid, gbtid, elink
-
-def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
+def lpgbt_vfat_bert(system, oh_select, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
     file_out = open("vfat_daq_test_output.txt", "w+")
 
     if nl1a!=0:
@@ -89,24 +40,24 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
 
     # Check ready and get nodes
     for vfat in vfat_list:
-        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
         check_lpgbt_link_ready(oh_select, gbt_select)
 
         print("Configuring VFAT %d" % (vfat))
         file_out.write("Configuring VFAT %d\n" % (vfat))
-        configureVfat(1, vfat-6*oh_select, oh_select, 0)
+        configureVfat(1, vfat, oh_select, 0)
         if calpulse:
-            enableVfatchannel(vfat-6*oh_select, oh_select, 0, 0, 1) # enable calpulsing on channel 0 for this VFAT
+            enableVfatchannel(vfat, oh_select, 0, 0, 1) # enable calpulsing on channel 0 for this VFAT
 
-        link_good_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat-6*oh_select))
-        sync_error_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat-6*oh_select))
+        link_good_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.LINK_GOOD" % (oh_select, vfat))
+        sync_error_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat))
         link_good = read_backend_reg(link_good_node[vfat])
         sync_err = read_backend_reg(sync_error_node[vfat])
         if system!="dryrun" and (link_good == 0 or sync_err > 0):
             print (Colors.RED + "Link is bad for VFAT# %02d"%(vfat) + Colors.ENDC)
             rw_terminate()
-        daq_event_count_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_EVENT_CNT" % (oh_select, vfat-6*oh_select))
-        daq_crc_error_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_CRC_ERROR_CNT" % (oh_select, vfat-6*oh_select))
+        daq_event_count_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_EVENT_CNT" % (oh_select, vfat))
+        daq_crc_error_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.DAQ_CRC_ERROR_CNT" % (oh_select, vfat))
         daq_event_count_initial[vfat] = read_backend_reg(daq_event_count_node[vfat])
         daq_crc_error_count_initial[vfat] = read_backend_reg(daq_crc_error_node[vfat])
 
@@ -160,7 +111,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
                 else:
                     real_calpulse_counter = calpulse_counter
                 #daq_event_count_temp = read_backend_reg(daq_event_count_node[vfat]) - daq_event_count_initial[vfat]
-                daq_event_count_temp = real_l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
+                daq_event_count_temp = real_l1a_counter # since DAQ_EVENT_CNT is a 16-bit rolling counter
                 print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, daq_event_count_temp))
                 file_out.write("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, daq_event_count_temp))
                 vfat_results_string = ""
@@ -184,7 +135,7 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
                 else:
                     real_calpulse_counter = calpulse_counter
                 #daq_event_count_temp = read_backend_reg(daq_event_count_node[vfat]) - daq_event_count_initial[vfat]
-                daq_event_count_temp = real_l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
+                daq_event_count_temp = real_l1a_counter # since DAQ_EVENT_CNT is a 16-bit rolling counter
                 print ("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, daq_event_count_temp))
                 file_out.write("Time passed: %.2f minutes, L1A counter = %.2e,  Calpulse counter = %.2e, DAQ Events = %.2e\n" % ((time()-t0)/60.0, real_l1a_counter, real_calpulse_counter, daq_event_count_temp))
                 vfat_results_string = ""
@@ -244,10 +195,10 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
                 real_calpulse_counter = nl1a_reg_cycles*(2**32) + calpulse_counter
             else:
                 real_calpulse_counter = calpulse_counter
-            if daq_event_count_diff[vfat] != real_l1a_counter%256:
-                print (Colors.YELLOW + "Mismatch between DAQ_EVENT_CNT and L1A counter: %d"%(daq_event_count_diff[vfat] - real_l1a_counter%256) + Colors.ENDC)
-                file_out.write("Mismatch between DAQ_EVENT_CNT and L1A counter: %d\n"%(daq_event_count_diff[vfat] - real_l1a_counter%256))
-            daq_event_count_diff[vfat] = real_l1a_counter # since DAQ_EVENT_CNT is a 8-bit rolling counter
+            if daq_event_count_diff[vfat] != real_l1a_counter%(2**16):
+                print (Colors.YELLOW + "Mismatch between DAQ_EVENT_CNT and L1A counter: %d"%(real_l1a_counter%(2**16) - daq_event_count_diff[vfat]) + Colors.ENDC)
+                file_out.write("Mismatch between DAQ_EVENT_CNT and L1A counter: %d\n"%(real_l1a_counter%(2**16) - daq_event_count_diff[vfat]))
+            daq_event_count_diff[vfat] = real_l1a_counter # since DAQ_EVENT_CNT is a 16-bit rolling counter
         else:
             if nl1a != 0:
                 daq_event_count_diff[vfat] = nl1a
@@ -290,13 +241,13 @@ def lpgbt_vfat_bert(system, vfat_list, nl1a, runtime, l1a_bxgap, calpulse):
 
     # Disable channels on VFATs
     for vfat in vfat_list:
-        lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
+        lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
         enable_channel = 0
         print("Unconfiguring VFAT %d" % (vfat))
         file_out.write("Unconfiguring VFAT %d\n" % (vfat))
         if calpulse:
-            enableVfatchannel(vfat-6*oh_select, oh_select, 0, 0, 0) # disable calpulsing on channel 0 for this VFAT
-        configureVfat(0, vfat-6*oh_select, oh_select, 0)
+            enableVfatchannel(vfat, oh_select, 0, 0, 0) # disable calpulsing on channel 0 for this VFAT
+        configureVfat(0, vfat, oh_select, 0)
 
     file_out.close()
 if __name__ == '__main__':
@@ -305,14 +256,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='LpGBT VFAT DAQ Error Ratio Test')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
-    parser.add_argument("-v", "--vfats", action="store", dest="vfats", nargs='+', help="vfats = list of VFATs (0-11)")
-    #parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-7 (only needed for backend)")
-    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0, 1 (only needed for backend)")
+    parser.add_argument("-o", "--ohid", action="store", dest="ohid", help="ohid = 0-1")
+    #parser.add_argument("-g", "--gbtid", action="store", dest="gbtid", help="gbtid = 0-7 (only needed for backend)")
+    parser.add_argument("-v", "--vfats", action="store", nargs='+', dest="vfats", help="vfats = list of VFAT numbers (0-23)")
     parser.add_argument("-n", "--nl1a", action="store", dest="nl1a", help="nl1a = fixed number of L1A cycles")
     parser.add_argument("-t", "--time", action="store", dest="time", help="time = time (in minutes) to perform the DAQ test")
     parser.add_argument("-b", "--bxgap", action="store", dest="bxgap", default="500", help="bxgap = Nr. of BX between two L1A's (default = 500 i.e. 12.5 us)")
     parser.add_argument("-c", "--calpulse", action="store_true", dest="calpulse", help="if calpulsing for all channels should be enabled")
-    parser.add_argument("-a", "--addr", action="store_true", dest="addr", help="if plugin card addressing needs should be enabled")
+    parser.add_argument("-a", "--addr", action="store", nargs='+', dest="addr", help="addr = list of VFATs to enable HDLC addressing")
     args = parser.parse_args()
 
     if args.system == "chc":
@@ -333,14 +284,21 @@ if __name__ == '__main__':
         print (Colors.YELLOW + "Only valid options: backend, dryrun" + Colors.ENDC)
         sys.exit()
 
+    if args.ohid is None:
+        print(Colors.YELLOW + "Need OHID" + Colors.ENDC)
+        sys.exit()
+    if int(args.ohid) > 1:
+        print(Colors.YELLOW + "Only OHID 0-1 allowed" + Colors.ENDC)
+        sys.exit()
+
     if args.vfats is None:
         print (Colors.YELLOW + "Enter VFAT numbers" + Colors.ENDC)
         sys.exit()
     vfat_list = []
     for v in args.vfats:
         v_int = int(v)
-        if v_int not in range(0,12):
-            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-11" + Colors.ENDC)
+        if v_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number, only allowed 0-23" + Colors.ENDC)
             sys.exit()
         vfat_list.append(v_int)
 
@@ -350,8 +308,8 @@ if __name__ == '__main__':
         if args.time is not None:
             print (Colors.YELLOW + "Cannot give both time and number of L1A cycles" + Colors.ENDC)
             sys.exit()
-        if nl1a > (2**24 - 1):
-            print (Colors.YELLOW + "Number of L1A cycles can be maximum 1.68e7. Using time option for longer tests" + Colors.ENDC)
+        if nl1a > (2**32 - 1):
+            print (Colors.YELLOW + "Number of L1A cycles can be maximum 4.29e9. Using time option for longer tests" + Colors.ENDC)
             sys.exit()
     runtime = 0
     if args.time is not None:
@@ -375,9 +333,17 @@ if __name__ == '__main__':
     if args.calpulse:
         print ("Calpulsing enabled for all channels for given VFATs")
 
-    if args.addr:
-        print ("Enabling VFAT addressing for plugin cards")
-        write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.USE_VFAT_ADDRESSING"), 1)
+    if args.addr is not None:
+        print ("Enabling VFAT addressing for plugin cards on slots: ")
+        print (args.addr)
+        addr_list = []
+        for a in args.addr:
+        a_int = int(a)
+        if a_int not in range(0,24):
+            print (Colors.YELLOW + "Invalid VFAT number for HDLC addressing, only allowed 0-23" + Colors.ENDC)
+            sys.exit()
+        addr_list.append(a_int)
+        enable_hdlc_addressing(addr_list)
         
     # Parsing Registers XML File
     print("Parsing xml file...")
@@ -390,7 +356,7 @@ if __name__ == '__main__':
     
     # Running Phase Scan
     try:
-        lpgbt_vfat_bert(args.system, vfat_list, nl1a, runtime, l1a_bxgap, args.calpulse)
+        lpgbt_vfat_bert(args.system, int(args.ohid), vfat_list, nl1a, runtime, l1a_bxgap, args.calpulse)
     except KeyboardInterrupt:
         print (Colors.RED + "Keyboard Interrupt encountered" + Colors.ENDC)
         rw_terminate()
