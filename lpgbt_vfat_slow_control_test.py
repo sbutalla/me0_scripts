@@ -40,9 +40,9 @@ def lpgbt_vfat_bert(system, oh_select, vfat_list, reg_list, niter, runtime, verb
         sync_error_node[vfat] = get_rwreg_node("GEM_AMC.OH_LINKS.OH%d.VFAT%d.SYNC_ERR_CNT" % (oh_select, vfat))
         link_good = read_backend_reg(link_good_node[vfat])
         sync_err = read_backend_reg(sync_error_node[vfat])
-        #if system!="dryrun" and (link_good == 0 or sync_err > 0):
-        #    print (Colors.RED + "Link is bad for VFAT# %02d"%(vfat) + Colors.ENDC)
-        #    rw_terminate()
+        if system!="dryrun" and (link_good == 0 or sync_err > 0):
+            print (Colors.RED + "Link is bad for VFAT# %02d"%(vfat) + Colors.ENDC)
+            rw_terminate()
 
         reg_node[vfat] = {}
         for reg in reg_list:
