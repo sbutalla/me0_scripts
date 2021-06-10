@@ -24,10 +24,10 @@ def lpgbt_vfat_bert(system, oh_select, vfat_list, reg_list, niter, verbose):
             print ("Operation: READ & WRITE\n")
             write_perm = 1
 
-        errors[reg] = 12*[0]
-        error_rates[reg] = 12*[0]
-        link_bad_errors[reg] = 12*[0]
-        sync_errors[reg] = 12*[0]
+        errors[reg] = 24*[0]
+        error_rates[reg] = 24*[0]
+        link_bad_errors[reg] = 24*[0]
+        sync_errors[reg] = 24*[0]
 
         node = {}
         for vfat in vfat_list:

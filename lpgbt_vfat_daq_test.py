@@ -26,12 +26,12 @@ def lpgbt_vfat_bert(system, oh_select, vfat_list, nl1a, runtime, l1a_bxgap, calp
     sync_error_node = {}
     daq_event_count_node = {}
     daq_crc_error_node = {}
-    daq_event_count_initial = 12*[0]
-    daq_crc_error_count_initial = 12*[0]
-    daq_event_count_final = 12*[0]
-    daq_crc_error_count_final = 12*[0]
-    daq_event_count_diff = 12*[0]
-    daq_crc_error_count_diff = 12*[0]
+    daq_event_count_initial = 24*[0]
+    daq_crc_error_count_initial = 24*[0]
+    daq_event_count_final = 24*[0]
+    daq_crc_error_count_final = 24*[0]
+    daq_event_count_diff = 24*[0]
+    daq_crc_error_count_diff = 24*[0]
 
     l1a_rate = 1e9/(l1a_bxgap * 25) # in Hz
     efficiency = 1

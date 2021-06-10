@@ -23,7 +23,7 @@ def lpgbt_communication_test(system, oh_select, vfat_list, depth):
     print ("LPGBT VFAT Communication Check depth=%s transactions" % (str(depth)))
     
     vfat_oh_link_reset()
-    cfg_run = 12*[0]
+    cfg_run = 24*[0]
     for vfat in vfat_list:
         lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
            
@@ -38,11 +38,11 @@ def lpgbt_communication_test(system, oh_select, vfat_list, depth):
 def lpgbt_phase_scan(system, oh_select, vfat_list, depth, best_phase):
     print ("LPGBT Phase Scan depth=%s transactions" % (str(depth)))
 
-    link_good    = [[0 for phase in range(16)] for vfat in range(12)]
-    sync_err_cnt = [[0 for phase in range(16)] for vfat in range(12)]
-    cfg_run      = [[0 for phase in range(16)] for vfat in range(12)]
-    daq_crc_error      = [[0 for phase in range(16)] for vfat in range(12)]
-    errs         = [[0 for phase in range(16)] for vfat in range(12)]
+    link_good    = [[0 for phase in range(16)] for vfat in range(24)]
+    sync_err_cnt = [[0 for phase in range(16)] for vfat in range(24)]
+    cfg_run      = [[0 for phase in range(16)] for vfat in range(24)]
+    daq_crc_error      = [[0 for phase in range(16)] for vfat in range(24)]
+    errs         = [[0 for phase in range(16)] for vfat in range(24)]
 
     for vfat in vfat_list:
         lpgbt, gbt_select, elink, gpio = vfat_to_gbt_elink_gpio(vfat)
@@ -130,8 +130,8 @@ def lpgbt_phase_scan(system, oh_select, vfat_list, depth, best_phase):
             print(result_str)
         write_backend_reg(get_rwreg_node("GEM_AMC.TTC.GENERATOR.RESET"), 1)
 
-    centers = 12*[0]
-    widths  = 12*[0]
+    centers = 24*[0]
+    widths  = 24*[0]
 
     for vfat in vfat_list:
         for phase in range(0, 16):
@@ -139,7 +139,7 @@ def lpgbt_phase_scan(system, oh_select, vfat_list, depth, best_phase):
         centers[vfat], widths[vfat] = find_phase_center(errs[vfat])
 
     print ("\nphase : 0123456789ABCDEF")
-    bestphase_vfat = 12*[0]
+    bestphase_vfat = 24*[0]
     for vfat in vfat_list:
         sys.stdout.write("VFAT%02d: " % (vfat))
         for phase in range(0, 16):

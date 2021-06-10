@@ -80,9 +80,9 @@ def lpgbt_vfat_bert(system, oh_select, vfat_list, reg_list, niter, runtime, verb
         file_out.write("\n")
 
         total_sc_transactions_alt[reg] = 0
-        errors[reg] = 12*[0]
-        error_rates[reg] = 12*[0]
-        bus_errors[reg] = 12*[0]
+        errors[reg] = 24*[0]
+        error_rates[reg] = 24*[0]
+        bus_errors[reg] = 24*[0]
         t0 = time()
         t00 = t0
         n=0
