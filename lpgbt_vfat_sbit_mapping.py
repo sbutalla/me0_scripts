@@ -50,7 +50,7 @@ def vfat_to_oh_gbt_elink(vfat):
     return lpgbt, ohid, gbtid, elink
 
 def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
-    print ("LPGBT VFAT S-Bit Phase Scan\n")
+    print ("LPGBT VFAT S-Bit Mapping\n")
 
     vfat_oh_link_reset()
     global_reset()
@@ -184,16 +184,16 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
         print ("")
         # End of VFAT loop
 
-    if not os.path.isdir("sbit_phase_scan_results"):
-        os.mkdir("sbit_phase_scan_results")
+    if not os.path.isdir("sbit_mapping_results"):
+        os.mkdir("sbit_mapping_results")
     now = str(datetime.datetime.now())[:16]
     now = now.replace(":", "_")
     now = now.replace(" ", "_")
-    filename = "sbit_phase_scan_results/sbit_phase_scan_results_"+now+".py"
+    filename = "sbit_mapping_results/sbit_mapping_results_"+now+".py"
     with open(filename, 'w') as file:
         file.write(json.dumps(s_bit_channel_mapping))
 
-    print ("S-bit Phase Scan Results: \n")
+    print ("S-bit Mapping Results: \n")
     for vfat in s_bit_channel_mapping:
         print ("VFAT %02d: "%(vfat))
         for elink in s_bit_channel_mapping[vfat]:
@@ -206,12 +206,12 @@ def lpgbt_vfat_sbit(system, vfat_list, nl1a, l1a_bxgap):
         print ("")
 
     write_backend_reg(get_rwreg_node("GEM_AMC.GEM_SYSTEM.VFAT3.SC_ONLY_MODE"), 0)
-    print ("\nS-bit phase scan done\n")
+    print ("\nS-bit mapping done\n")
 
 if __name__ == '__main__':
 
     # Parsing arguments
-    parser = argparse.ArgumentParser(description='LpGBT VFAT S-Bit Phase Scan')
+    parser = argparse.ArgumentParser(description='LpGBT VFAT S-Bit Mapping')
     parser.add_argument("-s", "--system", action="store", dest="system", help="system = backend or dryrun")
     #parser.add_argument("-l", "--lpgbt", action="store", dest="lpgbt", help="lpgbt = boss or sub")
     parser.add_argument("-v", "--vfat", action="store", dest="vfat", nargs='+', help="vfat = list of VFATs (0-11)")
