@@ -273,7 +273,7 @@ def select_ic_link(ohIdx, gbtIdx):
     if system=="backend":
         ohIdx = int(ohIdx)
         gbtIdx = int(gbtIdx)
-        if ohIdx not in range(0,8) or gbtIdx not in [0,1]:
+        if ohIdx not in range(0,2) or gbtIdx not in range(0,8):
             print (Colors.RED + "ERROR: Invalid ohIdx or gbtIdx" + Colors.ENDC)
             rw_terminate()
         linkIdx = ohIdx * 8 + gbtIdx
