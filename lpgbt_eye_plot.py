@@ -3,6 +3,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 import os, sys, glob
 import argparse
+plt.rcParams.update({'font.size': 18})
 
 if __name__ == '__main__':
 
@@ -89,20 +90,25 @@ if __name__ == '__main__':
                     i_mod = len(y_mod) + i_mod
                 if i_mod>=len(y_mod):
                     i_mod = i_mod - len(y_mod)
-                y_mod[i_mod] = y[i]
+                y_mod[i_mod] = y[i] / 100
             eye_data_mod.append(y_mod)
 
         eye_data_plot = eye_data
+        print('Eye data plot data type: ', type(eye_data_plot))
+        print('Eye plot data:\n', eye_data_plot)
         if args.shift:
             eye_data_plot = eye_data_mod
 
         (fig, axs) = plt.subplots(1, 1, figsize=(10, 8))
         print ("fig type = " + str(type(fig)))
         print ("axs type = " + str(type(axs)))
-        axs.set_title("LpGBT 2.56 Gbps RX Eye Opening Monitor")
-        plot = axs.imshow(eye_data_plot, alpha=0.9, vmin=0, vmax=100, cmap='jet',interpolation="nearest", aspect="auto",extent=[-384.52/2,384.52/2,-0.6,0.6,])
-        plt.xlabel('ps')
-        plt.ylabel('volts')
-        fig.colorbar(plot, ax=axs)
+        axs.set_title("lpGBT 2.56 Gbps RX Eye Opening Monitor")
+        plot = axs.imshow(eye_data_plot, alpha=0.9, vmin=0, vmax=1, cmap='inferno',interpolation="nearest", aspect="auto",extent=[-384.52/2,384.52/2,-0.6,0.6,])
+        plt.xlabel('Time (ps)')
+        plt.ylabel('Voltage (V)')
+        #fig.colorbar(plot, ax=axs)
+        fig.tight_layout()
+        colorbar = plt.colorbar(plot, ax=axs, pad=0.04)
+        colorbar.ax.set_ylabel('Bin count / Max count', rotation=270, labelpad=18)
         plt.savefig(os.path.join(eye_data_dir, eye_data_filepath.split(".txt")[0]+".pdf"))
         print ("")
