@@ -3,6 +3,8 @@ from time import sleep, time
 import sys
 import argparse
 import random
+import numpy as np
+from tqdm import tqdm
 
 # VFAT number: boss/sub, ohid, gbtid, elink 
 # For GE2/1 GEB + Pizza
@@ -55,7 +57,7 @@ def vfat_to_oh_gbt_elink(vfat):
     return lpgbt, ohid, gbtid, elink
         
 def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
-    print ("LPGBT VFAT Slow Control Timing Measurements\n" % (str(niter)))
+    print ("LPGBT VFAT Slow Control Timing Measurements\n")
     errors = {}
     error_rates = {}
     link_bad_errors = {}
@@ -63,7 +65,6 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
 
     vfat_oh_link_reset()
     sleep(0.1)
-
     for reg in reg_list:
         print ("Using register: " + reg)
         write_perm = 0
@@ -79,9 +80,10 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
         sync_errors[reg] = 12*[0]
 
         node = {}
+	print('Testing slow control timing on VFATs:')
         for vfat in vfat_list:
             lpgbt, oh_select, gbt_select, elink = vfat_to_oh_gbt_elink(vfat)
-            print ("VFAT#: %02d" %(vfat))
+            print ("VFAT%02d" %(vfat))
             
             check_lpgbt_link_ready(oh_select, gbt_select)
             node[vfat] = get_rwreg_node('GEM_AMC.OH.OH%d.GEB.VFAT%d.%s' % (oh_select, vfat-6*oh_select, reg))
@@ -94,22 +96,39 @@ def lpgbt_vfat_bert(system, vfat_list, reg_list, niter, verbose):
         #    n+=1
 
         t0 = time()
-        print ("Start time %f microseconds"%((time() - t0)*1e6))
-        for vfat in vfat_list:
-            n=0
-            while n < niter:
-                print ("New loop %f microseconds"%((time() - t0)*1e6))
-                write_backend_reg(node[vfat], 0x111222)
-                print ("Reading done %f microseconds"%((time() - t0)*1e6))
-                data_read_after = read_backend_reg(node[vfat])
-                print ("Writing done %f microseconds"%((time() - t0)*1e6))
-                print ("")
-                n+=1
+        #print ("Start time %f microseconds"%((time() - t0)*1e6))
+        
+        timeData = np.ndarray((len(vfat_list)+1, 2, niter))
+        
+        
+        for vfat in range(0, len(vfat_list)):
+            n = 0
+            print('\nReading/writing register on VFAT%02d' % vfat_list[vfat])
+            for n in tqdm(range(niter), ncols = 100):		    
+                tempTime = time()
+                write_backend_reg(node[vfat_list[vfat]], 0x111222)
+                timeData[vfat][0][n] = time() - tempTime
+                
+                tempTime = time()
+                data_read_after = read_backend_reg(node[vfat_list[vfat]])
+                timeData[vfat][1][n] = time() - tempTime
+                n += 1
+        
+        #print ("Stop time %f microseconds"%((time() - t0)*1e6))
 
-        print ("Stop time %f microseconds"%((time() - t0)*1e6))
+        print ("\nOperations for register %s completed \n" % (reg))      
+	
+	
+	print("Average read times")
+	for vfat in range(len(vfat_list)):
+	    print(Colors.GREEN + 'VFAT%02d' % vfat_list[vfat] + ": %f" % (np.average(timeData[vfat][0][:]) * 1e6) + " microseconds" + Colors.ENDC)
+	
+	#if reg == TEST_REG:
+	print("Average write times")
+        for vfat in range(len(vfat_list)):
+            print(Colors.GREEN + 'VFAT%02d' % vfat_list[vfat] + ": %f" % (np.average(timeData[vfat][1][:])* 1e6) + " microseconds" + Colors.ENDC)
 
-        print ("Operations for register %s completed \n" % (reg))      
-
+	print(Colors.YELLOW + "" + Colors.ENDC)
 
 if __name__ == '__main__':
 
