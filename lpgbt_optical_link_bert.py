@@ -187,7 +187,7 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
         error_node = get_rwreg_node('GEM_AMC.OPTICAL_LINKS.MGT_CHANNEL_%d.STATUS.PRBS_ERROR_CNT' % (mgt_channel))
         prbs_errors = read_backend_reg(error_node)
         ber = prbs_errors
-        #ber = float(prbs_errors)/float(n_transactions) # if prbs errors count error in each transaction
+        ber = float(prbs_errors)/float(n_transactions) # if prbs errors count error in each transaction
         
         result_string = ""
         print ("Measurement time: " + str(measure_time) + " seconds")
@@ -196,7 +196,7 @@ def prbs_check(system, boss, path, ohid, gbtid, bert_source, time):
         else:
             result_string += Colors.YELLOW 
         result_string += "Number of errors: " + str(ber) + Colors.ENDC + "\n"
-        #result_string += "BER = " + str(ber) + Colors.ENDC + "\n"
+        result_string += "BER = " + str(ber) + Colors.ENDC + "\n"
         print (result_string)
         
         # Stopping reading PRBS7
